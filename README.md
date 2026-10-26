@@ -21,13 +21,13 @@ Use **Explore sample workspace** for a nonpersistent tour. All sample tasks and 
 
 ## GitHub Pages deployment
 
-The workflow in [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) deploys `dist/` on pushes to `main`.
+The workflow in [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) publishes the contents of `dist/` at the site root whenever `main` is pushed, or when the workflow is manually dispatched.
 
-1. Under **Settings → Pages → Build and deployment**, select **GitHub Actions** as the publishing source.
-2. Run **Actions → Deploy QuestBoard → Run workflow** if the initial push did not deploy automatically.
-3. Before switching the custom domain, verify the generated `https://jessedudgeon.github.io/questboard/` site.
-4. When ready to cut over, configure `projects.dudgeon.io` under **Settings → Pages → Custom domain** and update its DNS CNAME to `jessedudgeon.github.io.`. Do not change the current DNS until GitHub Pages and authentication are ready.
-5. Ensure your Supabase Auth URL allowlist includes the final GitHub Pages URL and `https://projects.dudgeon.io/`. Configure both Google and Microsoft identity providers before onboarding staff.
+1. Under **Settings → Pages → Build and deployment**, select **GitHub Actions** as the publishing source (not a branch/Jekyll build).
+2. Open **Actions → Deploy QuestBoard → Run workflow** to start a new workflow run after changing the Pages source. Avoid re-running only the deploy job from an older run, since that may leave duplicate `github-pages` artifacts.
+3. Set **Settings → Pages → Custom domain** to `projects.dudgeon.io` and configure a DNS CNAME of `projects` pointing to `jessedudgeon.github.io.`.
+4. Confirm that `https://projects.dudgeon.io/` displays the application rather than this README. A README at the site root indicates that GitHub Pages is still serving the branch-based Jekyll output.
+5. Ensure the Supabase Auth URL allowlist includes `https://projects.dudgeon.io/` and configure both Google and Microsoft identity providers before onboarding staff.
 
 GitHub Pages hosts only the frontend. Supabase continues to host all application data and authorization logic. The website is publicly downloadable even though organization data requires authentication and database row-level authorization.
 
