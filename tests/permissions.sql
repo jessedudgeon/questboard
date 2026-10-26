@@ -25,6 +25,13 @@ select set_config('request.jwt.claim.sub',(select admin::text from qa_ids),true)
 -- Cross-organization scope must not pass even if the actor can see both departments.
 select pg_temp.must_deny('insert into public.qb_projects(org_id,department_id,title,created_by) select other_org,dept,''Wrong organization'',admin from qa_ids');
 select pg_temp.must_deny('insert into public.qb_invitations(org_id,scope_type,scope_id,invite_role,invited_email,created_by) select org,''department'',other_dept,''department_viewer'',''qa@example.invalid'',admin from qa_ids');
+-- Client uses return=minimal because new-row SELECT policy runs before membership triggers.
+insert into public.qb_projects(org_id,department_id,title,created_by) select org,dept,'QA created through RLS',admin from qa_ids;
+insert into public.qb_tasks(project_id,title,created_by) select project,'QA task created through RLS',admin from qa_ids;
+do $$ begin
+ if not exists(select 1 from public.qb_projects where title='QA created through RLS' and org_id=(select org from qa_ids)) then raise exception 'Created project is not visible after trigger'; end if;
+ if not exists(select 1 from public.qb_tasks where title='QA task created through RLS' and project_id=(select project from qa_ids)) then raise exception 'Created task is not visible'; end if;
+end $$;
 -- Authorized forward path and incomplete-checklist rejection.
 select public.qb_transition_task(task,'ready') from qa_ids;
 select set_config('request.jwt.claim.sub',(select viewer::text from qa_ids),true);
