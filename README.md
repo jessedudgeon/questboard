@@ -39,7 +39,7 @@ The SQL files in `schema/` document the additive QuestBoard tables, policies, an
 
 For a fresh project:
 
-1. Apply `schema/001_questboard.sql`, then `schema/002_questboard_workflow_hardening.sql`.
+1. Apply `schema/001_questboard.sql`, then `schema/002_questboard_workflow_hardening.sql`, then `schema/003_questboard_qa_hardening.sql`.
 2. Use your privileged Supabase administrative session to create an organization, add an authorized `auth.users` UUID as `qb_org_members.role = 'admin'`, add departments, and grant initial department managers. That bootstrap step is intentionally not included in the public migration because it contains organization-specific identity information.
 3. Configure Google and Microsoft/Entra OAuth providers and redirect URLs in Supabase Auth.
 4. Verify RLS with at least one user per role before opening the app to multiple departments.
@@ -54,3 +54,13 @@ For a fresh project:
 ## Security expectations
 
 Always keep `qb_*` row-level security enabled. Role checks and task status transitions are enforced in PostgreSQL rather than trusting the mode or controls shown in the browser. Preview data is not stored. Invite acceptance requires an authenticated user with a matching verified email address.
+
+## QA and regression checks
+
+Run `node --check dist/app.js` and `node --test tests/frontend.test.cjs`. The Pages deployment runs these checks before uploading the application.
+
+`tests/permissions.sql` runs disposable database fixtures inside a transaction and rolls everything back. It exercises allowed workflow transitions, denied viewer transitions, self-approval prevention, checklist enforcement, cross-organization scope rejection, invitation role upgrades, suspended managers, and one-time XP. Run it only through a privileged SQL connection.
+
+The consolidated SQL in `schema/003_questboard_qa_hardening.sql` is already applied to the pilot as five named QA migrations. Do not rerun the initial schema on the pilot.
+
+QA on 2026-10-26 confirmed Google is enabled but Microsoft/Azure is disabled in Supabase Auth. Microsoft SSO still requires provider configuration. Google authorization begins successfully; a real sign-in and the production redirect allowlist still need verification. Keep `https://minutes.dudgeon.io/` configured and add the exact `https://projects.dudgeon.io/` redirect URL. QuestBoard returns all sign-ins, including invitation links, to its stable app URL and fetches email-matched pending invitations after sign-in.
