@@ -215,12 +215,12 @@
         if(!get('title'))throw Error('Project name is required');
         const row={org_id:s.org.id,department_id:get('department_id'),title:get('title'),summary:get('summary'),target_date:get('target_date')||null,visibility:get('visibility'),lead_id:s.user.id,created_by:s.user.id};
         if(s.demo){row.id=uid();row.status='active';s.projects.unshift(row);s.projectMembers.push({project_id:row.id,user_id:s.user.id,role:'lead',status:'active'});s.projectId=row.id;}
-        else{const d=await getResult(api.from('qb_projects').insert(row).select().single());s.projectId=d.id;}
+        else{row.id=uid();await getResult(api.from('qb_projects').insert(row));s.projectId=row.id;}
         s.nav='project';toast('Project created');
       }else if(type==='task'){
         const row={project_id:get('project_id'),title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:s.user.id,xp_reward:Number(get('xp_reward'))||30,created_by:s.user.id};
         if(s.demo){row.id=uid();row.status='backlog';row.created_at=new Date().toISOString();s.tasks.unshift(row);s.taskId=row.id;}
-        else{const d=await getResult(api.from('qb_tasks').insert(row).select().single());s.taskId=d.id;}
+        else{row.id=uid();await getResult(api.from('qb_tasks').insert(row));s.taskId=row.id;}
         s.nav='task';toast('Task created');
       }else if(type==='edit-task'){
         const row={title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:get('reviewer_id')||null,updated_at:new Date().toISOString()};
