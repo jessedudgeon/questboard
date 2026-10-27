@@ -4,3 +4,4 @@ node_modules/
 !.env.example
 *.tar.gz
 .DS_Store
+supabase/.temp/
