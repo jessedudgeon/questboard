@@ -99,3 +99,10 @@ PR CI also runs `npm run test:postgres` against a disposable PostgreSQL 17 servi
 real multi-session races. This command requires `QB_RUN_DATABASE_TESTS=1` and an empty
 localhost `questboard_test` database using the test-only credentials in the workflow.
 It does not accept a production URL. No production credentials belong in CI.
+
+## Session 3 scoped identity (proposed)
+
+Read [Session 3 status and rollout requirements](docs/SESSION_03.md). Scoped colleague
+profiles and assignment eligibility depend on the additive Session 3 migration, applied
+**after Session 2 and before the new frontend**. The migration is not applied by Pages.
+Use `scripts/session03-preflight.sql` for read-only aggregate checks before review.

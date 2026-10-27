@@ -80,6 +80,23 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    await a.query("update public.qb_org_members set role='member' where org_id=$1 and user_id=$2",[ids.org,ids.admin]);
    await finishWait(pending(b,'select public.qb_accept_invitation($1)',[inv]),'42501');
   });
+  await scenario('Organization suspension commits first: assignment waits and rejects target',async ids=>{
+   await a.query('begin');await signed(b,ids.admin);
+   await a.query("update public.qb_org_members set status='suspended' where org_id=$1 and user_id=$2",[ids.org,ids.viewer]);
+   await finishWait(pending(b,'update public.qb_tasks set assignee_id=$1 where id=$2',[ids.viewer,ids.task]),'42501');
+  });
+  await scenario('Assignment commits first: suspension waits and removes access',async ids=>{
+   await signed(a,ids.admin);await b.query('begin');
+   await a.query('update public.qb_tasks set assignee_id=$1 where id=$2',[ids.viewer,ids.task]);
+   await finishWait(pending(b,"update public.qb_org_members set status='suspended' where org_id=$1 and user_id=$2",[ids.org,ids.viewer]));
+   await signed(b,ids.viewer);
+   assert.equal((await b.query('select qb_private.can_view_project($1) allowed',[ids.project])).rows[0].allowed,false);
+  });
+  await scenario('Organization suspension commits first: project membership waits and rejects target',async ids=>{
+   await a.query('begin');await signed(b,ids.admin);
+   await a.query("update public.qb_org_members set status='suspended' where org_id=$1 and user_id=$2",[ids.org,ids.viewer]);
+   await finishWait(pending(b,"insert into public.qb_project_members(project_id,user_id,role) values($1,$2,'viewer')",[ids.project,ids.viewer]),'42501');
+  });
   await scenario('Two simultaneous acceptances: only the first succeeds',async ids=>{
    const inv=await invitation(ids);await signed(a,ids.viewer);await signed(b,ids.viewer);
    await a.query('select public.qb_accept_invitation($1)',[inv]);

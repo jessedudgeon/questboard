@@ -1,7 +1,7 @@
 name: Test QuestBoard
 on:
   pull_request:
-    branches: [main, audit/session-01-baseline]
+    branches: [main, audit/session-01-baseline, hardening/session-02-authorization]
 permissions:
   contents: read
 jobs:

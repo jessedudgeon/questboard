@@ -213,3 +213,5 @@ Track Google real-account callback and Microsoft/Entra setup as explicit owner-d
 gates. Deliver a tested PR, updated status/backlog, migration impact, remaining decisions,
 and a ready-to-copy Session 4 prompt.
 ```
+
+Follow-up: [Session 3 scoped profiles and assignment permissions](SESSION_03.md).

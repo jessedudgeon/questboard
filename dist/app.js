@@ -15,7 +15,8 @@
     {id:'admin',icon:'⚙',pro:'Administration',rpg:'Administration'}
   ];
   let api = null;
-  const s = { user:null,loading:true,demo:false,org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false };
+  let candidateRequest = 0;
+  const s = { user:null,loading:true,demo:false,org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -62,7 +63,7 @@
     s.departments=[{id:'it',name:'Information Technology',color:'#6585e5'},{id:'fac',name:'Facilities',color:'#32a89b'},{id:'adm',name:'Admissions',color:'#bb89e2'}];
     s.departmentMembers=[{department_id:'it',user_id:'demo-user',role:'manager',status:'active'}];
     s.orgMembers=[{org_id:'demo-org',user_id:'demo-user',role:'admin',status:'active'}];
-    s.projectMembers=[];s.profiles=[{user_id:'demo-user',display_name:'Jesse'},{user_id:'sam',display_name:'Sam'},{user_id:'eve',display_name:'Eve'}];
+    s.departmentMembers.push({department_id:'it',user_id:'sam',role:'contributor',status:'active'},{department_id:'it',user_id:'eve',role:'contributor',status:'active'});s.projectMembers=[{project_id:'p3',user_id:'demo-user',role:'lead',status:'active'},{project_id:'p3',user_id:'sam',role:'contributor',status:'active'}];s.profiles=[{user_id:'demo-user',display_name:'Jesse'},{user_id:'sam',display_name:'Sam'},{user_id:'eve',display_name:'Eve'}];
     s.projects=[
       {id:'p1',org_id:'demo-org',department_id:'it',title:'Network Infrastructure Modernization',summary:'Refresh aging switches, audit network assets, and standardize configurations.',status:'active',visibility:'department',target_date:'2026-12-15',lead_id:'demo-user'},
       {id:'p2',org_id:'demo-org',department_id:'it',title:'Critical Vulnerability Remediation',summary:'Close and verify high-impact findings across campus systems.',status:'active',visibility:'department',target_date:'2026-11-30',lead_id:'demo-user'},
@@ -96,7 +97,7 @@
         getResult(api.from('qb_task_updates').select('*').order('created_at',{ascending:false}).limit(200)),
         getResult(api.from('qb_task_events').select('*').order('created_at',{ascending:false}).limit(200)),
         getResult(api.from('qb_xp_events').select('*')),
-        getResult(api.from('qb_profiles').select('user_id,display_name,preferred_mode'))
+        getResult(api.from('qb_profiles').select('user_id,display_name'))
       ]);
       const projectIds=new Set(projects.map(p=>p.id)), departmentIds=new Set(departments.map(d=>d.id));
       const orgTasks=tasks.filter(t=>projectIds.has(t.project_id)), taskIds=new Set(orgTasks.map(t=>t.id));
@@ -175,14 +176,55 @@
   function login(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Meaningful work, real progress</div><h1>Your work is an <em>adventure.</em></h1><p>Plan projects. Rally your team. Make every accomplishment count. One workspace, two ways to experience progress.</p><div class="login-points"><span>✓ Department workspaces</span><span>✓ Verified progress</span><span>✓ Optional RPG mode</span></div></div><div class="login-foot">QuestBoard · ${esc(cfg.buildLabel||'Pilot')}</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>Welcome to QuestBoard</h2><p>Sign in with your approved university or Google account. Organization membership is invitation-only.</p><button class="auth-provider" data-action="login" data-value="azure"><span class="provider-icon ms">▦</span>Continue with Microsoft</button><button class="auth-provider" data-action="login" data-value="google"><span class="provider-icon google">G</span>Continue with Google</button><div class="auth-divider">OR EXPLORE FIRST</div><button class="btn demo-btn" data-action="demo">✦ Explore sample workspace</button><div class="auth-fine">Microsoft and Google OAuth require authorized provider configuration and redirect allowlists. Demo data is fictional and not saved.</div></div></div></div>`;}
   function modalHTML(){if(!s.modal)return '';let content='',title='';
     if(s.modal==='project'){title=term('Create a project','Begin a campaign');content=`<form data-form="project"><div class="modal-body"><div class="form-field"><label>Project name</label><input name="title" required maxlength="140" placeholder="e.g. Network Infrastructure Modernization"></div><div class="form-field"><label>Goal / description</label><textarea name="summary" maxlength="1200" placeholder="What outcome are we trying to achieve?"></textarea></div><div class="form-grid"><div class="form-field"><label>Department</label><select name="department_id" required>${managedDepartments().map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></div><div class="form-field"><label>Target date</label><input type="date" name="target_date"></div></div><div class="form-field"><label>Visibility</label><select name="visibility"><option value="department">Department private</option><option value="invited">Invited project members</option><option value="restricted">Restricted project</option></select><small class="field-hint">Cross-department access requires explicit project membership.</small></div></div>${modalFooter('Create project')}</form>`;}
-    if(s.modal==='task'){title=term('Add a task','Post a quest');content=`<form data-form="task"><div class="modal-body"><div class="form-field"><label>Task title</label><input name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label>Expected outcome</label><textarea name="description" maxlength="2500" placeholder="What does success look like?"></textarea></div><div class="form-field"><label>Project</label><select name="project_id" required>${managedProjects().map(p=>`<option value="${p.id}" ${p.id===s.projectId?'selected':''}>${esc(p.title)}</option>`).join('')}</select></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date"></div><div class="form-field"><label>Assign to</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions()}</select></div><div class="form-field"><label>XP on approval</label><select name="xp_reward"><option value="15">15 · Small</option><option value="30" selected>30 · Standard</option><option value="60">60 · Complex</option><option value="100">100 · Major</option></select></div></div></div>${modalFooter('Create task')}</form>`;}
-    if(s.modal==='edit-task'){const t=taskFor(s.taskId);title='Edit task';content=`<form data-form="edit-task"><div class="modal-body"><div class="form-field"><label>Title</label><input name="title" required maxlength="160" value="${esc(t.title)}"></div><div class="form-field"><label>Description</label><textarea name="description">${esc(t.description)}</textarea></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority">${Object.entries(priorityNames).map(([k,v])=>`<option value="${k}" ${t.priority===k?'selected':''}>${v}</option>`).join('')}</select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date" value="${esc(t.due_date||'')}"></div><div class="form-field"><label>Assignee</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions(t.assignee_id)}</select></div><div class="form-field"><label>Reviewer</label><select name="reviewer_id"><option value="">Project lead</option>${memberOptions(t.reviewer_id)}</select></div></div></div>${modalFooter('Save changes')}</form>`;}
+    if(s.modal==='task'){const selectedProject=s.candidateProject||s.projectId||managedProjects()[0]?.id;title=term('Add a task','Post a quest');content=`<form data-form="task"><div class="modal-body"><div class="form-field"><label>Task title</label><input name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label>Expected outcome</label><textarea name="description" maxlength="2500" placeholder="What does success look like?"></textarea></div><div class="form-field"><label>Project</label><select name="project_id" id="task-project-select" required>${managedProjects().map(p=>`<option value="${p.id}" ${p.id===selectedProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date"></div><div class="form-field"><label>Assign to</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions(selectedProject)}</select></div><div class="form-field"><label>XP on approval</label><select name="xp_reward"><option value="15">15 · Small</option><option value="30" selected>30 · Standard</option><option value="60">60 · Complex</option><option value="100">100 · Major</option></select></div></div></div>${candidateNotice()}${modalFooter('Create task')}</form>`;}
+    if(s.modal==='edit-task'){const t=taskFor(s.taskId);title='Edit task';content=`<form data-form="edit-task"><div class="modal-body"><div class="form-field"><label>Title</label><input name="title" required maxlength="160" value="${esc(t.title)}"></div><div class="form-field"><label>Description</label><textarea name="description">${esc(t.description)}</textarea></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority">${Object.entries(priorityNames).map(([k,v])=>`<option value="${k}" ${t.priority===k?'selected':''}>${v}</option>`).join('')}</select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date" value="${esc(t.due_date||'')}"></div><div class="form-field"><label>Assignee</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions(t.project_id,t.assignee_id,t.id)}</select></div><div class="form-field"><label>Reviewer</label><select name="reviewer_id"><option value="">Project lead</option>${memberOptions(t.project_id,t.reviewer_id,t.id)}</select></div></div></div>${candidateNotice()}${modalFooter('Save changes')}</form>`;}
     if(s.modal==='department'){title='Create department';content=`<form data-form="department"><div class="modal-body"><div class="form-field"><label>Department name</label><input name="name" required maxlength="120" placeholder="e.g. Facilities"></div><div class="form-field"><label>Color</label><input name="color" type="color" value="#658be7" style="height:45px"></div></div>${modalFooter('Create department')}</form>`;}
     if(s.modal==='invite'){title='Invite a team member';content=`<form data-form="invite"><div class="modal-body"><div class="form-field"><label>Email address</label><input name="invited_email" type="email" required placeholder="person@university.edu"></div><div class="form-field"><label>Access scope</label><select name="scope" id="invite-scope"><option value="organization">Organization member</option>${s.departments.map(d=>`<option value="dept:${d.id}">Department · ${esc(d.name)}</option>`).join('')}${s.projects.map(p=>`<option value="project:${p.id}">Project · ${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label>Role</label><select name="invite_role" id="invite-role"><option value="member">Organization member</option></select></div><div class="invite-box"><p>After creating the invitation, copy its secure link to share with the recipient. Automatic invitation emails are not enabled in this pilot.</p></div></div>${modalFooter('Create invitation')}</form>`;}
     return `<div class="modal-cover" data-action="close-modal"><div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal-head"><h2>${esc(title)}</h2><button class="icon-btn" data-action="close-modal" aria-label="Close">✕</button></div>${content}</div></div>`;
   }
-  const modalFooter=text=>`<div class="modal-footer"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn primary">${esc(text)}</button></div>`;
-  function memberOptions(selected=''){const ids=[...new Set([s.user?.id,...s.departmentMembers.map(m=>m.user_id),...s.projectMembers.map(m=>m.user_id),...(s.demo?['sam','eve']:[])].filter(Boolean))];return ids.map(id=>`<option value="${id}" ${selected===id?'selected':''}>${esc(nameFor(id))}</option>`).join('');}
+  const modalFooter=text=>`<div class="modal-footer"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn primary" ${['task','edit-task'].includes(s.modal)&&(s.candidatesLoading||s.candidateError)?'disabled':''}>${esc(text)}</button></div>`;
+  function demoCandidates(projectId){
+    const project=projectFor(projectId);if(!project)return [];
+    const ids=new Set(s.projectMembers.filter(m=>m.project_id===projectId&&m.status==='active').map(m=>m.user_id));
+    if(project.visibility==='department')s.departmentMembers.filter(m=>m.department_id===project.department_id&&m.status==='active').forEach(m=>ids.add(m.user_id));
+    return [...ids].map(user_id=>({user_id,display_name:nameFor(user_id)}));
+  }
+  function memberOptions(projectId,selected='',taskId=null){
+    const rows=s.demo?demoCandidates(projectId):s.candidateProject===projectId&&s.candidateTask===taskId?s.candidateRows:[];
+    const options=rows.map(p=>`<option value="${esc(p.user_id)}" ${selected===p.user_id?'selected':''}>${esc(p.display_name)}</option>`);
+    // Preserve historical references on unrelated edits; never offer them for new assignments.
+    if(taskId&&selected&&!rows.some(p=>p.user_id===selected))options.push(`<option value="${esc(selected)}" selected>Unavailable — keep existing assignment</option>`);
+    return options.join('');
+  }
+  const candidateMessage=()=>s.candidatesLoading?'Loading eligible people…':s.candidateError?'Unable to load eligible people. Close and reopen this dialog to retry.':'Only people with access to this work are listed.';
+  const candidateNotice=()=>`<p id="candidate-status" class="field-hint" role="status">${esc(candidateMessage())}</p>`;
+  function updateAssignmentControls(){
+    const form=document.querySelector?.('form[data-form="task"],form[data-form="edit-task"]');if(!form)return;
+    const task=s.candidateTask?taskFor(s.candidateTask):null;
+    for(const field of ['assignee_id','reviewer_id']){
+      const select=form.querySelector(`[name="${field}"]`);if(!select)continue;
+      const selected=task?task[field]:select.value;
+      const rows=s.demo?demoCandidates(s.candidateProject):s.candidateRows;
+      const keep=task?selected:rows.some(p=>p.user_id===selected)?selected:'';
+      select.innerHTML=`<option value="">${field==='assignee_id'?'Unassigned':'Project lead'}</option>`+memberOptions(s.candidateProject,keep,s.candidateTask);
+      select.disabled=!!(s.candidatesLoading||s.candidateError);
+    }
+    const submit=form.querySelector('[type="submit"]');if(submit)submit.disabled=!!(s.candidatesLoading||s.candidateError);
+    const status=document.getElementById('candidate-status');if(status)status.textContent=candidateMessage();
+  }
+  async function loadAssignmentCandidates(projectId,taskId=null){
+    const request=++candidateRequest;
+    s.candidateProject=projectId;s.candidateTask=taskId;s.candidateRows=[];s.candidatesLoading=true;s.candidateError=null;
+    updateAssignmentControls();
+    try{
+      if(!projectId)throw Error('Choose a project');
+      const rows=s.demo?demoCandidates(projectId):await getResult(api.rpc('qb_assignment_candidates',{p_project:projectId,p_task:taskId}));
+      if(request!==candidateRequest)return;
+      s.candidateRows=rows;
+    }catch(e){if(request!==candidateRequest)return;s.candidateError=e.message;}
+    if(request!==candidateRequest)return;
+    s.candidatesLoading=false;updateAssignmentControls();
+  }
   function render(){document.body.classList.toggle('mode-rpg',rpg());root.innerHTML=s.loading?`<div class="boot"><div class="brand-symbol">✦</div><p>Loading QuestBoard…</p></div>`:!s.user?login():s.lastError?`<div class="empty" role="alert"><h2>Unable to load your workspace</h2><p>${esc(s.lastError)}</p><button class="btn primary" data-action="retry">Try again</button><button class="btn" data-action="logout">Sign out</button></div>`:!s.org?onboarding():header();
     root.querySelectorAll('.project-card,.task-item,.board-task,[data-action="project"]:not(button)').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;});
     root.querySelectorAll('.form-field').forEach((field,i)=>{const label=field.querySelector('label'),input=field.querySelector('input,select,textarea');if(label&&input){if(!input.id)input.id='field-'+i;label.htmlFor=input.id;}});}
@@ -200,8 +242,17 @@
     if(action==='project'){s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
     if(action==='task'){s.taskId=id;s.nav='task';s.menuOpen=false;render();return;}
     if(action==='filter'){s.filter=v;render();return;}
-    if(action==='modal'){s.modal=v;render();return;}
-    if(action==='close-modal'){s.modal=null;render();return;}
+    if(action==='modal'){
+      s.modal=v;
+      if(['task','edit-task'].includes(v)){
+        const task=v==='edit-task'?taskFor(s.taskId):null;
+        const projectId=task?.project_id||managedProjects().find(p=>p.id===s.projectId)?.id||managedProjects()[0]?.id;
+        s.candidateProject=projectId;s.candidateTask=task?.id||null;s.candidateRows=[];s.candidateError=null;s.candidatesLoading=true;
+        render();await loadAssignmentCandidates(projectId,task?.id||null);
+      }else{candidateRequest++;render();}
+      return;
+    }
+    if(action==='close-modal'){candidateRequest++;s.modal=null;render();return;}
     if(action==='status'){await withBusy(async()=>{if(s.demo){const t=taskFor(id);if(!taskActions(t).some(([st])=>st===v))throw Error('Invalid status change');if(v==='in_review'&&s.checklist.some(c=>c.task_id===id&&!c.done))throw Error('Finish the checklist first');t.status=v;if(v!=='complete')t.completed_at=null;if(v==='complete'){t.completed_at=new Date().toISOString();if(!s.xp.some(x=>x.task_id===id))s.xp.push({task_id:id,user_id:t.assignee_id,amount:t.xp_reward});}s.events.unshift({task_id:id,event_type:'status',after_data:{status:v},created_at:new Date().toISOString()});}else await getResult(api.rpc('qb_transition_task',{p_task:id,p_new_status:v}));toast('Task updated');await refresh();});return;}
     if(action==='check'){await withBusy(async()=>{const item=s.checklist.find(c=>c.id===id);if(s.demo)item.done=!item.done;else await getResult(api.rpc('qb_toggle_checklist',{p_item:id,p_done:!item.done}));await refresh();});return;}
     if(action==='copy-invite'){const link=location.origin+location.pathname+'?invite='+encodeURIComponent(id);try{await navigator.clipboard.writeText(link);toast('Invitation link copied');}catch{prompt('Copy invitation link',link);}return;}
@@ -211,6 +262,14 @@
   async function handleForm(form){const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').trim();
     await withBusy(async()=>{
       for(const field of form.querySelectorAll('[required]')){if(!String(fd.get(field.name)||'').trim())throw Error('Please complete all required fields');}
+      if(['task','edit-task'].includes(type)&&!s.demo){
+        const existing=type==='edit-task'?taskFor(s.taskId):null;
+        if(s.candidatesLoading||s.candidateError||s.candidateProject!==(existing?.project_id||get('project_id'))||s.candidateTask!==(existing?.id||null))throw Error('Load eligible people before saving');
+        for(const key of ['assignee_id','reviewer_id']){
+          const id=type==='task'&&key==='reviewer_id'?s.user.id:get(key);
+          if(id&&id!==existing?.[key]&&!s.candidateRows.some(p=>p.user_id===id))throw Error('Selected person no longer has access to this work');
+        }
+      }
       if(type==='project'){
         if(!get('title'))throw Error('Project name is required');
         const row={org_id:s.org.id,department_id:get('department_id'),title:get('title'),summary:get('summary'),target_date:get('target_date')||null,visibility:get('visibility'),lead_id:s.user.id,created_by:s.user.id};
@@ -244,9 +303,9 @@
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f);}});
-  document.addEventListener('change',e=>{if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('change',e=>{if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select')loadAssignmentCandidates(e.target.value);if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
   document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
-  document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){s.modal=null;render();}});
+  document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     if(window.supabase?.createClient&&cfg.supabaseUrl&&cfg.supabasePublishableKey){api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});}
     if(!api){s.loading=false;render();return;}
