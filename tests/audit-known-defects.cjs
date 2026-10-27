@@ -1,9 +1,9 @@
-// Diagnostic reproductions of the Session 1 baseline, NOT desired behavior.
+// Historical pre-migration diagnostic reproductions of the Session 1 baseline, NOT desired behavior.
 // Run explicitly; remove/convert each probe to a denial regression when repaired.
 const fs=require('node:fs');
 const {database}=require('./database-helper.cjs');
 (async()=>{
- const db=await database();
+ const db=await database({migrate:false});
  const fixture=fs.readFileSync(__dirname+'/permissions.sql','utf8').split('create function pg_temp.must_deny')[0];
  const admin="set local role authenticated; select set_config('request.jwt.claim.sub',(select admin::text from qa_ids),true);";
  async function probe(name,setup,sql){
