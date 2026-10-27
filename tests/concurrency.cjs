@@ -98,6 +98,11 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    await finishWait(pending(b,"insert into public.qb_project_members(project_id,user_id,role) values($1,$2,'viewer')",[ids.project,ids.viewer]),'42501');
   });
   const membership=(type,scope,user,action,role,expectedRole,status)=>({text:'select public.qb_manage_membership($1,$2,$3,$4,$5,$6,$7)',values:[type,scope,user,action,role,expectedRole,status]});
+  await scenario('Direct database writes also serialize and preserve the last active administrator',async ids=>{
+   await a.query('begin');await b.query('begin');
+   await a.query("update public.qb_org_members set role='member' where org_id=$1 and user_id=$2",[ids.org,ids.admin]);
+   await finishWait(pending(b,"update public.qb_org_members set role='member' where org_id=$1 and user_id=$2",[ids.org,ids.reserve]),'23514');
+  });
   await scenario('Two administrators demote themselves: second waits and cannot remove last admin',async ids=>{
    await signed(a,ids.admin);await signed(b,ids.reserve);
    await a.query(membership('organization',ids.org,ids.admin,'role','member','admin','active'));

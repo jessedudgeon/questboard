@@ -66,6 +66,7 @@ test('Session 4 membership lifecycle role matrix',async t=>{
    await actor(db);await db.exec(manage('department','dept','viewer','role','contributor','viewer','active'));
    await deny(db,manage('department','dept','viewer','role','manager','contributor','active'));
    await deny(db,manage('department','dept','reserve','suspend',null,'manager','active'));
+   assert.equal((await db.query("update public.qb_department_members set role='viewer' where user_id=(select reserve from qa_ids) returning user_id")).rows.length,0);
    await deny(db,manage('organization','org','viewer','suspend',null,'member','active'));
   });
   await check('Project-only lead can administer ordinary roles, not lead grants',async()=>{
@@ -73,6 +74,7 @@ test('Session 4 membership lifecycle role matrix',async t=>{
    await actor(db,'viewer');await db.exec(manage('project','project','reserve','grant','viewer'));
    await deny(db,manage('project','project','reserve','role','lead','viewer','active'));
    await deny(db,manage('project','project','admin','suspend',null,'lead','active'));
+   assert.equal((await db.query("update public.qb_project_members set role='viewer' where user_id=(select admin from qa_ids) returning user_id")).rows.length,0);
   });
   await check('Hidden restricted project and cross-organization scope cannot be administered',async()=>{
    await db.exec("update public.qb_projects set visibility='restricted'");await actor(db,'reserve');

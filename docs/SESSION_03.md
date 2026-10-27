@@ -130,3 +130,6 @@ Ready-to-copy prompt:
 > concurrency tests and reviewed additive migrations; do not replay creation migrations
 > or change production data without impact review. Include deployment blockers and a
 > ready-to-copy Session 5 prompt.
+
+Follow-up: [Session 4 membership lifecycle and administration](SESSION_04.md) advances
+this rollout's schema gate to `20261027153612` when the Session 4 frontend is merged.

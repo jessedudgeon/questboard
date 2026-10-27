@@ -38,7 +38,7 @@ begin
  if tg_table_name='qb_org_members' then o:=(r->>'org_id')::uuid;
  elsif tg_table_name='qb_department_members' then select org_id into o from public.qb_departments where id=(r->>'department_id')::uuid;
  else select org_id into o from public.qb_projects where id=(r->>'project_id')::uuid; end if;
- perform 1 from public.qb_organizations where id=o for update;
+ perform 1 from public.qb_organizations where id=o for no key update;
  return case when tg_op='DELETE' then old else new end;
 end;
 $$;
@@ -91,6 +91,17 @@ create trigger qb_org_lifecycle_audit after insert or update or delete on public
 create trigger qb_dept_lifecycle_audit after insert or update or delete on public.qb_department_members for each row execute function qb_private.audit_membership_change();
 create trigger qb_project_lifecycle_audit after insert or update or delete on public.qb_project_members for each row execute function qb_private.audit_membership_change();
 
+-- Keep direct table updates aligned with the lifecycle API: non-admin managers
+-- cannot demote/suspend another leadership row through PostgREST instead.
+alter policy qb_dept_members_update on public.qb_department_members using (
+ qb_private.is_department_manager(department_id) and (role<>'manager' or exists(
+  select 1 from public.qb_departments d where d.id=department_id and qb_private.is_org_admin(d.org_id))))
+ with check(qb_private.is_department_manager(department_id) and role in ('contributor','viewer'));
+alter policy qb_pm_update on public.qb_project_members using (
+ qb_private.can_manage_project(project_id) and qb_private.can_view_project(project_id) and
+ (role<>'lead' or exists(select 1 from public.qb_projects p where p.id=project_id and qb_private.is_org_admin(p.org_id))))
+ with check(qb_private.can_manage_project(project_id) and qb_private.can_view_project(project_id) and role in ('contributor','viewer'));
+
 -- Explicit action + expected role/status provides optimistic concurrency. A stale UI
 -- cannot silently reinstate or demote someone changed by a different administrator.
 create function public.qb_manage_membership(p_type text,p_scope uuid,p_user uuid,p_action text,p_role text,
@@ -103,7 +114,7 @@ begin
  elsif p_type='department' then select org_id into o from public.qb_departments where id=p_scope;tbl:='qb_department_members';col:='department_id';
  elsif p_type='project' then select org_id into o from public.qb_projects where id=p_scope;tbl:='qb_project_members';col:='project_id';
  else raise exception using errcode='22023',message='Invalid scope';end if;
- perform 1 from public.qb_organizations where id=o for update;
+ perform 1 from public.qb_organizations where id=o for no key update;
  if not found or not qb_private.can_administer_members(p_type,p_scope) then raise exception using errcode='42501',message='Scope unavailable';end if;
  execute format('select role,status from public.%I where %I=$1 and user_id=$2 for update',tbl,col) into old_role,old_status using p_scope,p_user;
  if old_role is distinct from p_expected_role or old_status is distinct from p_expected_status then
