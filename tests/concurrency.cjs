@@ -97,6 +97,27 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    await a.query("update public.qb_org_members set status='suspended' where org_id=$1 and user_id=$2",[ids.org,ids.viewer]);
    await finishWait(pending(b,"insert into public.qb_project_members(project_id,user_id,role) values($1,$2,'viewer')",[ids.project,ids.viewer]),'42501');
   });
+  const membership=(type,scope,user,action,role,expectedRole,status)=>({text:'select public.qb_manage_membership($1,$2,$3,$4,$5,$6,$7)',values:[type,scope,user,action,role,expectedRole,status]});
+  await scenario('Two administrators demote themselves: second waits and cannot remove last admin',async ids=>{
+   await signed(a,ids.admin);await signed(b,ids.reserve);
+   await a.query(membership('organization',ids.org,ids.admin,'role','member','admin','active'));
+   await finishWait(pending(b,membership('organization',ids.org,ids.reserve,'role','member','admin','active')),'23514');
+  });
+  await scenario('Two department managers demoted: second waits and preserves last manager',async ids=>{
+   await signed(a,ids.admin);await signed(b,ids.reserve);
+   await a.query(membership('department',ids.dept,ids.admin,'role','contributor','manager','active'));
+   await finishWait(pending(b,membership('department',ids.dept,ids.reserve,'role','contributor','manager','active')),'23514');
+  });
+  await scenario('Stale simultaneous membership changes: second waits and requires reload',async ids=>{
+   await signed(a,ids.admin);await signed(b,ids.reserve);
+   await a.query(membership('department',ids.dept,ids.viewer,'suspend',null,'viewer','active'));
+   await finishWait(pending(b,membership('department',ids.dept,ids.viewer,'role','contributor','viewer','active')),'40001');
+  });
+  await scenario('Administrator demotion commits before waiting administration: authority is rechecked',async ids=>{
+   await signed(a,ids.reserve);await signed(b,ids.admin);
+   await a.query(membership('organization',ids.org,ids.admin,'role','member','admin','active'));
+   await finishWait(pending(b,membership('organization',ids.org,ids.viewer,'role','admin','member','active')),'42501');
+  });
   await scenario('Two simultaneous acceptances: only the first succeeds',async ids=>{
    const inv=await invitation(ids);await signed(a,ids.viewer);await signed(b,ids.viewer);
    await a.query('select public.qb_accept_invitation($1)',[inv]);
