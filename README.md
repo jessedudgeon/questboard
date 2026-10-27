@@ -64,3 +64,23 @@ Run `node --check dist/app.js` and `node --test tests/frontend.test.cjs`. The Pa
 The consolidated SQL in `schema/003_questboard_qa_hardening.sql` is already applied to the pilot as five named QA migrations. Do not rerun the initial schema on the pilot.
 
 QA on 2026-10-26 confirmed Google is enabled but Microsoft/Azure is disabled in Supabase Auth. Microsoft SSO requires an Entra app registration: client ID, client secret, and tenant URL are currently empty. Google authorization begins successfully; the production redirect allowlist was verified in the Supabase dashboard. A real Google account callback still needs end-to-end verification. Keep `https://minutes.dudgeon.io/` configured and add the exact `https://projects.dudgeon.io/` redirect URL. QuestBoard returns all sign-ins, including invitation links, to its stable app URL and fetches email-matched pending invitations after sign-in.
+
+## QuestBoard 2.0 baseline
+
+See [Session 1 audit](docs/SESSION_01_AUDIT.md) for verified implementation status,
+known authorization gaps, the prioritized backlog, and the Session 2 prompt.
+
+Development checks now run with `npm ci --ignore-scripts`, `npm run check`, and
+`npm test`. Node 22 is used in CI. The browser remains static HTML/CSS/JavaScript;
+Node and the pinned PGlite dependency are only needed for tests.
+
+The database test creates an in-memory PostgreSQL instance with a minimal
+`auth.users` / `auth.uid()` test shim, loads the repository schema there, then
+runs `tests/permissions.sql`. It never connects to Supabase. This tests SQL/RLS
+behavior, not Supabase Auth, PostgREST, or production schema equivalence.
+
+`node tests/audit-known-defects.cjs` reproduces the five Session 1 database
+findings locally. These probes assert the observed defects, **not** desired
+behavior; they are deliberately outside the normal CI test glob. Convert them
+to denial/regression tests as each issue is repaired. Do not run these fixtures
+against the shared production database.

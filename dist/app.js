@@ -218,7 +218,7 @@
         else{row.id=uid();await getResult(api.from('qb_projects').insert(row));s.projectId=row.id;}
         s.nav='project';toast('Project created');
       }else if(type==='task'){
-        const row={project_id:get('project_id'),title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:s.user.id,xp_reward:Number(get('xp_reward'))||30,created_by:s.user.id};
+        const row={project_id:get('project_id'),title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:s.user.id,xp_reward:get('xp_reward')===''?30:Number(get('xp_reward')),created_by:s.user.id};
         if(s.demo){row.id=uid();row.status='backlog';row.created_at=new Date().toISOString();s.tasks.unshift(row);s.taskId=row.id;}
         else{row.id=uid();await getResult(api.from('qb_tasks').insert(row));s.taskId=row.id;}
         s.nav='task';toast('Task created');
