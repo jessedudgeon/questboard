@@ -1,6 +1,6 @@
 # Session 3 — Scoped Profiles and Assignment Permissions
 
-Date: 2026-10-27. Status: proposed, not deployed.
+Date: 2026-10-27. Status: merge authorized; database and frontend deployment pending.
 
 ## Verified starting point
 
@@ -61,15 +61,17 @@ or rewrite any historical references if later counts differ.
 
 Deployment sequence requiring owner review:
 
-1. Review/merge the stacked PRs in dependency order (#2, #3, then Session 3), accounting for
-   the existing Pages-on-main deployment behavior. Keep frontend rollout coordinated with
-   database deployment; merging code does not apply SQL.
+1. Merge the reviewed stack while preserving the Pages deployment gate. The deploy job
+   requires repository variable `QB_SCHEMA_VERSION=20261027145136`; leave it unset until
+   both missing additive migrations are verified. Existing production remains served.
+   Merging code does not apply SQL.
 2. Recheck migration history and named functions/constraints; reconcile baseline history as
    documented in Session 2. Do not replay `schema/` creation files or blindly run db push.
 3. Review database backup/recovery and preflight results. Apply only the reviewed, missing
    additive Session 2 then Session 3 migrations, using a controlled rollout window.
 4. Verify policies/grants and directory RPC with synthetic staging identities. Publish the
-   dependent frontend only after the RPC is available. Missing RPC fails closed and blocks
+   dependent frontend only after the RPC is available: set the repository variable above
+   and manually run the Deploy QuestBoard workflow from main. Missing RPC fails closed and blocks
    task form saves; it does not fall back to an organization-wide roster.
 5. Run hosted smoke tests for ordinary collaborators, project-only members, managers,
    restricted participants, suspended and cross-org users, then MeetingDesk smoke tests.
