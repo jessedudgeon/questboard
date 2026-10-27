@@ -7,7 +7,8 @@ Date: 2026-10-27. Status: merge authorized; database and frontend deployment pen
 Read `docs/SESSION_02.md` and inspected current main and PRs #2/#3 before implementation.
 Main remains `0a538c8cd28c68846cda12112df68bfade7fcda9`. PR #2 is draft/unmerged at
 `055dfedc5378d5cc7ddf7e82304ae774ce4363c1`; PR #3 is draft/unmerged at
-`7f27fbcf3aca5c0f77ccfef86caf83521f924bc7`. This work is stacked on PR #3.
+`7f27fbcf3aca5c0f77ccfef86caf83521f924bc7`. This work includes PR #3. PR #4 was retargeted to main after merge authorization so
+the full stack can merge together while preserving the original commits and deployment gate.
 
 Read-only inspection of the shared MeetingDesk Supabase project found only seven baseline
 migration versions: `20261026140022`, `20261026141132`, `20261026170546`,
@@ -92,9 +93,9 @@ must separately review the permissions it would reopen.
   upgrade, and a populated Session 2-to-3 upgrade without replaying Session 2.
 - MeetingDesk compatibility check uses an unrelated synthetic table/policy canary and
   verifies it remains unchanged. It does not certify the hosted MeetingDesk application.
-- Native PostgreSQL 17 CI: pending at report creation; ten concurrent-write scenarios,
+- Native PostgreSQL 17 CI: passed (run 40527794722); ten concurrent-write scenarios,
   including suspension-before-assignment, assignment-before-suspension, and suspension
-  versus project-member creation. CI status is recorded below once available.
+  versus project-member creation. Both test and postgres jobs succeeded.
 - Tests use disposable local databases and an auth shim; no production credentials/data.
   Hosted PostgREST, real SSO, browser account switching and production performance are not
   covered by these isolated tests.
