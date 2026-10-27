@@ -2,6 +2,9 @@
 
 Implementation audit and baseline assessment • October 27, 2026
 
+Follow-up: [Session 2](SESSION_02.md) proposes fixes for F01/F02/F03/F05. This document
+records the original baseline; proposed fixes are not yet production deployment evidence.
+
 ## Assessment
 
 QuestBoard is a functioning first-release foundation, not a completed 1.1 release.

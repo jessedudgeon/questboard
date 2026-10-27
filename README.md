@@ -75,7 +75,7 @@ Development checks now run with `npm ci --ignore-scripts`, `npm run check`, and
 Node and the pinned PGlite dependency are only needed for tests.
 
 The database test creates an in-memory PostgreSQL instance with a minimal
-`auth.users` / `auth.uid()` test shim, loads the repository schema there, then
+`auth.users` / `auth.uid()` test shim, loads the repository schema plus additive migrations there, then
 runs `tests/permissions.sql`. It never connects to Supabase. This tests SQL/RLS
 behavior, not Supabase Auth, PostgREST, or production schema equivalence.
 
@@ -84,3 +84,18 @@ findings locally. These probes assert the observed defects, **not** desired
 behavior; they are deliberately outside the normal CI test glob. Convert them
 to denial/regression tests as each issue is repaired. Do not run these fixtures
 against the shared production database.
+
+
+## Session 2 authorization hardening (proposed)
+
+Read [Session 2 status and migration runbook](docs/SESSION_02.md) before deployment.
+The new SQL under `supabase/migrations/` is additive to the existing pilot baseline;
+merging code does not apply it. Do not replay `schema/001–003` or blindly run a database
+push against the shared project. Production remains unchanged until migration review.
+
+The normal `npm test` suite now covers hardened permissions and populated upgrades.
+Historical diagnostic probes explicitly load the unpatched Session 1 baseline.
+PR CI also runs `npm run test:postgres` against a disposable PostgreSQL 17 service for
+real multi-session races. This command requires `QB_RUN_DATABASE_TESTS=1` and an empty
+localhost `questboard_test` database using the test-only credentials in the workflow.
+It does not accept a production URL. No production credentials belong in CI.
