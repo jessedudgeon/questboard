@@ -120,7 +120,7 @@ Do not drop audit history during routine recovery.
 ## Validation
 
 - `npm run check`: passed.
-- `npm test`: 82 tests passing before the final direct-policy review; final results below.
+- `npm test`: 82 tests passing, zero failed/skipped, including the final direct-policy review.
 - New SQL tests cover org/admin role transfer, ordinary scoped grants, suspend/reinstate,
   expected-state conflicts, last admin/manager protections, restricted management paths,
   anonymous/ordinary/cross-org denial, direct-write denial, audit integrity, and historical
@@ -131,8 +131,8 @@ Do not drop audit history during routine recovery.
   synthetic MeetingDesk table/policy remain unchanged; the new audit table starts empty.
 - Existing regression fixtures now include a reserve admin/manager so their suspension
   cases exercise revoked access without violating the newly introduced continuity rules.
-- Native PostgreSQL 17 CI passed initial implementation (run 40533960884). Final validation
-  includes 15 concurrent-write scenarios, including direct-write and API last-admin races,
+- Native PostgreSQL 17 CI passed final code validation (run 40534778978):
+  15 concurrent-write scenarios, including direct-write and API last-admin races,
   last-manager races, stale updates and actor-demotion rechecks.
 - Limitations: isolated auth shim, not hosted Auth/PostgREST; synthetic MeetingDesk canary,
   not a full MeetingDesk UI test; no production performance/load certification.
