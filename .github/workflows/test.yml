@@ -1,7 +1,7 @@
 name: Test QuestBoard
 on:
   pull_request:
-    branches: [main, audit/session-01-baseline, hardening/session-02-authorization]
+    branches: [main, audit/session-01-baseline, hardening/session-02-authorization, administration/session-04-lifecycle]
 permissions:
   contents: read
 jobs:
@@ -43,3 +43,15 @@ jobs:
       - run: npm run test:postgres
         env:
           QB_RUN_DATABASE_TESTS: '1'
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
