@@ -1,6 +1,6 @@
 -- Run using a privileged SQL connection. All fixtures roll back, including auth users.
 begin;
-create temporary table qa_ids as select gen_random_uuid() as admin, gen_random_uuid() as viewer,
+create temporary table qa_ids as select gen_random_uuid() as reserve,gen_random_uuid() as admin, gen_random_uuid() as viewer,
  gen_random_uuid() as org,gen_random_uuid() as other_org,gen_random_uuid() as dept,
  gen_random_uuid() as other_dept,gen_random_uuid() as project,gen_random_uuid() as task,gen_random_uuid() as item;
 grant select on qa_ids to authenticated;
@@ -12,6 +12,10 @@ insert into public.qb_department_members(department_id,user_id,role) select dept
 insert into public.qb_projects(id,org_id,department_id,title,created_by) select project,org,dept,'QA',admin from qa_ids;
 insert into public.qb_tasks(id,project_id,title,created_by) select task,project,'QA unassigned',admin from qa_ids;
 insert into public.qb_checklist(id,task_id,title) select item,task,'QA objective' from qa_ids;
+-- A second manager/admin keeps suspension tests focused on revoked-user access.
+insert into auth.users(id,email,email_confirmed_at) select reserve,'reserve-'||reserve||'@example.invalid',now() from qa_ids;
+insert into public.qb_org_members(org_id,user_id,role) select org,reserve,'admin' from qa_ids;
+insert into public.qb_department_members(department_id,user_id,role) select dept,reserve,'manager' from qa_ids;
 create function pg_temp.must_deny(statement text) returns void language plpgsql as $$
 begin
   begin execute statement; exception when others then return; end;

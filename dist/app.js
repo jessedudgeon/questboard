@@ -16,6 +16,8 @@
   ];
   let api = null;
   let candidateRequest = 0;
+  let membershipRequest=0;
+  const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
   const s = { user:null,loading:true,demo:false,org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
@@ -77,6 +79,7 @@
     s.loading=false;s.nav='home';s.workspace='all';render();
   }
   async function loadLive(){
+    membershipRequest++;Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
     if(!api||!s.user)return;
     s.loading=true;s.lastError=null;render();
     try{
@@ -116,7 +119,7 @@
     return `<div class="shell ${s.menuOpen?'menu-open':''}"><aside class="sidebar"><div class="brand"><span class="logo">✦</span><span>QuestBoard<small>WORK, REIMAGINED</small></span></div>
       <div class="sidebar-label">Workspace</div>${defs.slice(0,3).map(x=>navItem(x)).join('')}
       <div class="sidebar-label">Collaboration</div>${defs.slice(3,6).map(x=>navItem(x)).join('')}
-      <div class="side-bottom">${isAdmin()?navItem(defs[6]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
+      <div class="side-bottom">${membershipScopes().length?navItem(defs[6]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
       <main class="main">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
       <header class="topbar"><div class="top-left"><button class="mobile-menu" data-action="menu" aria-label="Open menu">☰</button><select class="workspace-select" id="workspace-select" aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right"><label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
       <div class="page">${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${pageContent()}</div></main></div>${modalHTML()}`;
@@ -166,9 +169,43 @@
     <div class="layout-2"><div class="panel"><div class="panel-head"><h3>${term('Project health','Campaign progress')}</h3></div><div class="panel-body">${visibleProjects().map(p=>`<div style="margin-bottom:24px" data-action="project" data-id="${p.id}"><div class="section-row"><strong>${esc(p.title)}</strong><small>${pct(p)}%</small></div><div class="progress-track"><div class="progress-fill" style="width:${pct(p)}%"></div></div></div>`).join('')||empty('◈','No project data','Create a project to start tracking progress.')}</div></div><div class="panel"><div class="panel-head"><h3>Progression principles</h3></div><div class="panel-body"><p class="muted">✦ XP only after verified completion.</p><p class="muted" style="margin-top:18px">✦ No penalty for reporting blockers.</p><p class="muted" style="margin-top:18px">✦ Shared success matters more than individual rankings.</p><p class="muted" style="margin-top:18px">✦ Talent trees and mastery tracks are planned for the next release.</p></div></div></div>`;
   }
   function meetingsPage(){return pageTitle(term('Meeting follow-ups','Council Chamber'),'Carry decisions into action without losing the story of the work.')+`<div class="layout-2"><div class="panel"><div class="panel-head"><h3>Minutes integration</h3></div><div class="panel-body"><div style="font-size:32px;margin-bottom:15px">▤</div><h2>Keep decisions and execution connected</h2><p class="lead" style="margin-bottom:22px">Minutes remains the record of meetings. QuestBoard holds the projects, tasks, and work journals. A scoped action-link workflow is planned after the existing Minutes JSON structure is upgraded.</p><a class="btn primary" href="${esc(cfg.minutesUrl||'https://minutes.dudgeon.io')}" target="_blank" rel="noopener">Open Minutes ↗</a></div></div><div class="panel"><div class="panel-head"><h3>Weekly standup workflow</h3></div><div class="panel-body"><div class="info-list"><p>01 · Capture decisions and assignments in Minutes.</p><p>02 · Create the corresponding task in QuestBoard.</p><p>03 · Staff log work, blockers, and evidence here.</p><p>04 · Review verified progress at the next standup.</p></div></div></div></div>`;}
-  function adminPage(){if(!isAdmin())return pageTitle('Administration','Organization administration requires an authorized role.')+empty('⚿','Access restricted','Ask an organization administrator to grant the appropriate role.');
+  function membershipScopes(){return [
+    ...(isAdmin()&&s.org?[{value:'organization:'+s.org.id,label:'Organization'}]:[]),
+    ...managedDepartments().map(d=>({value:'department:'+d.id,label:'Department · '+d.name})),
+    ...managedProjects().map(p=>({value:'project:'+p.id,label:'Project · '+p.title}))];}
+  function membershipRoles(type){return type==='organization'?['member','admin']:type==='department'?(isAdmin()?['viewer','contributor','manager']:['viewer','contributor']):(isAdmin()?['viewer','contributor','lead']:['viewer','contributor']);}
+  function membershipPanel(){
+    const scopes=membershipScopes();if(!scopes.length)return empty('⚿','Access restricted','No membership administration scope is available.');
+    const selected=scopes.some(x=>x.value===membership.scope)?membership.scope:scopes[0].value;
+    const type=selected.split(':')[0],roles=membershipRoles(type),ready=membership.loaded&&membership.scope===selected&&!membership.loading&&!membership.error;
+    const roleOptions=current=>roles.map(r=>`<option value="${r}" ${r===current?'selected':''}>${esc(r)}</option>`).join('');
+    return `<section class="panel" style="margin-bottom:22px"><div class="panel-head"><h3>Membership controls</h3></div><div style="padding:20px">
+      <label for="membership-scope">Scope</label><select id="membership-scope">${scopes.map(x=>`<option value="${esc(x.value)}" ${x.value===selected?'selected':''}>${esc(x.label)}</option>`).join('')}</select>
+      <button class="btn" data-action="load-memberships">${membership.loading?'Loading…':'Load / refresh members'}</button>
+      <p role="status">${esc(membership.error||(!ready?'Load members to administer this scope.':'Suspension preserves work history. Other active scopes may still grant access. Organization suspension overrides them.'))}</p>
+      ${s.demo?'<p>Membership administration requires a signed-in workspace.</p>':''}
+      ${ready?`<div class="table-wrap"><table class="data-table"><thead><tr><th>Member</th><th>Role / status</th><th>Action</th></tr></thead><tbody>${membership.rows.filter(m=>m.role).map(m=>{
+        const allowed=roles.includes(m.role);return `<tr><td>${esc(m.display_name)}<small> · organization ${esc(m.org_status)}</small></td><td>${esc(m.role)} · ${esc(m.status)}</td><td>${allowed?`<form data-form="membership" data-user="${esc(m.user_id)}"><input type="hidden" name="scope" value="${esc(selected)}"><select name="role" aria-label="Membership role">${roleOptions(m.role)}</select><select name="action" aria-label="Membership action"><option value="role">Change role</option><option value="${m.status==='active'?'suspend':'reinstate'}">${m.status==='active'?'Suspend':'Reinstate'}</option></select><button class="btn sm" type="submit">Apply</button></form>`:'Leadership requires an organization administrator'}</td></tr>`;}).join('')}</tbody></table></div>
+      ${type!=='organization'?`<form data-form="membership"><input type="hidden" name="scope" value="${esc(selected)}"><input type="hidden" name="action" value="grant"><label>Grant scoped access <select name="user_id" required><option value="">Choose a person</option>${membership.rows.filter(m=>!m.role&&m.org_status==='active').map(m=>`<option value="${esc(m.user_id)}">${esc(m.display_name)}</option>`).join('')}</select></label><select name="role" aria-label="Membership role">${roleOptions('viewer')}</select><button class="btn" type="submit">Grant access</button></form>`:'<p>New organization members must accept an invitation.</p>'}
+      <h4>Recent membership history</h4><p>Latest 50 changes in this scope. No history is backfilled.</p><ul>${membership.events.map(e=>`<li>${esc(niceDate(e.created_at))} · ${esc(membership.rows.find(m=>m.user_id===e.user_id)?.display_name||nameFor(e.user_id))} · ${esc(e.before_data?e.before_data.role+' / '+e.before_data.status:'new')} → ${esc(e.after_data?e.after_data.role+' / '+e.after_data.status:'removed')} · actor ${esc(e.actor_id?nameFor(e.actor_id):'system')}</li>`).join('')||'<li>No recorded changes.</li>'}</ul>`:''}
+    </div></section>`;
+  }
+  async function loadMemberships(scope){
+    const request=++membershipRequest,user=s.user?.id,org=s.org?.id;
+    Object.assign(membership,{scope,rows:[],events:[],loading:true,error:null,loaded:false});render();
+    try{
+      if(s.demo)throw Error('Sign in to manage memberships');
+      if(!membershipScopes().some(x=>x.value===scope))throw Error('Scope unavailable');
+      const [type,id]=scope.split(':');
+      const [rows,events]=await Promise.all([getResult(api.rpc('qb_membership_directory',{p_type:type,p_scope:id})),getResult(api.from('qb_membership_events').select('user_id,actor_id,before_data,after_data,created_at').eq('scope_type',type).eq('scope_id',id).order('created_at',{ascending:false}).limit(50))]);
+      if(request!==membershipRequest||user!==s.user?.id||org!==s.org?.id)return;
+      Object.assign(membership,{rows,events,loaded:true});
+    }catch(e){if(request!==membershipRequest)return;membership.error=e.message;}
+    if(request!==membershipRequest)return;membership.loading=false;render();
+  }
+  function adminPage(){if(!isAdmin())return pageTitle('Membership administration','Manage people within your authorized scopes.')+membershipPanel();
     return pageTitle('Organization administration','Manage departments, invitations, and the people who can collaborate.',`<button class="btn primary" data-action="modal" data-value="invite">＋ Invite people</button><button class="btn" data-action="modal" data-value="department">＋ Department</button>`)+
-    `<div class="kpi-grid"><div class="kpi"><div class="label">Departments</div><div class="value">${s.departments.length}</div><div class="bubble">▦</div></div><div class="kpi purple"><div class="label">Active members</div><div class="value">${s.orgMembers.filter(m=>m.status==='active').length}</div><div class="bubble">♧</div></div><div class="kpi amber"><div class="label">Pending invites</div><div class="value">${s.invitations.filter(i=>i.status==='pending').length}</div><div class="bubble">✉</div></div><div class="kpi green"><div class="label">SSO options</div><div class="value">2</div><div class="bubble">⚿</div><div class="hint">Microsoft / Google · provider setup required</div></div></div>
+    membershipPanel()+`<div class="kpi-grid"><div class="kpi"><div class="label">Departments</div><div class="value">${s.departments.length}</div><div class="bubble">▦</div></div><div class="kpi purple"><div class="label">Active members</div><div class="value">${s.orgMembers.filter(m=>m.status==='active').length}</div><div class="bubble">♧</div></div><div class="kpi amber"><div class="label">Pending invites</div><div class="value">${s.invitations.filter(i=>i.status==='pending').length}</div><div class="bubble">✉</div></div><div class="kpi green"><div class="label">SSO options</div><div class="value">2</div><div class="bubble">⚿</div><div class="hint">Microsoft / Google · provider setup required</div></div></div>
     <div class="panel" style="margin-bottom:22px"><div class="panel-head"><div><h3>Department workspaces</h3><p>Membership and project visibility are scoped to each department</p></div><button class="btn sm" data-action="modal" data-value="department">Add department</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Department</th><th>Projects</th><th>Members</th></tr></thead><tbody>${s.departments.map(d=>`<tr><td class="strong"><span class="small-dot" style="background:${esc(d.color)}"></span>${esc(d.name)}</td><td>${s.projects.filter(p=>p.department_id===d.id).length}</td><td>${s.departmentMembers.filter(m=>m.department_id===d.id).length}</td></tr>`).join('')}</tbody></table></div></div>
     <div class="panel"><div class="panel-head"><div><h3>Invitations</h3><p>One-time invitations are tied to verified email accounts</p></div><button class="btn sm" data-action="modal" data-value="invite">Invite member</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Email</th><th>Scope</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${s.invitations.map(i=>`<tr><td class="strong">${esc(i.invited_email)}</td><td>${esc(i.scope_type)}</td><td>${esc(i.invite_role.replace(/_/g,' '))}</td><td>${tag(i.status)}</td><td><div class="inline-actions">${i.status==='pending'?`<button class="btn sm" data-action="copy-invite" data-id="${i.id}">Copy link</button><button class="btn sm danger" data-action="revoke-invite" data-id="${i.id}">Revoke</button>`:'—'}</div></td></tr>`).join('')||`<tr><td colspan="5" style="text-align:center;padding:25px;color:var(--muted)">No invitations yet</td></tr>`}</tbody></table></div></div>`;
   }
@@ -231,6 +268,7 @@
   async function refresh(){if(s.demo){render();return;}await loadLive();}
   async function withBusy(work){if(s.busy)return;s.busy=true;try{await work();}catch(e){toast(e.message||'Something went wrong',true);}finally{s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
+    if(action==='load-memberships'){await loadMemberships(document.getElementById('membership-scope').value);return;}
     if(action==='nav'){s.nav=v;s.filter='all';s.projectId=null;s.taskId=null;s.menuOpen=false;render();return;}
     if(action==='menu'){s.menuOpen=!s.menuOpen;render();return;}
     if(action==='mode'){s.mode=v;localStorage.setItem('qb-mode',v);if(!s.demo&&s.user){api?.from('qb_profiles').update({preferred_mode:v}).eq('user_id',s.user.id).then(()=>{});}render();return;}
@@ -270,6 +308,17 @@
           if(id&&id!==existing?.[key]&&!s.candidateRows.some(p=>p.user_id===id))throw Error('Selected person no longer has access to this work');
         }
       }
+      if(type==='membership'){
+        const scope=get('scope'),user=form.dataset.user||get('user_id');
+        if(!membership.loaded||membership.loading||membership.error||scope!==membership.scope||!membershipScopes().some(x=>x.value===scope))throw Error('Reload members before saving');
+        const row=membership.rows.find(m=>m.user_id===user);if(!row)throw Error('Select an eligible person');
+        const [scopeType,scopeId]=scope.split(':');
+        await getResult(api.rpc('qb_manage_membership',{p_type:scopeType,p_scope:scopeId,p_user:user,p_action:get('action'),p_role:get('role'),p_expected_role:row.role,p_expected_status:row.status}));
+        membership.loaded=false;membership.rows=[];membership.events=[];
+        await refresh();
+        if(membershipScopes().some(x=>x.value===scope))await loadMemberships(scope);
+        toast('Membership updated');return;
+      }
       if(type==='project'){
         if(!get('title'))throw Error('Project name is required');
         const row={org_id:s.org.id,department_id:get('department_id'),title:get('title'),summary:get('summary'),target_date:get('target_date')||null,visibility:get('visibility'),lead_id:s.user.id,created_by:s.user.id};
@@ -303,7 +352,7 @@
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f);}});
-  document.addEventListener('change',e=>{if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select')loadAssignmentCandidates(e.target.value);if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('change',e=>{if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select')loadAssignmentCandidates(e.target.value);if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
   document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){

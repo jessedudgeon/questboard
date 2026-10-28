@@ -106,3 +106,10 @@ Read [Session 3 status and rollout requirements](docs/SESSION_03.md). Scoped col
 profiles and assignment eligibility depend on the additive Session 3 migration, applied
 **after Session 2 and before the new frontend**. The migration is not applied by Pages.
 Use `scripts/session03-preflight.sql` for read-only aggregate checks before review.
+
+## Session 4 membership lifecycle (proposed)
+
+[Session 4 report and rollout runbook](docs/SESSION_04.md) covers scoped grant/suspend/
+reinstate administration, last-admin/manager safeguards and audit history. Apply the
+reviewed Session 2, 3 and 4 migrations before enabling the Session 4 Pages gate
+(`QB_SCHEMA_VERSION=20261027153612`). No production migrations are applied by merging.

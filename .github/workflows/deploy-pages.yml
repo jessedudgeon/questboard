@@ -16,8 +16,8 @@ concurrency:
 
 jobs:
   deploy:
-    # Set only after verifying both reviewed additive migrations in production.
-    if: ${{ vars.QB_SCHEMA_VERSION == '20261027145136' }}
+    # Set only after verifying all three reviewed additive migrations in production.
+    if: ${{ vars.QB_SCHEMA_VERSION == '20261027153612' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
