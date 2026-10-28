@@ -113,3 +113,10 @@ Use `scripts/session03-preflight.sql` for read-only aggregate checks before revi
 reinstate administration, last-admin/manager safeguards and audit history. Apply the
 reviewed Session 2, 3 and 4 migrations before enabling the Session 4 Pages gate
 (`QB_SCHEMA_VERSION=20261027153612`). No production migrations are applied by merging.
+
+## Session 5 organization/session isolation (proposed)
+
+[Session 5 report](docs/SESSION_05.md) documents explicit organization switching, scoped
+queries and stale-request cancellation. No new migration; the Session 4 schema gate still
+applies. `npm run test:browser` runs synthetic Chromium integration tests; install its
+browser with `npx playwright install --with-deps chromium`. Tests never sign into production.

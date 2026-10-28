@@ -15,10 +15,27 @@
     {id:'admin',icon:'⚙',pro:'Administration',rpg:'Administration'}
   ];
   let api = null;
+  let epoch=0, requestController=null, authRevision=0, signedOutLocally=false, signingOut=false, signOutFailed=false;
+  const formEpoch=new WeakMap();
+  const workspaceArrays=['departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations'];
+  function invalidateWorkspace(resetNavigation=true){
+    epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
+    candidateRequest++;membershipRequest++;
+    Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
+    for(const key of workspaceArrays)s[key]=[];
+    Object.assign(s,{org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null});
+    if(resetNavigation)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:''});
+    const notifications=document.getElementById('toast');if(notifications)notifications.innerHTML='';
+    return epoch;
+  }
+  const stale=()=>Object.assign(new Error('Workspace changed'),{stale:true});
+  const preferenceKey=id=>'qb-organization:'+id;
+  function rememberedOrg(id){try{return sessionStorage.getItem(preferenceKey(id));}catch{return null;}}
+  function rememberOrg(id,org){try{if(org)sessionStorage.setItem(preferenceKey(id),org);else sessionStorage.removeItem(preferenceKey(id));}catch{}}
   let candidateRequest = 0;
   let membershipRequest=0;
   const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
-  const s = { user:null,loading:true,demo:false,org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
+  const s = { user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -58,8 +75,17 @@
   const iconForProject = (title) => /network|technology|system|security|firewall/i.test(title)?'⌘':/facility|building|campus/i.test(title)?'⌂':/admission|student/i.test(title)?'◈':'✦';
   const fmtStatus = st=>rpg()?(rpgStatusNames[st]||st):(statusNames[st]||st);
   const toast=(message,error=false)=>{const d=document.createElement('div');d.className='toast'+(error?' error':'');d.textContent=message;document.getElementById('toast').appendChild(d);setTimeout(()=>d.remove(),4200);};
-  const getResult=async p=>{const {data,error}=await p;if(error)throw new Error(error.message||'Unable to save');return data;};
+  const getResult=async p=>{const generation=epoch;
+    if(requestController&&typeof p?.abortSignal==='function')p=p.abortSignal(requestController.signal);
+    const {data,error}=await p;if(generation!==epoch)throw stale();
+    if(error)throw new Error(error.message||'Unable to save');return data;
+  };
+  async function scopedRows(table,column,ids,select='*',configure=q=>q){
+    const rows=[];for(let i=0;i<ids.length;i+=100)rows.push(...await getResult(configure(api.from(table).select(select).in(column,ids.slice(i,i+100)))));
+    return rows;
+  }
   function loadDemo(){
+    invalidateWorkspace();s.organizations=[];
     s.demo=true;s.user={id:'demo-user',email:'demo@questboard.test',user_metadata:{full_name:'Jesse'}};
     s.org={id:'demo-org',name:'University of Saint Francis'};s.orgMembership={role:'admin',status:'active'};
     s.departments=[{id:'it',name:'Information Technology',color:'#6585e5'},{id:'fac',name:'Facilities',color:'#32a89b'},{id:'adm',name:'Admissions',color:'#bb89e2'}];
@@ -78,40 +104,79 @@
     s.events=[];s.xp=[{task_id:'t2',user_id:'demo-user',amount:30},{task_id:'t8',user_id:'demo-user',amount:40}];s.invitations=[];s.pendingInvitations=[];
     s.loading=false;s.nav='home';s.workspace='all';render();
   }
-  async function loadLive(){
-    membershipRequest++;Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
-    if(!api||!s.user)return;
-    s.loading=true;s.lastError=null;render();
+  async function loadLive(requestedOrg=s.org?.id||s.requestedOrg||rememberedOrg(s.user?.id),resetNavigation=false){
+    if(!api||!s.user||s.demo)return;
+    const user=s.user,generation=invalidateWorkspace(resetNavigation);
+    s.requestedOrg=requestedOrg;s.loading=true;render();
     try{
-      const profile={user_id:s.user.id,display_name:s.user.user_metadata?.full_name||s.user.user_metadata?.name||s.user.email?.split('@')[0]||'Member',preferred_mode:s.mode};
+      const profile={user_id:user.id,display_name:user.user_metadata?.full_name||user.user_metadata?.name||user.email?.split('@')[0]||'Member',preferred_mode:s.mode};
       await getResult(api.from('qb_profiles').upsert(profile,{onConflict:'user_id'}));
-      s.pendingInvitations=await getResult(api.rpc('qb_my_invitations'));
-      const memberships=await getResult(api.from('qb_org_members').select('*').eq('user_id',s.user.id).eq('status','active'));
-      s.orgMembership=memberships?.find(m=>m.org_id===s.org?.id)||memberships?.[0]||null;
-      if(!s.orgMembership){s.org=null;s.pendingInvitations=await getResult(api.rpc('qb_my_invitations'));s.loading=false;render();return;}
-      const orgs=await getResult(api.from('qb_organizations').select('*').eq('id',s.orgMembership.org_id));s.org=orgs?.[0]||null;
-      const [departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles]=await Promise.all([
-        getResult(api.from('qb_departments').select('*').eq('org_id',s.org.id).order('name')),
-        getResult(api.from('qb_department_members').select('*')),
-        getResult(api.from('qb_projects').select('*').eq('org_id',s.org.id).order('created_at',{ascending:false})),
-        getResult(api.from('qb_project_members').select('*')),
-        getResult(api.from('qb_tasks').select('*').order('created_at',{ascending:false})),
-        getResult(api.from('qb_checklist').select('*').order('position')),
-        getResult(api.from('qb_task_updates').select('*').order('created_at',{ascending:false}).limit(200)),
-        getResult(api.from('qb_task_events').select('*').order('created_at',{ascending:false}).limit(200)),
-        getResult(api.from('qb_xp_events').select('*')),
-        getResult(api.from('qb_profiles').select('user_id,display_name'))
+      const [pendingInvitations,memberships]=await Promise.all([
+        getResult(api.rpc('qb_my_invitations')),
+        getResult(api.from('qb_org_members').select('*').eq('user_id',user.id).eq('status','active'))
       ]);
-      const projectIds=new Set(projects.map(p=>p.id)), departmentIds=new Set(departments.map(d=>d.id));
-      const orgTasks=tasks.filter(t=>projectIds.has(t.project_id)), taskIds=new Set(orgTasks.map(t=>t.id));
-      Object.assign(s,{departments,departmentMembers:departmentMembers.filter(m=>departmentIds.has(m.department_id)),projects,projectMembers:projectMembers.filter(m=>projectIds.has(m.project_id)),tasks:orgTasks,checklist:checklist.filter(c=>taskIds.has(c.task_id)),updates:updates.filter(u=>taskIds.has(u.task_id)),events:events.filter(e=>taskIds.has(e.task_id)),xp:xp.filter(x=>taskIds.has(x.task_id)),profiles});
-      if(isAdmin()){
-        const [members,invitations]=await Promise.all([getResult(api.from('qb_org_members').select('*').eq('org_id',s.org.id)),getResult(api.from('qb_invitations').select('*').eq('org_id',s.org.id).order('created_at',{ascending:false}))]);
-        s.orgMembers=members;s.invitations=invitations;
-      } else {s.orgMembers=[];s.invitations=[];}
-
-    }catch(e){toast(e.message,true);s.lastError=e.message;}
-    s.loading=false;render();
+      const organizations=await scopedRows('qb_organizations','id',memberships.map(m=>m.org_id),'id,name',q=>q.order('name'));
+      const orgMembership=memberships.find(m=>m.org_id===requestedOrg&&organizations.some(o=>o.id===m.org_id))||memberships.find(m=>organizations.some(o=>o.id===m.org_id))||null;
+      const org=organizations.find(o=>o.id===orgMembership?.org_id)||null;
+      if(!org){s.organizations=[];s.pendingInvitations=pendingInvitations;rememberOrg(user.id,null);s.loading=false;render();return;}
+      const [departments,projects]=await Promise.all([
+        getResult(api.from('qb_departments').select('*').eq('org_id',org.id).order('name')),
+        getResult(api.from('qb_projects').select('*').eq('org_id',org.id).order('created_at',{ascending:false}))
+      ]);
+      const projectIds=projects.map(p=>p.id),departmentIds=departments.map(d=>d.id);
+      const [departmentMembers,projectMembers,tasks,orgMembers,invitations]=await Promise.all([
+        scopedRows('qb_department_members','department_id',departmentIds),
+        scopedRows('qb_project_members','project_id',projectIds),
+        scopedRows('qb_tasks','project_id',projectIds,'*',q=>q.order('created_at',{ascending:false})),
+        orgMembership.role==='admin'?getResult(api.from('qb_org_members').select('*').eq('org_id',org.id)):Promise.resolve([]),
+        orgMembership.role==='admin'?getResult(api.from('qb_invitations').select('*').eq('org_id',org.id).order('created_at',{ascending:false})):Promise.resolve([])
+      ]);
+      const taskIds=tasks.map(t=>t.id);
+      const [checklist,updates,events,xp]=await Promise.all([
+        scopedRows('qb_checklist','task_id',taskIds,'*',q=>q.order('position')),
+        scopedRows('qb_task_updates','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false}).limit(200)),
+        scopedRows('qb_task_events','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false}).limit(200)),
+        scopedRows('qb_xp_events','task_id',taskIds)
+      ]);
+      const people=[...new Set([user.id,...orgMembers.map(m=>m.user_id),...departmentMembers.map(m=>m.user_id),...projectMembers.map(m=>m.user_id),...tasks.flatMap(t=>[t.assignee_id,t.reviewer_id,t.created_by]),...updates.map(u=>u.author_id),...events.map(e=>e.actor_id)].filter(Boolean))];
+      const profiles=await scopedRows('qb_profiles','user_id',people,'user_id,display_name');
+      // Recheck membership at commit: suspension during the load must not publish its snapshot.
+      const current=await getResult(api.from('qb_org_members').select('org_id,role,status').eq('org_id',org.id).eq('user_id',user.id).eq('status','active'));
+      if(!current.length||current[0].role!==orgMembership.role){s.organizations=[];rememberOrg(user.id,null);throw Error('Organization access changed. Reload your workspace.');}
+      if(generation!==epoch)return;
+      Object.assign(s,{organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations});
+      rememberOrg(user.id,org.id);
+      if(requestedOrg&&requestedOrg!==org.id)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:''});
+      if(!departments.some(d=>d.id===s.workspace))s.workspace='all';
+    }catch(e){if(generation!==epoch||e.stale)return;s.lastError=e.message;}
+    if(generation!==epoch)return;s.loading=false;render();return !s.lastError;
+  }
+  async function switchOrganization(id){
+    if(s.demo||!s.user)return;
+    if(!s.organizations.some(o=>o.id===id))return;
+    await loadLive(id,true);
+  }
+  function organizationSelector(){return !s.demo&&s.organizations.length?`<select class="workspace-select" id="organization-select" aria-label="Organization">${s.organizations.map(o=>`<option value="${esc(o.id)}" ${o.id===(s.org?.id||s.requestedOrg)?'selected':''}>${esc(o.name)}</option>`).join('')}</select>`:'';}
+  function receiveSession(event,session){
+    authRevision++;
+    if(s.demo)return;
+    const user=session?.user||null;
+    if(signedOutLocally&&user)return;
+    if(!user){invalidateWorkspace();s.user=null;s.organizations=[];s.loading=false;render();return;}
+    if(user.id===s.user?.id&&event!=='INITIAL_SESSION'){s.user=user;if(event==='TOKEN_REFRESHED'){const generation=epoch,org=s.org?.id;setTimeout(()=>{if(generation===epoch&&!s.demo)loadLive(org);},0);}return;}
+    invalidateWorkspace();s.organizations=[];s.user=user;s.loading=true;render();
+    const generation=epoch;
+    // Do not await Supabase requests within its synchronous auth callback.
+    setTimeout(()=>{if(generation===epoch&&!s.demo)loadLive(rememberedOrg(user.id),true);},0);
+  }
+  async function signOut(){
+    if(signingOut)return;
+    signingOut=true;signOutFailed=false;signedOutLocally=true;const user=s.user;
+    invalidateWorkspace();s.user=null;s.organizations=[];s.loading=false;render();
+    if(user)rememberOrg(user.id,null);
+    try{if(api){const {error}=await api.auth.signOut({scope:'local'});if(error)throw error;}}
+    catch(e){signOutFailed=true;toast('Workspace cleared. Sign-out could not be confirmed; retry Sign out before signing in.',true);}
+    finally{signingOut=false;render();}
   }
   function header(){
     const name=s.user?.user_metadata?.full_name||s.user?.user_metadata?.name||s.user?.email?.split('@')[0]||'Member';
@@ -121,7 +186,7 @@
       <div class="sidebar-label">Collaboration</div>${defs.slice(3,6).map(x=>navItem(x)).join('')}
       <div class="side-bottom">${membershipScopes().length?navItem(defs[6]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
       <main class="main">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
-      <header class="topbar"><div class="top-left"><button class="mobile-menu" data-action="menu" aria-label="Open menu">☰</button><select class="workspace-select" id="workspace-select" aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right"><label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
+      <header class="topbar"><div class="top-left">${organizationSelector()}<button class="mobile-menu" data-action="menu" aria-label="Open menu">☰</button><select class="workspace-select" id="workspace-select" aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right"><label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
       <div class="page">${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${pageContent()}</div></main></div>${modalHTML()}`;
   }
   function navItem(x){return `<button class="nav-link ${s.nav===x.id?'active':''}" data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
@@ -210,7 +275,7 @@
     <div class="panel"><div class="panel-head"><div><h3>Invitations</h3><p>One-time invitations are tied to verified email accounts</p></div><button class="btn sm" data-action="modal" data-value="invite">Invite member</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Email</th><th>Scope</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>${s.invitations.map(i=>`<tr><td class="strong">${esc(i.invited_email)}</td><td>${esc(i.scope_type)}</td><td>${esc(i.invite_role.replace(/_/g,' '))}</td><td>${tag(i.status)}</td><td><div class="inline-actions">${i.status==='pending'?`<button class="btn sm" data-action="copy-invite" data-id="${i.id}">Copy link</button><button class="btn sm danger" data-action="revoke-invite" data-id="${i.id}">Revoke</button>`:'—'}</div></td></tr>`).join('')||`<tr><td colspan="5" style="text-align:center;padding:25px;color:var(--muted)">No invitations yet</td></tr>`}</tbody></table></div></div>`;
   }
   function onboarding(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Identity verified</div><h1>Your next chapter <em>starts here.</em></h1><p>Your account is signed in. An organization administrator must invite you before departmental work becomes available.</p></div><div class="login-foot">Private university workspace</div></div><div class="login-right"><div class="auth-card"><div class="mini">✉</div><h2>You're almost in</h2><p>Signed in as ${esc(s.user.email)}. Invitations to this verified address appear below.</p>${s.pendingInvitations.length?s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}</strong><p>${esc(i.invite_role.replace(/_/g,' '))} · expires ${niceDate(i.expires_at)}</p><button class="btn primary block" style="margin-top:15px" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join(''):`<div class="invite-box"><strong>No pending invitations</strong><p>Ask your organization administrator to invite ${esc(s.user.email)}.</p></div>`}<button class="btn block" style="margin-top:20px" data-action="logout">Sign out</button></div></div></div>`;}
-  function login(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Meaningful work, real progress</div><h1>Your work is an <em>adventure.</em></h1><p>Plan projects. Rally your team. Make every accomplishment count. One workspace, two ways to experience progress.</p><div class="login-points"><span>✓ Department workspaces</span><span>✓ Verified progress</span><span>✓ Optional RPG mode</span></div></div><div class="login-foot">QuestBoard · ${esc(cfg.buildLabel||'Pilot')}</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>Welcome to QuestBoard</h2><p>Sign in with your approved university or Google account. Organization membership is invitation-only.</p><button class="auth-provider" data-action="login" data-value="azure"><span class="provider-icon ms">▦</span>Continue with Microsoft</button><button class="auth-provider" data-action="login" data-value="google"><span class="provider-icon google">G</span>Continue with Google</button><div class="auth-divider">OR EXPLORE FIRST</div><button class="btn demo-btn" data-action="demo">✦ Explore sample workspace</button><div class="auth-fine">Microsoft and Google OAuth require authorized provider configuration and redirect allowlists. Demo data is fictional and not saved.</div></div></div></div>`;}
+  function login(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Meaningful work, real progress</div><h1>Your work is an <em>adventure.</em></h1><p>Plan projects. Rally your team. Make every accomplishment count. One workspace, two ways to experience progress.</p><div class="login-points"><span>✓ Department workspaces</span><span>✓ Verified progress</span><span>✓ Optional RPG mode</span></div></div><div class="login-foot">QuestBoard · ${esc(cfg.buildLabel||'Pilot')}</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>Welcome to QuestBoard</h2><p>Sign in with your approved university or Google account. Organization membership is invitation-only.</p><button class="auth-provider" data-action="login" data-value="azure"><span class="provider-icon ms">▦</span>Continue with Microsoft</button><button class="auth-provider" data-action="login" data-value="google"><span class="provider-icon google">G</span>Continue with Google</button><div class="auth-divider">OR EXPLORE FIRST</div><button class="btn demo-btn" data-action="demo">✦ Explore sample workspace</button>${signOutFailed?'<button class="btn" data-action="logout">Retry sign out</button>':''}<div class="auth-fine">Microsoft and Google OAuth require authorized provider configuration and redirect allowlists. Demo data is fictional and not saved.</div></div></div></div>`;}
   function modalHTML(){if(!s.modal)return '';let content='',title='';
     if(s.modal==='project'){title=term('Create a project','Begin a campaign');content=`<form data-form="project"><div class="modal-body"><div class="form-field"><label>Project name</label><input name="title" required maxlength="140" placeholder="e.g. Network Infrastructure Modernization"></div><div class="form-field"><label>Goal / description</label><textarea name="summary" maxlength="1200" placeholder="What outcome are we trying to achieve?"></textarea></div><div class="form-grid"><div class="form-field"><label>Department</label><select name="department_id" required>${managedDepartments().map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></div><div class="form-field"><label>Target date</label><input type="date" name="target_date"></div></div><div class="form-field"><label>Visibility</label><select name="visibility"><option value="department">Department private</option><option value="invited">Invited project members</option><option value="restricted">Restricted project</option></select><small class="field-hint">Cross-department access requires explicit project membership.</small></div></div>${modalFooter('Create project')}</form>`;}
     if(s.modal==='task'){const selectedProject=s.candidateProject||s.projectId||managedProjects()[0]?.id;title=term('Add a task','Post a quest');content=`<form data-form="task"><div class="modal-body"><div class="form-field"><label>Task title</label><input name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label>Expected outcome</label><textarea name="description" maxlength="2500" placeholder="What does success look like?"></textarea></div><div class="form-field"><label>Project</label><select name="project_id" id="task-project-select" required>${managedProjects().map(p=>`<option value="${p.id}" ${p.id===selectedProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date"></div><div class="form-field"><label>Assign to</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions(selectedProject)}</select></div><div class="form-field"><label>XP on approval</label><select name="xp_reward"><option value="15">15 · Small</option><option value="30" selected>30 · Standard</option><option value="60">60 · Complex</option><option value="100">100 · Major</option></select></div></div></div>${candidateNotice()}${modalFooter('Create task')}</form>`;}
@@ -262,11 +327,12 @@
     if(request!==candidateRequest)return;
     s.candidatesLoading=false;updateAssignmentControls();
   }
-  function render(){document.body.classList.toggle('mode-rpg',rpg());root.innerHTML=s.loading?`<div class="boot"><div class="brand-symbol">✦</div><p>Loading QuestBoard…</p></div>`:!s.user?login():s.lastError?`<div class="empty" role="alert"><h2>Unable to load your workspace</h2><p>${esc(s.lastError)}</p><button class="btn primary" data-action="retry">Try again</button><button class="btn" data-action="logout">Sign out</button></div>`:!s.org?onboarding():header();
+  function render(){document.body.classList.toggle('mode-rpg',rpg());root.innerHTML=s.loading?`<div class="boot"><div class="brand-symbol">✦</div><p>Loading QuestBoard…</p>${organizationSelector()}${s.user?'<button class="btn" data-action="logout">Sign out</button>':''}</div>`:!s.user?login():s.lastError?`<div class="empty" role="alert"><h2>Unable to load your workspace</h2>${organizationSelector()}<p>${esc(s.lastError)}</p><button class="btn primary" data-action="retry">Try again</button><button class="btn" data-action="logout">Sign out</button></div>`:!s.org?onboarding():header();
+    root.querySelectorAll('form[data-form]').forEach(form=>formEpoch.set(form,epoch));
     root.querySelectorAll('.project-card,.task-item,.board-task,[data-action="project"]:not(button)').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;});
     root.querySelectorAll('.form-field').forEach((field,i)=>{const label=field.querySelector('label'),input=field.querySelector('input,select,textarea');if(label&&input){if(!input.id)input.id='field-'+i;label.htmlFor=input.id;}});}
-  async function refresh(){if(s.demo){render();return;}await loadLive();}
-  async function withBusy(work){if(s.busy)return;s.busy=true;try{await work();}catch(e){toast(e.message||'Something went wrong',true);}finally{s.busy=false;}}
+  async function refresh(){if(s.demo){render();return;}const user=s.user?.id,org=s.org?.id;const loaded=await loadLive();if(!loaded||user!==s.user?.id||org!==s.org?.id)throw stale();}
+  async function withBusy(work){if(s.busy)return;const generation=epoch;s.busy=true;try{await work();}catch(e){if(generation===epoch&&!e.stale)toast(e.message||'Something went wrong',true);}finally{if(generation===epoch)s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
     if(action==='load-memberships'){await loadMemberships(document.getElementById('membership-scope').value);return;}
     if(action==='nav'){s.nav=v;s.filter='all';s.projectId=null;s.taskId=null;s.menuOpen=false;render();return;}
@@ -274,8 +340,8 @@
     if(action==='mode'){s.mode=v;localStorage.setItem('qb-mode',v);if(!s.demo&&s.user){api?.from('qb_profiles').update({preferred_mode:v}).eq('user_id',s.user.id).then(()=>{});}render();return;}
     if(action==='demo'){loadDemo();return;}
     if(action==='exit-demo'){location.reload();return;}
-    if(action==='login'){if(!api){toast('Authentication client unavailable. Try again later.',true);return;}await withBusy(async()=>{const redirectTo=location.origin+location.pathname;const {error}=await api.auth.signInWithOAuth({provider:v,options:{redirectTo,scopes:v==='azure'?'email':undefined}});if(error)throw error;});return;}
-    if(action==='logout'){await withBusy(async()=>{if(api)await getResult(api.auth.signOut({scope:'local'}));location.reload();});return;}
+    if(action==='login'){if(signingOut||signOutFailed){toast('Complete sign out before signing in.',true);return;}signedOutLocally=false;if(!api){toast('Authentication client unavailable. Try again later.',true);return;}await withBusy(async()=>{const redirectTo=location.origin+location.pathname;const {error}=await api.auth.signInWithOAuth({provider:v,options:{redirectTo,scopes:v==='azure'?'email':undefined}});if(error)throw error;});return;}
+    if(action==='logout'){await signOut();return;}
     if(action==='retry'){await loadLive();return;}
     if(action==='project'){s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
     if(action==='task'){s.taskId=id;s.nav='task';s.menuOpen=false;render();return;}
@@ -293,11 +359,11 @@
     if(action==='close-modal'){candidateRequest++;s.modal=null;render();return;}
     if(action==='status'){await withBusy(async()=>{if(s.demo){const t=taskFor(id);if(!taskActions(t).some(([st])=>st===v))throw Error('Invalid status change');if(v==='in_review'&&s.checklist.some(c=>c.task_id===id&&!c.done))throw Error('Finish the checklist first');t.status=v;if(v!=='complete')t.completed_at=null;if(v==='complete'){t.completed_at=new Date().toISOString();if(!s.xp.some(x=>x.task_id===id))s.xp.push({task_id:id,user_id:t.assignee_id,amount:t.xp_reward});}s.events.unshift({task_id:id,event_type:'status',after_data:{status:v},created_at:new Date().toISOString()});}else await getResult(api.rpc('qb_transition_task',{p_task:id,p_new_status:v}));toast('Task updated');await refresh();});return;}
     if(action==='check'){await withBusy(async()=>{const item=s.checklist.find(c=>c.id===id);if(s.demo)item.done=!item.done;else await getResult(api.rpc('qb_toggle_checklist',{p_item:id,p_done:!item.done}));await refresh();});return;}
-    if(action==='copy-invite'){const link=location.origin+location.pathname+'?invite='+encodeURIComponent(id);try{await navigator.clipboard.writeText(link);toast('Invitation link copied');}catch{prompt('Copy invitation link',link);}return;}
+    if(action==='copy-invite'){const generation=epoch;const link=location.origin+location.pathname+'?invite='+encodeURIComponent(id);try{await navigator.clipboard.writeText(link);if(generation!==epoch)return;toast('Invitation link copied');}catch{if(generation!==epoch)return;prompt('Copy invitation link',link);}return;}
     if(action==='revoke-invite'){await withBusy(async()=>{if(s.demo)s.invitations.find(i=>i.id===id).status='revoked';else await getResult(api.rpc('qb_revoke_invitation',{p_invitation:id}));toast('Invitation revoked');await refresh();});return;}
-    if(action==='accept-invite'){await withBusy(async()=>{const orgId=await getResult(api.rpc('qb_accept_invitation',{p_invitation:id}));s.org={id:orgId};s.workspace='all';s.nav='home';toast('Welcome to your new workspace');await loadLive();});return;}
+    if(action==='accept-invite'){await withBusy(async()=>{const orgId=await getResult(api.rpc('qb_accept_invitation',{p_invitation:id}));toast('Welcome to your new workspace');await loadLive(orgId,true);});return;}
   }
-  async function handleForm(form){const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').trim();
+  async function handleForm(form){if(formEpoch.has(form)&&formEpoch.get(form)!==epoch)return;const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').trim();
     await withBusy(async()=>{
       for(const field of form.querySelectorAll('[required]')){if(!String(fd.get(field.name)||'').trim())throw Error('Please complete all required fields');}
       if(['task','edit-task'].includes(type)&&!s.demo){
@@ -352,13 +418,17 @@
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f);}});
-  document.addEventListener('change',e=>{if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select')loadAssignmentCandidates(e.target.value);if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('change',e=>{if(e.target?.id==='organization-select')switchOrganization(e.target.value);if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select')loadAssignmentCandidates(e.target.value);if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
   document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     if(window.supabase?.createClient&&cfg.supabaseUrl&&cfg.supabasePublishableKey){api=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});}
     if(!api){s.loading=false;render();return;}
-    try{const {data,error}=await api.auth.getSession();if(error)throw error;s.user=data.session?.user||null;s.loading=false;if(s.user)await loadLive();else render();api.auth.onAuthStateChange((event,session)=>{if(!s.demo&&event==='SIGNED_IN'&&session?.user&&session.user.id!==s.user?.id){s.user=session.user;setTimeout(()=>{if(!s.demo&&s.user?.id===session.user.id)loadLive();},0);}if(!s.demo&&event==='SIGNED_OUT'){s.user=null;s.org=null;s.loading=false;render();}});}catch(e){s.loading=false;render();toast('Unable to load authentication: '+e.message,true);}
+    api.auth.onAuthStateChange(receiveSession);
+    const revision=authRevision;
+    try{const {data,error}=await api.auth.getSession();if(revision!==authRevision)return;if(error)throw error;receiveSession('INITIAL_SESSION',data.session);}
+    catch(e){if(revision!==authRevision)return;invalidateWorkspace();s.user=null;s.organizations=[];s.loading=false;render();toast('Unable to load authentication: '+e.message,true);}
+
   }
   init();
 })();
