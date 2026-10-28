@@ -4,7 +4,7 @@ const path=require('node:path');
 async function start(page){
  await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><body><div id="app"></div><div id="toast"></div></body></html>'}));
  await page.goto('http://127.0.0.1:4173/');
- await page.evaluate(installFakeSupabase.toString()+';installFakeSupabase(window)');
+ await page.addScriptTag({content:'('+installFakeSupabase.toString()+')(window);'});
  await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
  await expect(page.getByLabel('Organization')).toHaveValue('a');
  await expect(page.locator('.page')).toContainText('Alpha');

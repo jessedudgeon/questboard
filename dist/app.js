@@ -104,7 +104,7 @@
     s.events=[];s.xp=[{task_id:'t2',user_id:'demo-user',amount:30},{task_id:'t8',user_id:'demo-user',amount:40}];s.invitations=[];s.pendingInvitations=[];
     s.loading=false;s.nav='home';s.workspace='all';render();
   }
-  async function loadLive(requestedOrg=s.org?.id||rememberedOrg(s.user?.id),resetNavigation=false){
+  async function loadLive(requestedOrg=s.org?.id||s.requestedOrg||rememberedOrg(s.user?.id),resetNavigation=false){
     if(!api||!s.user||s.demo)return;
     const user=s.user,generation=invalidateWorkspace(resetNavigation);
     s.requestedOrg=requestedOrg;s.loading=true;render();
@@ -327,7 +327,7 @@
     if(request!==candidateRequest)return;
     s.candidatesLoading=false;updateAssignmentControls();
   }
-  function render(){document.body.classList.toggle('mode-rpg',rpg());root.innerHTML=s.loading?`<div class="boot"><div class="brand-symbol">✦</div><p>Loading QuestBoard…</p>${organizationSelector()}${s.user?'<button class="btn" data-action="logout">Sign out</button>':''}</div>`:!s.user?login():s.lastError?`<div class="empty" role="alert"><h2>Unable to load your workspace</h2><p>${esc(s.lastError)}</p><button class="btn primary" data-action="retry">Try again</button><button class="btn" data-action="logout">Sign out</button></div>`:!s.org?onboarding():header();
+  function render(){document.body.classList.toggle('mode-rpg',rpg());root.innerHTML=s.loading?`<div class="boot"><div class="brand-symbol">✦</div><p>Loading QuestBoard…</p>${organizationSelector()}${s.user?'<button class="btn" data-action="logout">Sign out</button>':''}</div>`:!s.user?login():s.lastError?`<div class="empty" role="alert"><h2>Unable to load your workspace</h2>${organizationSelector()}<p>${esc(s.lastError)}</p><button class="btn primary" data-action="retry">Try again</button><button class="btn" data-action="logout">Sign out</button></div>`:!s.org?onboarding():header();
     root.querySelectorAll('form[data-form]').forEach(form=>formEpoch.set(form,epoch));
     root.querySelectorAll('.project-card,.task-item,.board-task,[data-action="project"]:not(button)').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;});
     root.querySelectorAll('.form-field').forEach((field,i)=>{const label=field.querySelector('label'),input=field.querySelector('input,select,textarea');if(label&&input){if(!input.id)input.id='field-'+i;label.htmlFor=input.id;}});}
