@@ -175,3 +175,5 @@ References reviewed: Supabase database functions guidance
 (https://supabase.com/docs/guides/database/functions), current changelog, and Postgres
 lock-ordering guidance. Definer APIs use empty search paths, explicit actor authorization
 and revoked public/anonymous EXECUTE; arbitrary trigger helpers are not client-executable.
+
+Follow-up: [Session 5 organization switching and session isolation](SESSION_05.md).

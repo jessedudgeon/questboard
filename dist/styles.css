@@ -13,3 +13,7 @@
 @media(max-width:560px){.page{padding:22px 16px 50px}.topbar{padding:0 16px}.top-right{gap:6px}.workspace-select{max-width:130px}.mode-switch button{font-size:10px;padding:6px}.user-dot{display:none}.page-heading{display:block}.page-heading .buttons{margin-top:16px}.kpi-grid{gap:10px}.kpi{padding:16px}.kpi .value{font-size:25px}.kpi .bubble{width:29px;height:29px;right:10px;top:12px}.project-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.login-left{padding:25px}.login-content{margin:30px 0}.login-content p{font-size:14px}.login-points{gap:10px}.login-right{padding:24px}.demo-banner{padding:10px 16px}.detail-banner{padding:22px}.detail-banner h1{font-size:23px}.panel-head,.panel-body{padding:16px}.board{grid-template-columns:repeat(5,220px)}}
 
 [role="button"]:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+/* Keep organization and department selectors usable together on narrow screens. */
+.topbar{height:auto;min-height:78px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.top-left{min-width:0;flex-wrap:wrap}.top-left .workspace-select{max-width:230px;min-width:0}
+@media(max-width:560px){.topbar{min-height:65px;gap:10px}.top-left{width:100%;gap:8px}.top-left .workspace-select{max-width:calc(50vw - 36px)}.top-right{margin-left:auto}}
