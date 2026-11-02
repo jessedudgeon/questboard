@@ -41,3 +41,22 @@ test('Organization control remains usable on a narrow viewport',async({page})=>{
  await expect(page.locator('.page')).toContainText('Beta');
  const box=await page.getByLabel('Organization').boundingBox();expect(box.x+box.width).toBeLessThanOrEqual(390);
 });
+
+test('Signed-out invitation and OAuth recovery remain usable on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/?invite=10000000-0000-0000-0000-000000000001#error=access_denied&error_description=private-provider-text');
+ await page.addScriptTag({content:'('+installFakeSupabase.toString()+')(window);fixture.current=null;QUESTBOARD_CONFIG.authProviders={google:true,azure:false};fixture.api.auth.signInWithOAuth=async()=>({error:{message:"private-provider-text"}});'});
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await expect(page.getByRole('alert')).toContainText('Sign-in was not completed');
+ await expect(page.getByRole('button',{name:'Microsoft sign-in unavailable'})).toBeDisabled();
+ await expect(page.locator('body')).not.toContainText('private-provider-text');
+ expect(page.url()).not.toContain('error');
+ await page.getByRole('button',{name:'Continue with Google'}).click();
+ await expect(page.getByRole('alert')).toContainText('Unable to start sign-in');
+ await expect(page.getByRole('button',{name:'Continue with Google'})).toBeEnabled();
+ await expect(page.locator('.invite-box')).toContainText('email address that received');
+ await page.getByRole('button',{name:'Dismiss notice'}).click();await expect(page.locator('.invite-box')).toHaveCount(0);
+ const fits=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth);expect(fits).toBeTruthy();
+});
