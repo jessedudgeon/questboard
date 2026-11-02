@@ -115,8 +115,31 @@
     const {data,error}=await p;if(generation!==epoch)throw stale();
     if(error)throw new Error(error.message||'Unable to save');return data;
   };
+  const pageSize=250,maxCollectionRows=20000;
+  const rowKeys={qb_profiles:['user_id'],qb_org_members:['org_id','user_id'],qb_department_members:['department_id','user_id'],qb_project_members:['project_id','user_id']};
+  async function pagedRows(makeQuery,keys=['id'],isCurrent=()=>true){
+    const generation=epoch,rows=[],seen=new Set();
+    for(let page=0;page<200;page++){
+      if(generation!==epoch||!isCurrent())throw stale();
+      let query=makeQuery();for(const key of keys)query=query.order(key,{ascending:true});
+      const batch=await getResult(query.range(rows.length,rows.length+pageSize-1));
+      if(generation!==epoch||!isCurrent())throw stale();
+      if(!Array.isArray(batch))throw Error('Unable to read the complete workspace. Please retry.');
+      if(!batch.length)return rows;
+      if(rows.length+batch.length>maxCollectionRows)throw Error('This workspace is too large to load at once. Contact your administrator. No partial results are shown.');
+      for(const row of batch){const key=JSON.stringify(keys.map(k=>row[k]));if(seen.has(key))throw Error('Workspace records changed while loading. Please retry.');seen.add(key);}
+      rows.push(...batch);
+      if(s.loading){s.loadedRows=(s.loadedRows||0)+batch.length;const progress=document.getElementById('load-progress');if(progress)progress.textContent=`${s.loadedRows.toLocaleString()} records loaded…`;}
+    }
+    throw Error('Unable to finish loading this workspace. Please retry.');
+  }
   async function scopedRows(table,column,ids,select='*',configure=q=>q){
-    const rows=[];for(let i=0;i<ids.length;i+=100)rows.push(...await getResult(configure(api.from(table).select(select).in(column,ids.slice(i,i+100)))));
+    const generation=epoch,rows=[],uniqueIds=[...new Set(ids)];
+    for(let i=0;i<uniqueIds.length;i+=100){
+      if(generation!==epoch)throw stale();
+      rows.push(...await pagedRows(()=>configure(api.from(table).select(select).in(column,uniqueIds.slice(i,i+100))),rowKeys[table]||['id']));
+      if(rows.length>maxCollectionRows)throw Error('This workspace is too large to load at once. Contact your administrator. No partial results are shown.');
+    }
     return rows;
   }
   function loadDemo(){
@@ -142,37 +165,40 @@
   async function loadLive(requestedOrg=s.org?.id||s.requestedOrg||rememberedOrg(s.user?.id),resetNavigation=false){
     if(!api||!s.user||s.demo)return;
     const user=s.user,generation=invalidateWorkspace(resetNavigation);
-    s.requestedOrg=requestedOrg;s.loading=true;render();
+    s.requestedOrg=requestedOrg;s.loadedRows=0;s.loading=true;render();
     try{
       const profile={user_id:user.id,display_name:user.user_metadata?.full_name||user.user_metadata?.name||user.email?.split('@')[0]||'Member',preferred_mode:s.mode};
       await getResult(api.from('qb_profiles').upsert(profile,{onConflict:'user_id'}));
       const [pendingInvitations,memberships]=await Promise.all([
-        getResult(api.rpc('qb_my_invitations')),
-        getResult(api.from('qb_org_members').select('*').eq('user_id',user.id).eq('status','active'))
+        pagedRows(()=>api.rpc('qb_my_invitations')),
+        pagedRows(()=>api.from('qb_org_members').select('*').eq('user_id',user.id).eq('status','active'),rowKeys.qb_org_members)
       ]);
       const organizations=await scopedRows('qb_organizations','id',memberships.map(m=>m.org_id),'id,name',q=>q.order('name'));
       const orgMembership=memberships.find(m=>m.org_id===requestedOrg&&organizations.some(o=>o.id===m.org_id))||memberships.find(m=>organizations.some(o=>o.id===m.org_id))||null;
       const org=organizations.find(o=>o.id===orgMembership?.org_id)||null;
       if(!org){s.organizations=[];s.pendingInvitations=pendingInvitations;rememberOrg(user.id,null);s.loading=false;render();return;}
       const [departments,projects]=await Promise.all([
-        getResult(api.from('qb_departments').select('*').eq('org_id',org.id).order('name')),
-        getResult(api.from('qb_projects').select('*').eq('org_id',org.id).order('created_at',{ascending:false}))
+        pagedRows(()=>api.from('qb_departments').select('*').eq('org_id',org.id).order('name')),
+        pagedRows(()=>api.from('qb_projects').select('*').eq('org_id',org.id).order('created_at',{ascending:false}))
       ]);
       const projectIds=projects.map(p=>p.id),departmentIds=departments.map(d=>d.id);
       const [departmentMembers,projectMembers,tasks,orgMembers,invitations]=await Promise.all([
         scopedRows('qb_department_members','department_id',departmentIds),
         scopedRows('qb_project_members','project_id',projectIds),
         scopedRows('qb_tasks','project_id',projectIds,'*',q=>q.order('created_at',{ascending:false})),
-        orgMembership.role==='admin'?getResult(api.from('qb_org_members').select('*').eq('org_id',org.id)):Promise.resolve([]),
-        orgMembership.role==='admin'?getResult(api.from('qb_invitations').select('*').eq('org_id',org.id).order('created_at',{ascending:false})):Promise.resolve([])
+        orgMembership.role==='admin'?pagedRows(()=>api.from('qb_org_members').select('*').eq('org_id',org.id),rowKeys.qb_org_members):Promise.resolve([]),
+        orgMembership.role==='admin'?pagedRows(()=>api.from('qb_invitations').select('*').eq('org_id',org.id).order('created_at',{ascending:false})):Promise.resolve([])
       ]);
       const taskIds=tasks.map(t=>t.id);
       const [checklist,updates,events,xp]=await Promise.all([
         scopedRows('qb_checklist','task_id',taskIds,'*',q=>q.order('position')),
-        scopedRows('qb_task_updates','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false}).limit(200)),
-        scopedRows('qb_task_events','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false}).limit(200)),
+        scopedRows('qb_task_updates','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false})),
+        scopedRows('qb_task_events','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false})),
         scopedRows('qb_xp_events','task_id',taskIds)
       ]);
+      // Batches are individually ordered; restore one global chronology for feeds.
+      const newest=(a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))||String(a.id).localeCompare(String(b.id));
+      tasks.sort(newest);updates.sort(newest);events.sort(newest);
       const people=[...new Set([user.id,...orgMembers.map(m=>m.user_id),...departmentMembers.map(m=>m.user_id),...projectMembers.map(m=>m.user_id),...tasks.flatMap(t=>[t.assignee_id,t.reviewer_id,t.created_by]),...updates.map(u=>u.author_id),...events.map(e=>e.actor_id)].filter(Boolean))];
       const profiles=await scopedRows('qb_profiles','user_id',people,'user_id,display_name');
       // Recheck membership at commit: suspension during the load must not publish its snapshot.
@@ -363,7 +389,7 @@
     if(request!==candidateRequest)return;
     s.candidatesLoading=false;updateAssignmentControls();
   }
-  function render(){document.body.classList.toggle('mode-rpg',rpg());root.innerHTML=s.loading?`<div class="boot"><div class="brand-symbol">✦</div><p>Loading QuestBoard…</p>${organizationSelector()}${s.user?'<button class="btn" data-action="logout">Sign out</button>':''}</div>`:!s.user?login():s.lastError?`<div class="empty" role="alert"><h2>Unable to load your workspace</h2>${organizationSelector()}<p>${esc(s.lastError)}</p><button class="btn primary" data-action="retry">Try again</button><button class="btn" data-action="logout">Sign out</button></div>`:!s.org?onboarding():header();
+  function render(){document.body.classList.toggle('mode-rpg',rpg());root.innerHTML=s.loading?`<div class="boot"><div class="brand-symbol">✦</div><p>Loading QuestBoard…</p><p id="load-progress" role="status">${s.loadedRows?`${s.loadedRows.toLocaleString()} records loaded…`:'Gathering your workspace…'}</p>${organizationSelector()}${s.user?'<button class="btn" data-action="logout">Sign out</button>':''}</div>`:!s.user?login():s.lastError?`<div class="empty" role="alert"><h2>Unable to load your workspace</h2>${organizationSelector()}<p>${esc(s.lastError)}</p><button class="btn primary" data-action="retry">Try again</button><button class="btn" data-action="logout">Sign out</button></div>`:!s.org?onboarding():header();
     root.querySelectorAll('form[data-form]').forEach(form=>formEpoch.set(form,epoch));
     root.querySelectorAll('.project-card,.task-item,.board-task,[data-action="project"]:not(button)').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;});
     root.querySelectorAll('.form-field').forEach((field,i)=>{const label=field.querySelector('label'),input=field.querySelector('input,select,textarea');if(label&&input){if(!input.id)input.id='field-'+i;label.htmlFor=input.id;}});}
