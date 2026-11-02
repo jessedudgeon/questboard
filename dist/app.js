@@ -16,13 +16,19 @@
   ];
   let api = null;
   let epoch=0, requestController=null, authRevision=0, signedOutLocally=false, signingOut=false, signOutFailed=false;
-  let authError=null,authPending=false,inviteIntent=null;
+  let authError=null,authPending=false,inviteIntent=null,taskLinkIntent=null;
   const inviteKey='qb-pending-invitation';
   const validInvite=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'');
   const providerEnabled=provider=>['google','azure'].includes(provider)&&cfg.authProviders?.[provider]!==false;
   function readAuthReturn(){
     const query=new URLSearchParams(location.search),fragment=new URLSearchParams((location.hash||'').replace(/^#/,''));
     const incoming=query.get('invite');
+    try{
+      const saved=JSON.parse(sessionStorage.getItem('qb-task-link')||'null');
+      const candidate=query.has('task')?{task:query.get('task'),org:query.get('org')}:saved;
+      if(candidate&&validInvite(candidate.task)&&validInvite(candidate.org)){taskLinkIntent=candidate;sessionStorage.setItem('qb-task-link',JSON.stringify(candidate));}
+    }catch{}
+
     try{inviteIntent=validInvite(incoming)?incoming:sessionStorage.getItem(inviteKey);if(!validInvite(inviteIntent))inviteIntent=null;if(inviteIntent)sessionStorage.setItem(inviteKey,inviteIntent);}catch{inviteIntent=validInvite(incoming)?incoming:null;}
     if(['error','error_code','error_description'].some(key=>query.has(key)||fragment.has(key))){
       authError='Sign-in was not completed. Try again, or contact your administrator if it keeps happening.';
@@ -52,7 +58,7 @@
     finally{authPending=false;if(generation===epoch)render();}
   }
   const formEpoch=new WeakMap();
-  const workspaceArrays=['departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations'];
+  const workspaceArrays=['departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness'];
   function invalidateWorkspace(resetNavigation=true){
     epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
     candidateRequest++;membershipRequest++;
@@ -70,7 +76,7 @@
   let candidateRequest = 0;
   let membershipRequest=0;
   const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
-  const s = { user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
+  const s = { user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -105,7 +111,7 @@
     if(t.status==='in_review'&&reviewer)a.push(['in_progress','Request Changes']);
     if(t.status==='in_review'&&reviewer&&independent)a.push(['complete',term('Approve & Complete','Declare Victory')]);
     if(t.status==='complete'&&canManage(t.project_id))a.push(['in_progress','Reopen']);
-    return a;
+    return a.filter(([status])=>!(['in_progress','in_review','complete'].includes(status)&&dependencyWaiting(t.id))&&!(t.status==='complete'&&status==='in_progress'&&dependents(t.id).some(d=>['in_progress','in_review','complete'].includes(taskFor(d.task_id)?.status))));
   };
   const iconForProject = (title) => /network|technology|system|security|firewall/i.test(title)?'⌘':/facility|building|campus/i.test(title)?'⌂':/admission|student/i.test(title)?'◈':'✦';
   const fmtStatus = st=>rpg()?(rpgStatusNames[st]||st):(statusNames[st]||st);
@@ -142,6 +148,39 @@
     }
     return rows;
   }
+  async function loadDependencyReadiness(ids){
+    const generation=epoch,rows=[];
+    for(let i=0;i<ids.length;i+=100){
+      if(generation!==epoch)throw stale();
+      const batch=ids.slice(i,i+100),result=await pagedRows(()=>api.rpc('qb_dependency_readiness',{p_tasks:batch}),['task_id']);
+      if(result.length!==batch.length)throw Error('Task access changed while loading. Please retry.');
+      rows.push(...result);
+    }
+    return rows;
+  }
+  const prerequisites=id=>s.dependencies.filter(d=>d.task_id===id);
+  const dependents=id=>s.dependencies.filter(d=>d.prerequisite_id===id);
+  const dependencyWaiting=id=>s.demo?prerequisites(id).some(d=>taskFor(d.prerequisite_id)?.status!=='complete'):s.dependencyReadiness.some(r=>r.task_id===id&&r.waiting);
+  function dependencyCycle(taskId,prerequisiteId){
+    const queue=[prerequisiteId],seen=new Set();while(queue.length){const id=queue.pop();if(id===taskId)return true;if(seen.has(id))continue;seen.add(id);queue.push(...prerequisites(id).map(d=>d.prerequisite_id));}return false;
+  }
+  async function setDependency(taskId,prerequisiteId,link){
+    const t=taskFor(taskId),p=taskFor(prerequisiteId);
+    if(!t||!p||t.project_id!==p.project_id||!canManage(t.project_id))throw Error('Choose an available task in the same project');
+    if(['complete','cancelled'].includes(t.status))throw Error('Reopen the task before changing dependencies');
+    if(link&&dependencyCycle(taskId,prerequisiteId))throw Error('This link would create a circular dependency');
+    if(link&&['in_progress','in_review'].includes(t.status)&&p.status!=='complete')throw Error('Mark this task blocked before linking an unfinished prerequisite');
+    if(s.demo){
+      if(link&&!prerequisites(taskId).some(d=>d.prerequisite_id===prerequisiteId))s.dependencies.push({id:uid(),project_id:t.project_id,task_id:taskId,prerequisite_id:prerequisiteId});
+      if(!link)s.dependencies=s.dependencies.filter(d=>d.task_id!==taskId||d.prerequisite_id!==prerequisiteId);
+    }else await getResult(api.rpc('qb_set_task_dependency',{p_task:taskId,p_prerequisite:prerequisiteId,p_link:link}));
+  }
+  function dependencyPanel(t){
+    const editable=canManage(t.project_id)&&!['complete','cancelled'].includes(t.status),before=prerequisites(t.id),after=dependents(t.id);
+    const candidates=s.tasks.filter(p=>p.project_id===t.project_id&&p.id!==t.id&&!before.some(d=>d.prerequisite_id===p.id)&&!dependencyCycle(t.id,p.id));
+    const item=(d,incoming)=>{const other=taskFor(incoming?d.prerequisite_id:d.task_id);if(!other)return '';return `<li class="dependency-item"><button class="btn ghost" data-action="task" data-id="${esc(other.id)}">${esc(other.title)}</button>${tag(other.status,fmtStatus(other.status))}${incoming&&editable?`<button class="btn sm" data-action="unlink-dependency" data-id="${esc(d.prerequisite_id)}" aria-label="Remove prerequisite: ${esc(other.title)}">Remove link</button>`:''}</li>`;};
+    return `<section class="panel"><div class="panel-head"><h3>Task dependencies</h3><button class="btn sm" data-action="copy-task-link" data-id="${esc(t.id)}" ${s.demo?'disabled':''}>Copy task link</button></div><div class="panel-body"><p>${dependencyWaiting(t.id)?'<strong>Waiting for prerequisites.</strong> Finish them before starting, resuming, reviewing or completing this task.':'All prerequisites are complete, or none are linked.'}</p><p class="muted">Links stay within this project. Only tasks you can access are shown.</p><h4>Depends on</h4><ul class="dependency-list">${before.map(d=>item(d,true)).join('')||'<li>No visible prerequisites.</li>'}</ul><h4>Needed by</h4><ul class="dependency-list">${after.map(d=>item(d,false)).join('')||'<li>No visible dependent tasks.</li>'}</ul>${editable?`<form data-form="dependency" class="dependency-form"><label for="dependency-task">Add prerequisite</label><select id="dependency-task" name="prerequisite_id" required><option value="">Choose a task that must finish first</option>${candidates.map(p=>`<option value="${esc(p.id)}">${esc(p.title)} — ${esc(fmtStatus(p.status))}</option>`).join('')}</select><button class="btn" type="submit">Link prerequisite</button></form>`:''}</div></section>`;
+  }
   function loadDemo(){
     invalidateWorkspace();s.organizations=[];
     s.demo=true;s.user={id:'demo-user',email:'demo@questboard.test',user_metadata:{full_name:'Jesse'}};
@@ -176,7 +215,7 @@
       const organizations=await scopedRows('qb_organizations','id',memberships.map(m=>m.org_id),'id,name',q=>q.order('name'));
       const orgMembership=memberships.find(m=>m.org_id===requestedOrg&&organizations.some(o=>o.id===m.org_id))||memberships.find(m=>organizations.some(o=>o.id===m.org_id))||null;
       const org=organizations.find(o=>o.id===orgMembership?.org_id)||null;
-      if(!org){s.organizations=[];s.pendingInvitations=pendingInvitations;rememberOrg(user.id,null);s.loading=false;render();return;}
+      if(!org){taskLinkIntent=null;try{sessionStorage.removeItem('qb-task-link');}catch{}s.organizations=[];s.pendingInvitations=pendingInvitations;rememberOrg(user.id,null);s.loading=false;render();return;}
       const [departments,projects]=await Promise.all([
         pagedRows(()=>api.from('qb_departments').select('*').eq('org_id',org.id).order('name')),
         pagedRows(()=>api.from('qb_projects').select('*').eq('org_id',org.id).order('created_at',{ascending:false}))
@@ -190,11 +229,13 @@
         orgMembership.role==='admin'?pagedRows(()=>api.from('qb_invitations').select('*').eq('org_id',org.id).order('created_at',{ascending:false})):Promise.resolve([])
       ]);
       const taskIds=tasks.map(t=>t.id);
-      const [checklist,updates,events,xp]=await Promise.all([
+      const [checklist,updates,events,xp,dependencies,dependencyReadiness]=await Promise.all([
         scopedRows('qb_checklist','task_id',taskIds,'*',q=>q.order('position')),
         scopedRows('qb_task_updates','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false})),
         scopedRows('qb_task_events','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false})),
-        scopedRows('qb_xp_events','task_id',taskIds)
+        scopedRows('qb_xp_events','task_id',taskIds),
+        scopedRows('qb_task_dependencies','project_id',projectIds),
+        loadDependencyReadiness(taskIds)
       ]);
       // Batches are individually ordered; restore one global chronology for feeds.
       const newest=(a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))||String(a.id).localeCompare(String(b.id));
@@ -205,12 +246,19 @@
       const current=await getResult(api.from('qb_org_members').select('org_id,role,status').eq('org_id',org.id).eq('user_id',user.id).eq('status','active'));
       if(!current.length||current[0].role!==orgMembership.role){s.organizations=[];rememberOrg(user.id,null);throw Error('Organization access changed. Reload your workspace.');}
       if(generation!==epoch)return;
-      Object.assign(s,{organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations});
+      Object.assign(s,{organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations,dependencies,dependencyReadiness});
       rememberOrg(user.id,org.id);
       if(requestedOrg&&requestedOrg!==org.id)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:''});
       if(!departments.some(d=>d.id===s.workspace))s.workspace='all';
     }catch(e){if(generation!==epoch||e.stale)return;s.lastError=e.message;}
-    if(generation!==epoch)return;s.loading=false;render();return !s.lastError;
+    if(generation!==epoch)return;s.loading=false;
+    let linkUnavailable=false;
+    if(!s.lastError&&taskLinkIntent){
+      const intent=taskLinkIntent;taskLinkIntent=null;try{sessionStorage.removeItem('qb-task-link');}catch{}
+      const linked=s.org?.id===intent.org?taskFor(intent.task):null;
+      if(linked){s.taskId=linked.id;s.projectId=linked.project_id;s.nav='task';}else linkUnavailable=true;
+    }
+    render();if(linkUnavailable)toast('This task link is unavailable to your account.',true);return !s.lastError;
   }
   async function switchOrganization(id){
     if(s.demo||!s.user)return;
@@ -229,7 +277,7 @@
     invalidateWorkspace();s.organizations=[];s.user=user;s.loading=true;render();
     const generation=epoch;
     // Do not await Supabase requests within its synchronous auth callback.
-    setTimeout(()=>{if(generation===epoch&&!s.demo)loadLive(rememberedOrg(user.id),true);},0);
+    setTimeout(()=>{if(generation===epoch&&!s.demo)loadLive(taskLinkIntent?.org||rememberedOrg(user.id),true);},0);
   }
   async function signOut(){
     if(signingOut)return;
@@ -276,13 +324,14 @@
   function projectPage(){const p=projectFor(s.projectId);if(!p)return projectsPage();const ts=s.tasks.filter(t=>t.project_id===p.id),progress=pct(p),manager=canManage(p.id);const statuses=[['backlog',term('Backlog','Unclaimed')],['ready',term('To do','Available')],['in_progress',term('In progress','In battle')],['blocked',term('Blocked','Obstructed')],['in_review',term('Review','Verification')]];
     return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button>`:''}<button class="btn" data-action="nav" data-value="team">♧ Team</button></div></div>
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${ts.length}</div><div class="hint">${ts.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${ts.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
-    <div class="section-row"><h2>${term('Task board','Quest board')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div><div class="board">${statuses.map(([st,label])=>`<div class="board-col"><div class="board-col-head">${esc(label)} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${t.id}"><h4>${esc(t.title)}</h4><p>${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}<small>✦ ${t.xp_reward||0} XP</small></div></div>`).join('')||`<small style="display:block;text-align:center;padding:25px 0">No work here</small>`}</div>`).join('')}</div>
+    <div class="section-row"><h2>${term('Task board','Quest board')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div><div class="board">${statuses.map(([st,label])=>`<div class="board-col"><div class="board-col-head">${esc(label)} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${t.id}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}<small>✦ ${t.xp_reward||0} XP</small></div></div>`).join('')||`<small style="display:block;text-align:center;padding:25px 0">No work here</small>`}</div>`).join('')}</div>
     ${ts.some(t=>t.status==='complete')?`<div class="panel" style="margin-top:22px"><div class="panel-head"><h3>✓ ${term('Completed work','Victories')}</h3></div><div class="panel-body">${ts.filter(t=>t.status==='complete').map(taskRow).join('')}</div></div>`:''}`;
   }
   function taskPage(){const t=taskFor(s.taskId);if(!t)return workPage();const p=projectFor(t.project_id),checks=s.checklist.filter(c=>c.task_id===t.id),updates=s.updates.filter(x=>x.task_id===t.id),events=s.events.filter(x=>x.task_id===t.id).slice(0,8),manager=canManage(t.project_id),actions=taskActions(t),xp=t.xp_reward||0;
     return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span><button data-action="project" data-id="${p?.id}">${esc(p?.title||'Project')}</button><span>›</span>${term('Task','Quest')}</div>
     <div class="page-heading"><div><div class="eyebrow">${esc(p?.title||'Project')} / ${term('Task','Quest')}</div><h1>${esc(t.title)}</h1><p class="lead">${esc(t.description||'No description yet.')}</p></div><div class="buttons">${tag(t.priority,priorityNames[t.priority])}${tag(t.status,fmtStatus(t.status))}</div></div>
     <div class="detail-grid"><div class="detail-content"><section class="panel"><div class="panel-head"><h3>${term('Objectives','Quest objectives')}</h3><small>${checks.filter(x=>x.done).length}/${checks.length} complete</small></div><div class="panel-body">${checks.length?checks.map(c=>`<label class="checkline"><input type="checkbox" data-action="check" data-id="${c.id}" ${c.done?'checked':''} ${['in_review','complete','cancelled'].includes(t.status)||!(s.demo||manager||t.assignee_id===s.user?.id)?'disabled':''}><span style="${c.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(c.title)}</span></label>`).join(''):empty('☑','No checklist items','Add objectives to define what completion means.')}${manager&&!['in_review','complete','cancelled'].includes(t.status)?`<form data-form="checklist" class="journal-form" style="display:flex"><input type="text" name="title" required maxlength="180" placeholder="Add a checklist item…" style="flex:1;min-width:0;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:10px"><button class="btn sm" type="submit">Add</button></form>`:''}</div></section>
+    ${dependencyPanel(t)}
     <section class="panel"><div class="panel-head"><div><h3>${term('Work journal','Adventure journal')}</h3><p>A living record of what was done, learned, or blocked</p></div></div><div class="panel-body">${updates.length?updates.map(u=>`<div class="journal-item"><span class="avatar">${esc(initials(nameFor(u.author_id)))}</span><div><strong>${esc(nameFor(u.author_id))} ${tag(u.kind,u.kind.replace('_',' '))}</strong><p>${esc(u.body)}</p><small>${niceDate(u.created_at)} · ${relative(u.created_at)}</small></div></div>`).join(''):empty('✎','No journal entries','Document work as it happens, so your next meeting has real context.')}
     <form data-form="update" class="journal-form"><textarea name="body" required maxlength="8000" placeholder="What did you do? What happened? What's next?"></textarea><div class="submit-row"><select name="kind"><option value="note">General note</option><option value="action">Action taken</option><option value="blocker">Blocker</option><option value="resolution">Resolution</option><option value="next_step">Next step</option></select><button class="btn primary" type="submit">Post update</button></div></form></div></section>
     ${events.length?`<section class="panel"><div class="panel-head"><h3>Activity history</h3></div><div class="panel-body">${events.map(e=>`<div class="journal-item"><span class="task-check">↻</span><div><strong>${esc(e.event_type)}</strong><p>${esc(JSON.stringify(e.after_data||{}))}</p><small>${niceDate(e.created_at)}</small></div></div>`).join('')}</div></section>`:''}</div>
@@ -406,6 +455,8 @@
     if(action==='exit-demo'){location.reload();return;}
     if(action==='login'){await startSignIn(v);return;}
     if(action==='dismiss-invite'){clearInviteIntent();render();return;}
+    if(action==='unlink-dependency'){await withBusy(async()=>{await setDependency(s.taskId,id,false);await refresh();toast('Dependency removed');});return;}
+    if(action==='copy-task-link'){const task=taskFor(id);if(!task||s.demo)return;const generation=epoch;const link=location.origin+location.pathname+'?org='+encodeURIComponent(s.org.id)+'&task='+encodeURIComponent(id);try{await navigator.clipboard.writeText(link);if(generation===epoch)toast('Task link copied');}catch{if(generation===epoch)prompt('Copy task link',link);}return;}
     if(action==='logout'){await signOut();return;}
     if(action==='retry'){await loadLive();return;}
     if(action==='project'){s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
@@ -464,6 +515,8 @@
       }else if(type==='edit-task'){
         const row={title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:get('reviewer_id')||null,updated_at:new Date().toISOString()};
         if(s.demo)Object.assign(taskFor(s.taskId),row);else await getResult(api.from('qb_tasks').update(row).eq('id',s.taskId));toast('Task updated');
+      }else if(type==='dependency'){
+        await setDependency(s.taskId,get('prerequisite_id'),true);toast('Prerequisite linked');
       }else if(type==='checklist'){
         const row={task_id:s.taskId,title:get('title'),position:s.checklist.filter(c=>c.task_id===s.taskId).length};
         if(s.demo){row.id=uid();row.done=false;s.checklist.push(row);}else await getResult(api.from('qb_checklist').insert(row));toast('Objective added');

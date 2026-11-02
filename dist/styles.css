@@ -20,3 +20,4 @@
 
 .auth-provider:disabled{cursor:not-allowed;opacity:.55}.auth-error{border:1px solid #d89090;background:#fff0f0;color:#842b2b;padding:14px;border-radius:10px;margin:16px 0;line-height:1.5}.auth-card .invite-box{margin-bottom:18px}.auth-card .invite-box p{margin:10px 0 16px;color:#52637d}
 #candidate-retry[hidden]{display:none}
+.dependency-list{list-style:none;padding:0}.dependency-item{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}.dependency-item .ghost{white-space:normal;text-align:left;overflow-wrap:anywhere}.dependency-form{display:grid;gap:10px;margin-top:20px}.dependency-form select{width:100%;min-width:0;padding:10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px}.dependency-waiting{display:block;color:var(--muted);margin:6px 0}

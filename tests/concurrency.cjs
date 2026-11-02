@@ -128,5 +128,32 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    await a.query('select public.qb_accept_invitation($1)',[inv]);
    await finishWait(pending(b,'select public.qb_accept_invitation($1)',[inv]),'42501');
   });
+  async function prerequisite(ids,complete=false){
+   const row=(await admin.query("insert into public.qb_tasks(project_id,title,created_by) values($1,'Dependency prerequisite',$2) returning id",[ids.project,ids.admin])).rows[0];
+   if(complete)await admin.query("update public.qb_tasks set status='complete' where id=$1",[row.id]);
+   await admin.query("update public.qb_tasks set status='ready' where id=$1",[ids.task]);return row.id;
+  }
+  await scenario('Concurrent reverse links serialize and cannot create a cycle',async ids=>{
+   const pre=await prerequisite(ids);await signed(a,ids.admin);await signed(b,ids.admin);
+   await a.query('select public.qb_set_task_dependency($1,$2,true)',[ids.task,pre]);
+   await finishWait(pending(b,'select public.qb_set_task_dependency($1,$2,true)',[pre,ids.task]),'23514');
+  });
+  await scenario('New unfinished prerequisite commits before a waiting start',async ids=>{
+   const pre=await prerequisite(ids);await signed(a,ids.admin);await signed(b,ids.admin);
+   await a.query('select public.qb_set_task_dependency($1,$2,true)',[ids.task,pre]);
+   await finishWait(pending(b,"select public.qb_transition_task($1,'in_progress')",[ids.task]),'55000');
+  });
+  await scenario('Starting work commits before a waiting new prerequisite',async ids=>{
+   const pre=await prerequisite(ids);await signed(a,ids.admin);await signed(b,ids.admin);
+   await a.query("select public.qb_transition_task($1,'in_progress')",[ids.task]);
+   await finishWait(pending(b,'select public.qb_set_task_dependency($1,$2,true)',[ids.task,pre]),'55000');
+  });
+  for(const first of ['reopen','start'])await scenario(`Prerequisite ${first} wins and conflicting dependent operation is rejected`,async ids=>{
+   const pre=await prerequisite(ids,true);await signed(a,ids.admin);
+   await a.query('select public.qb_set_task_dependency($1,$2,true)',[ids.task,pre]);await a.query('commit');
+   await signed(a,ids.admin);await signed(b,ids.admin);
+   await a.query("select public.qb_transition_task($1,'in_progress')",[first==='reopen'?pre:ids.task]);
+   await finishWait(pending(b,"select public.qb_transition_task($1,'in_progress')",[first==='reopen'?ids.task:pre]),'55000');
+  });
  }finally{await Promise.all([admin.end(),a.end(),b.end()]);}
 });
