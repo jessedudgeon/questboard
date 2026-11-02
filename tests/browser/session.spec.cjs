@@ -60,3 +60,17 @@ test('Signed-out invitation and OAuth recovery remain usable on mobile',async({p
  await page.getByRole('button',{name:'Dismiss notice'}).click();await expect(page.locator('.invite-box')).toHaveCount(0);
  const fits=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth);expect(fits).toBeTruthy();
 });
+
+test('Large project loads every page before showing its task board',async({page})=>{
+ await start(page);
+ await page.evaluate(()=>{
+  fixture.rowCap=71;
+  fixture.tables.qb_tasks=Array.from({length:1105},(_,i)=>({id:'large-'+String(i).padStart(5,'0'),project_id:'pa',title:'Large task '+i,status:'backlog',priority:'normal',created_at:'2026-11-02T00:00:00Z'}));
+ });
+ await page.getByLabel('Organization').selectOption('b');await expect(page.locator('.page')).toContainText('Beta');
+ await page.getByLabel('Organization').selectOption('a');
+ await expect(page.locator('.project-card[data-id="pa"]')).toContainText('1105 tasks');
+ await page.locator('.project-card[data-id="pa"]').click();
+ await expect(page.locator('.board-task')).toHaveCount(1105);
+ await expect(page.locator('.board-task[data-id="large-01104"]')).toContainText('Large task 1104');
+});

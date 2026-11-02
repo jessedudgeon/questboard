@@ -1,7 +1,7 @@
 // Synthetic in-memory API; never initializes a hosted Supabase connection.
 function installFakeSupabase(w){
  const user=id=>({id,email:id+'@example.invalid',user_metadata:{full_name:id}});
- const f={current:user('u1'),callback:null,calls:[],before:null,signOutError:false,tables:{
+ const f={current:user('u1'),callback:null,calls:[],before:null,signOutError:false,rowCap:1000,rpcRows:{},tables:{
   qb_organizations:[{id:'a',name:'Alpha department group'},{id:'b',name:'Beta department group'}],
   qb_org_members:[{org_id:'a',user_id:'u1',role:'admin',status:'active'},{org_id:'b',user_id:'u1',role:'member',status:'active'},{org_id:'b',user_id:'u2',role:'member',status:'active'}],
   qb_departments:[{id:'da',org_id:'a',name:'Alpha department'},{id:'db',org_id:'b',name:'Beta department'}],
@@ -14,21 +14,23 @@ function installFakeSupabase(w){
   qb_invitations:[],qb_membership_events:[]
  }};
  class Query{
-  constructor(table){this.table=table;this.filters=[];this.operation='select';}
+  constructor(table){this.table=table;this.filters=[];this.operation='select';this.orders=[];this.start=0;this.end=Infinity;}
   select(){return this;}eq(k,v){this.filters.push([k,[v]]);return this;}in(k,v){this.filters.push([k,v]);return this;}
-  order(){return this;}limit(){return this;}upsert(row){this.operation='upsert';this.row=row;return this;}
+  order(key,options={}){this.orders.push([key,options.ascending!==false]);return this;}limit(n){this.end=n-1;return this;}range(start,end){this.start=start;this.end=end;return this;}upsert(row){this.operation='upsert';this.row=row;return this;}
   insert(row){this.operation='insert';this.row=row;return this;}update(row){this.operation='update';this.row=row;return this;}
   abortSignal(signal){this.signal=signal;return this;}
   then(resolve,reject){return this.run().then(resolve,reject);}
-  async run(){const call={table:this.table,filters:this.filters,operation:this.operation,user:f.current?.id,signal:this.signal};f.calls.push(call);
+  async run(){const call={table:this.table,filters:this.filters,operation:this.operation,user:f.current?.id,signal:this.signal,start:this.start,end:this.end};f.calls.push(call);
    // Deliberately allow replies after abort, exercising generation checks as well.
    if(f.before)await f.before(call);
    if(this.operation!=='select')return{data:null};
    let rows=f.tables[this.table]||[];rows=rows.filter(row=>this.filters.every(([k,v])=>v.includes(row[k])));
+   rows=[...rows].sort((a,b)=>{for(const [key,asc] of this.orders){if(a[key]===b[key])continue;return (a[key]<b[key]?-1:1)*(asc?1:-1);}return 0;});
+   rows=rows.slice(this.start,Math.min(this.end+1,this.start+f.rowCap));
    return{data:JSON.parse(JSON.stringify(rows))};
   }
  }
- f.api={from:table=>new Query(table),rpc(name,args){return{signal:null,abortSignal(signal){this.signal=signal;return this;},async then(resolve,reject){try{const call={rpc:name,args,user:f.current?.id,signal:this.signal};f.calls.push(call);if(f.before)await f.before(call);return resolve({data:[]});}catch(e){return reject(e);}}};},auth:{
+ f.api={from:table=>new Query(table),rpc(name,args){return{signal:null,start:0,end:Infinity,order(){return this;},range(start,end){this.start=start;this.end=end;return this;},abortSignal(signal){this.signal=signal;return this;},async then(resolve,reject){try{const call={rpc:name,args,user:f.current?.id,signal:this.signal};f.calls.push(call);if(f.before)await f.before(call);return resolve({data:(f.rpcRows[name]||[]).slice(this.start,Math.min(this.end+1,this.start+f.rowCap))});}catch(e){return reject(e);}}};},auth:{
   getSession:async()=>({data:{session:f.current?{user:f.current}:null}}),
   onAuthStateChange(cb){f.callback=cb;return{data:{subscription:{unsubscribe(){}}}};},
   async signOut(options){f.calls.push({signOut:options});if(f.signOutError)return{error:{message:'offline'}};f.emit('SIGNED_OUT',null);return{error:null};}
