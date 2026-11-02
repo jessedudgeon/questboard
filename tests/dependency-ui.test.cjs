@@ -24,3 +24,22 @@ test('Task navigation intent survives a clean OAuth redirect but never grants ac
  const intent={org:'10000000-0000-0000-0000-000000000001',task:'20000000-0000-0000-0000-000000000001'};
  const {dom,q}=await linkedApp('https://projects.dudgeon.io/',(w,f)=>{w.sessionStorage.setItem('qb-task-link',JSON.stringify(intent));f.tables.qb_tasks=f.tables.qb_tasks.filter(t=>t.id!==intent.task);});try{assert.equal(q.s.nav,'home');assert.equal(q.s.taskId,null);assert.match(dom.window.document.getElementById('toast').textContent,/unavailable to your account/);}finally{dom.window.close();}
 });
+
+test('Task creation links a prerequisite and switching projects clears it while preserving draft',async()=>{
+ const {dom,q}=demo();try{
+  q.s.projectId=q.s.tasks.find(t=>t.id==='t3').project_id;
+  q.s.modal='task';q.render();
+  let form=dom.window.document.querySelector('[data-form="task"]');
+  form.querySelector('[name="title"]').value='Follow-up task';
+  const picker=form.querySelector('[name="prerequisite_id"]');picker.value='t3';
+  assert.equal(picker.value,'t3');assert(![...picker.options].some(o=>o.value==='t5'));
+  await q.handleForm(form);
+  const task=q.s.tasks.find(t=>t.title==='Follow-up task');assert(task);
+  assert(q.s.dependencies.some(d=>d.task_id===task.id&&d.prerequisite_id==='t3'));
+  q.s.modal='task';q.render();form=dom.window.document.querySelector('[data-form="task"]');
+  form.querySelector('[name="title"]').value='Keep draft';form.querySelector('[name="prerequisite_id"]').value='t3';
+  const project=form.querySelector('[name="project_id"]');project.value=q.s.tasks.find(t=>t.id==='t5').project_id;project.dispatchEvent(new dom.window.Event('change',{bubbles:true}));
+  assert.equal(form.querySelector('[name="prerequisite_id"]').value,'');assert.equal(form.querySelector('[name="title"]').value,'Keep draft');
+  assert(![...form.querySelector('[name="prerequisite_id"]').options].some(o=>o.value==='t3'));
+ }finally{dom.window.close();}
+});
