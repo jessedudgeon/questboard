@@ -95,3 +95,28 @@ test('Large eligible-person lists retry in place without losing the task draft',
  await form.locator('[name="assignee_id"]').selectOption('candidate-01104');
  await expect(form.locator('[name="assignee_id"]')).toHaveValue('candidate-01104');
 });
+
+test('Dependencies link and unlink through the task UI and show both directions',async({page})=>{
+ await start(page);
+ await page.evaluate(()=>{
+  fixture.tables.qb_tasks.push({id:'pre',project_id:'pa',title:'Finish prerequisite first',status:'ready',priority:'normal'});
+  const rpc=fixture.api.rpc;
+  fixture.api.rpc=(name,args)=>{
+   if(name!=='qb_set_task_dependency')return rpc(name,args);
+   if(args.p_link)fixture.tables.qb_task_dependencies.push({id:'dependency-1',project_id:'pa',task_id:args.p_task,prerequisite_id:args.p_prerequisite});
+   else fixture.tables.qb_task_dependencies=fixture.tables.qb_task_dependencies.filter(d=>d.task_id!==args.p_task||d.prerequisite_id!==args.p_prerequisite);
+   return Promise.resolve({data:null,error:null});
+  };
+ });
+ await page.getByLabel('Organization').selectOption('b');await expect(page.locator('.page')).toContainText('Beta');
+ await page.getByLabel('Organization').selectOption('a');await expect(page.locator('.page')).toContainText('Alpha');
+ await page.locator('.project-card[data-id="pa"]').click();await page.locator('.board-task[data-id="ta"]').click();
+ await page.getByLabel('Add prerequisite').selectOption('pre');await page.getByRole('button',{name:'Link prerequisite',exact:true}).click();
+ await expect(page.locator('.dependency-list').first()).toContainText('Finish prerequisite first');
+ await expect(page.locator('.detail-content')).toContainText('Waiting for prerequisites');
+ await page.locator('.dependency-list').first().getByRole('button',{name:'Finish prerequisite first',exact:true}).click();
+ await expect(page.locator('.dependency-list').nth(1)).toContainText('Alpha secret task');
+ await page.locator('.dependency-list').nth(1).getByRole('button',{name:'Alpha secret task',exact:true}).click();
+ await page.getByRole('button',{name:'Remove prerequisite: Finish prerequisite first',exact:true}).click();
+ await expect(page.locator('.dependency-list').first()).toContainText('No visible prerequisites');
+});
