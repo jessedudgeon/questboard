@@ -30,7 +30,7 @@ function installFakeSupabase(w){
    return{data:JSON.parse(JSON.stringify(rows))};
   }
  }
- f.api={from:table=>new Query(table),rpc(name,args){return{signal:null,start:0,end:Infinity,order(){return this;},range(start,end){this.start=start;this.end=end;return this;},abortSignal(signal){this.signal=signal;return this;},async then(resolve,reject){try{const call={rpc:name,args,user:f.current?.id,signal:this.signal};f.calls.push(call);if(f.before)await f.before(call);return resolve({data:(f.rpcRows[name]||[]).slice(this.start,Math.min(this.end+1,this.start+f.rowCap))});}catch(e){return reject(e);}}};},auth:{
+ f.api={from:table=>new Query(table),rpc(name,args){return{signal:null,start:0,end:Infinity,orders:[],order(key,options={}){this.orders.push([key,options.ascending!==false]);return this;},range(start,end){this.start=start;this.end=end;return this;},abortSignal(signal){this.signal=signal;return this;},async then(resolve,reject){try{const call={rpc:name,args,user:f.current?.id,signal:this.signal,start:this.start,end:this.end};f.calls.push(call);if(f.before)await f.before(call);return resolve({data:[...(typeof f.rpcRows[name]==='function'?f.rpcRows[name](args):f.rpcRows[name]||[])].sort((a,b)=>{for(const [key,asc] of this.orders){if(a[key]===b[key])continue;return (a[key]<b[key]?-1:1)*(asc?1:-1);}return 0;}).slice(this.start,Math.min(this.end+1,this.start+f.rowCap))});}catch(e){return reject(e);}}};},auth:{
   getSession:async()=>({data:{session:f.current?{user:f.current}:null}}),
   onAuthStateChange(cb){f.callback=cb;return{data:{subscription:{unsubscribe(){}}}};},
   async signOut(options){f.calls.push({signOut:options});if(f.signOutError)return{error:{message:'offline'}};f.emit('SIGNED_OUT',null);return{error:null};}

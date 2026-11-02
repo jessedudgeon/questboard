@@ -19,3 +19,4 @@
 @media(max-width:560px){.topbar{min-height:65px;gap:10px}.top-left{width:100%;gap:8px}.top-left .workspace-select{max-width:calc(50vw - 36px)}.top-right{margin-left:auto}}
 
 .auth-provider:disabled{cursor:not-allowed;opacity:.55}.auth-error{border:1px solid #d89090;background:#fff0f0;color:#842b2b;padding:14px;border-radius:10px;margin:16px 0;line-height:1.5}.auth-card .invite-box{margin-bottom:18px}.auth-card .invite-box p{margin:10px 0 16px;color:#52637d}
+#candidate-retry[hidden]{display:none}

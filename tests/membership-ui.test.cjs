@@ -1,8 +1,9 @@
+const {withPagedRpc}=require('./rpc-page-fixture.cjs');
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {JSDOM}=require('jsdom');
 function app(){const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'https://projects.dudgeon.io',runScripts:'outside-only'});
  dom.window.eval(fs.readFileSync(__dirname+'/../dist/app.js','utf8').replace('  init();','  globalThis.qa={s,membership,loadDemo,loadMemberships,membershipPanel,handleForm,setApi(x){api=x;}};'));
- const q=dom.window.qa;q.loadDemo();q.s.demo=false;q.s.nav='admin';q.s.orgMembership={role:'admin',status:'active'};return{dom,q};}
+ const q=dom.window.qa;const originalSetApi=q.setApi;q.setApi=value=>originalSetApi(withPagedRpc(value));q.loadDemo();q.s.demo=false;q.s.nav='admin';q.s.orgMembership={role:'admin',status:'active'};return{dom,q};}
 function api(rpc){return{rpc,from(){return{select(){return this;},eq(){return this;},order(){return this;},limit(){return Promise.resolve({data:[]});}};}};}
 test('Membership controls escape names, include suspended members and offer no removal action',async()=>{
  const {dom,q}=app();try{q.setApi(api(async()=>({data:[{user_id:'sam',display_name:'<img src=x onerror=alert(1)>',role:'viewer',status:'suspended',org_status:'active'}]})));
