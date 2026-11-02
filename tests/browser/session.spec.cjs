@@ -74,3 +74,24 @@ test('Large project loads every page before showing its task board',async({page}
  await expect(page.locator('.board-task')).toHaveCount(1105);
  await expect(page.locator('.board-task[data-id="large-01104"]')).toContainText('Large task 1104');
 });
+
+test('Large eligible-person lists retry in place without losing the task draft',async({page})=>{
+ await start(page);
+ await page.evaluate(()=>{
+  fixture.rowCap=73;
+  fixture.rpcRows.qb_assignment_candidates=Array.from({length:1105},(_,i)=>({user_id:'candidate-'+String(i).padStart(5,'0'),display_name:'Candidate '+String(i).padStart(5,'0')}));
+  fixture.before=c=>{if(c.rpc==='qb_assignment_candidates'&&c.start>=250)throw Error('Temporary directory failure');};
+ });
+ await page.locator('.project-card[data-id="pa"]').click();
+ await page.locator('[data-action="modal"][data-value="task"]').first().click();
+ await expect(page.getByRole('button',{name:'Retry loading people'})).toBeVisible();
+ const form=page.locator('form[data-form="task"]');await form.locator('[name="title"]').fill('Keep this draft');
+ await expect(form.locator('[type="submit"]')).toBeDisabled();
+ await page.evaluate(()=>fixture.before=null);
+ await page.getByRole('button',{name:'Retry loading people'}).click();
+ await expect(form.locator('[name="assignee_id"] option')).toHaveCount(1106);
+ await expect(form.locator('[name="title"]')).toHaveValue('Keep this draft');
+ await expect(form.locator('[type="submit"]')).toBeEnabled();
+ await form.locator('[name="assignee_id"]').selectOption('candidate-01104');
+ await expect(form.locator('[name="assignee_id"]')).toHaveValue('candidate-01104');
+});

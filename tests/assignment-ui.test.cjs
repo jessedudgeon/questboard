@@ -1,3 +1,4 @@
+const {withPagedRpc}=require('./rpc-page-fixture.cjs');
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -6,7 +7,7 @@ function app(){
  const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'https://projects.dudgeon.io/',runScripts:'outside-only'});
  const source=fs.readFileSync(__dirname+'/../dist/app.js','utf8').replace('  init();','  globalThis.qa={s,loadDemo,handleClick,handleForm,loadAssignmentCandidates,memberOptions,setApi(value){api=value;}};');
  dom.window.eval(source);
- const qa=dom.window.qa;qa.loadDemo();qa.s.demo=false;qa.s.projectId='p1';
+ const qa=dom.window.qa;const originalSetApi=qa.setApi;qa.setApi=value=>originalSetApi(withPagedRpc(value));qa.loadDemo();qa.s.demo=false;qa.s.projectId='p1';
  return {dom,qa,doc:dom.window.document};
 }
 function modal(value){return {dataset:{action:'modal',value}};}

@@ -324,7 +324,7 @@
       if(s.demo)throw Error('Sign in to manage memberships');
       if(!membershipScopes().some(x=>x.value===scope))throw Error('Scope unavailable');
       const [type,id]=scope.split(':');
-      const [rows,events]=await Promise.all([getResult(api.rpc('qb_membership_directory',{p_type:type,p_scope:id})),getResult(api.from('qb_membership_events').select('user_id,actor_id,before_data,after_data,created_at').eq('scope_type',type).eq('scope_id',id).order('created_at',{ascending:false}).limit(50))]);
+      const [rows,events]=await Promise.all([pagedRows(()=>api.rpc('qb_membership_directory',{p_type:type,p_scope:id}).order('display_name'),['user_id'],()=>request===membershipRequest),getResult(api.from('qb_membership_events').select('user_id,actor_id,before_data,after_data,created_at').eq('scope_type',type).eq('scope_id',id).order('created_at',{ascending:false}).order('id').limit(50))]);
       if(request!==membershipRequest||user!==s.user?.id||org!==s.org?.id)return;
       Object.assign(membership,{rows,events,loaded:true});
     }catch(e){if(request!==membershipRequest)return;membership.error=e.message;}
@@ -360,8 +360,8 @@
     if(taskId&&selected&&!rows.some(p=>p.user_id===selected))options.push(`<option value="${esc(selected)}" selected>Unavailable — keep existing assignment</option>`);
     return options.join('');
   }
-  const candidateMessage=()=>s.candidatesLoading?'Loading eligible people…':s.candidateError?'Unable to load eligible people. Close and reopen this dialog to retry.':'Only people with access to this work are listed.';
-  const candidateNotice=()=>`<p id="candidate-status" class="field-hint" role="status">${esc(candidateMessage())}</p>`;
+  const candidateMessage=()=>s.candidatesLoading?'Loading eligible people…':s.candidateError?'Unable to load eligible people. Retry without closing this form.':'Only people with access to this work are listed.';
+  const candidateNotice=()=>`<p id="candidate-status" class="field-hint" role="status">${esc(candidateMessage())}</p><button id="candidate-retry" type="button" class="btn sm" data-action="retry-candidates" ${s.candidateError?'':'hidden'}>Retry loading people</button>`;
   function updateAssignmentControls(){
     const form=document.querySelector?.('form[data-form="task"],form[data-form="edit-task"]');if(!form)return;
     const task=s.candidateTask?taskFor(s.candidateTask):null;
@@ -375,6 +375,7 @@
     }
     const submit=form.querySelector('[type="submit"]');if(submit)submit.disabled=!!(s.candidatesLoading||s.candidateError);
     const status=document.getElementById('candidate-status');if(status)status.textContent=candidateMessage();
+    const retry=document.getElementById('candidate-retry');if(retry)retry.hidden=!s.candidateError;
   }
   async function loadAssignmentCandidates(projectId,taskId=null){
     const request=++candidateRequest;
@@ -382,7 +383,7 @@
     updateAssignmentControls();
     try{
       if(!projectId)throw Error('Choose a project');
-      const rows=s.demo?demoCandidates(projectId):await getResult(api.rpc('qb_assignment_candidates',{p_project:projectId,p_task:taskId}));
+      const rows=s.demo?demoCandidates(projectId):await pagedRows(()=>api.rpc('qb_assignment_candidates',{p_project:projectId,p_task:taskId}).order('display_name'),['user_id'],()=>request===candidateRequest);
       if(request!==candidateRequest)return;
       s.candidateRows=rows;
     }catch(e){if(request!==candidateRequest)return;s.candidateError=e.message;}
@@ -396,6 +397,7 @@
   async function refresh(){if(s.demo){render();return;}const user=s.user?.id,org=s.org?.id;const loaded=await loadLive();if(!loaded||user!==s.user?.id||org!==s.org?.id)throw stale();}
   async function withBusy(work){if(s.busy)return;const generation=epoch;s.busy=true;try{await work();}catch(e){if(generation===epoch&&!e.stale)toast(e.message||'Something went wrong',true);}finally{if(generation===epoch)s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
+    if(action==='retry-candidates'){await loadAssignmentCandidates(s.candidateProject,s.candidateTask);return;}
     if(action==='load-memberships'){await loadMemberships(document.getElementById('membership-scope').value);return;}
     if(action==='nav'){s.nav=v;s.filter='all';s.projectId=null;s.taskId=null;s.menuOpen=false;render();return;}
     if(action==='menu'){s.menuOpen=!s.menuOpen;render();return;}
