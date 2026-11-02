@@ -13,8 +13,22 @@ test('Task dependency authorization, graph integrity and workflow',async t=>{
  insert into public.qb_tasks(id,project_id,title,created_by) select p1,project,'Prerequisite one',admin from qa_ids,dep_ids union all select p2,project,'Prerequisite two',admin from qa_ids,dep_ids;
  insert into public.qb_projects(id,org_id,department_id,title,created_by) select foreign_project,org,dept,'Other project',admin from qa_ids,dep_ids;
  insert into public.qb_tasks(id,project_id,title,created_by) select foreign_task,foreign_project,'Other project task',admin from qa_ids,dep_ids;
- `);try{await fn();}finally{await db.exec('reset role;rollback');}});}
+ `);try{await fn();}finally{await db.exec('rollback;reset role');}});}
  try{
+ await check('Creation atomically links prerequisites and rolls back invalid links',async()=>{
+  await actor(db);
+  const call=pre=>`select public.qb_create_task(project,'Created with prerequisite','Outcome','normal',null,null,30,${pre}) from qa_ids,dep_ids`;
+  const id=await scalar(db,call('p1'));
+  assert.equal(await scalar(db,`select count(*) from public.qb_task_dependencies where task_id='${id}'`),1);
+  assert.equal(await scalar(db,`select waiting from public.qb_dependency_readiness(array['${id}'::uuid])`),true);
+  const count=await scalar(db,'select count(*) from public.qb_tasks');
+  await deny(db,call('foreign_task'),'42501');
+  await deny(db,call('gen_random_uuid()'),'42501');
+  assert.equal(await scalar(db,'select count(*) from public.qb_tasks'),count);
+  await scalar(db,call('null'));
+  await actor(db,'viewer');await deny(db,call('p1'),'42501');
+  await db.exec('reset role;set local role anon');await deny(db,call('null'),'42501');
+ });
  await check('Managers link/unlink idempotently and writes are audited',async()=>{await actor(db);await db.exec(link+`;`+link);assert.equal(await scalar(db,'select count(*) from public.qb_task_dependencies'),1);assert.equal(await scalar(db,"select count(*) from public.qb_task_events where event_type='dependency_linked'"),1);await db.exec('select public.qb_set_task_dependency(task,p1,false) from qa_ids,dep_ids');assert.equal(await scalar(db,'select count(*) from public.qb_task_dependencies'),0);assert.equal(await scalar(db,"select count(*) from public.qb_task_events where event_type='dependency_unlinked'"),1);});
  await check('Self links, duplicate cycles and cross-project links are denied',async()=>{await actor(db);await deny(db,'select public.qb_set_task_dependency(task,task,true) from qa_ids','23514');await deny(db,'select public.qb_set_task_dependency(task,foreign_task,true) from qa_ids,dep_ids','42501');await db.exec(link+';select public.qb_set_task_dependency(p1,p2,true) from dep_ids');await deny(db,'select public.qb_set_task_dependency(p2,task,true) from qa_ids,dep_ids','23514');});
  await check('Viewers and anonymous users cannot manage links or bypass RPCs',async()=>{await actor(db,'viewer');await deny(db,link,'42501');await actor(db);await deny(db,'insert into public.qb_task_dependencies(project_id,task_id,prerequisite_id,created_by) select project,task,p1,admin from qa_ids,dep_ids','42501');await deny(db,'delete from public.qb_task_dependencies','42501');await db.exec('reset role;set local role anon');await deny(db,'select * from public.qb_task_dependencies','42501');await deny(db,'select public.qb_set_task_dependency(null,null,true)','42501');await deny(db,'select * from public.qb_dependency_readiness(null)','42501');});

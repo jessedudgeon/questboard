@@ -120,3 +120,34 @@ test('Dependencies link and unlink through the task UI and show both directions'
  await page.getByRole('button',{name:'Remove prerequisite: Finish prerequisite first',exact:true}).click();
  await expect(page.locator('.dependency-list').first()).toContainText('No visible prerequisites');
 });
+
+test('Create task with prerequisite saves in one call and retains draft on error',async({page})=>{
+ await start(page);
+ await page.evaluate(()=>{
+  fixture.rpcRows.qb_assignment_candidates=[{user_id:'u1',display_name:'First account'}];
+  const rpc=fixture.api.rpc;window.failCreate=true;
+  fixture.api.rpc=(name,a)=>{
+   if(name!=='qb_create_task')return rpc(name,a);
+   fixture.calls.push({rpc:name,args:a});
+   if(window.failCreate)return Promise.resolve({error:{message:'Prerequisite is unavailable'}});
+   fixture.tables.qb_tasks.push({id:'created',project_id:a.p_project,title:a.p_title,status:'backlog',priority:a.p_priority});
+   fixture.tables.qb_task_dependencies.push({id:'created-link',project_id:a.p_project,task_id:'created',prerequisite_id:a.p_prerequisite});
+   return Promise.resolve({data:'created'});
+  };
+ });
+ await page.locator('.project-card[data-id="pa"]').click();
+ await page.locator('[data-action="modal"][data-value="task"]').first().click();
+ const form=page.locator('form[data-form="task"]');
+ await form.locator('[name="title"]').fill('New dependent task');
+ await page.getByLabel('Depends on (optional)').selectOption('ta');
+ await form.getByRole('button',{name:'Create task',exact:true}).click();
+ await expect(page.locator('#toast')).toContainText('Prerequisite is unavailable');
+ await expect(form.locator('[name="title"]')).toHaveValue('New dependent task');
+ await expect(page.getByLabel('Depends on (optional)')).toHaveValue('ta');
+ await page.evaluate(()=>window.failCreate=false);
+ await form.getByRole('button',{name:'Create task',exact:true}).click();
+ await expect(page.locator('.dependency-list').first()).toContainText('Alpha secret task');
+ await expect(page.locator('.detail-content')).toContainText('Waiting for prerequisites');
+ const calls=await page.evaluate(()=>fixture.calls.filter(c=>c.rpc==='qb_create_task'));
+ expect(calls[1].args.p_prerequisite).toBe('ta');
+});
