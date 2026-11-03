@@ -7,12 +7,12 @@ async function start(page){
  await page.addScriptTag({content:'('+installFakeSupabase.toString()+')(window);'});
  await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
  await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
- await expect(page.getByLabel('Organization')).toHaveValue('a');
+ await expect(page.getByLabel('Organization',{exact:true})).toHaveValue('a');
  await expect(page.locator('.page')).toContainText('Alpha');
 }
 test('Actual organization selector removes prior-org content and privileges',async({page})=>{
- await start(page);await page.getByLabel('Organization').selectOption('b');
- await expect(page.getByLabel('Organization')).toHaveValue('b');await expect(page.locator('.page')).toContainText('Beta');
+ await start(page);await page.getByLabel('Organization',{exact:true}).selectOption('b');
+ await expect(page.getByLabel('Organization',{exact:true})).toHaveValue('b');await expect(page.locator('.page')).toContainText('Beta');
  await expect(page.locator('body')).not.toContainText('Alpha secret');
  await expect(page.locator('.nav-link[data-value="admin"]')).toHaveCount(0);
  const calls=await page.evaluate(()=>fixture.calls.filter(c=>c.table==='qb_tasks').map(c=>c.filters));
@@ -21,25 +21,25 @@ test('Actual organization selector removes prior-org content and privileges',asy
 test('Account change and sign-out defeat delayed load responses in Chromium',async({page})=>{
  await start(page);
  await page.evaluate(()=>{window.release=null;const pending=new Promise(resolve=>window.release=resolve);fixture.before=c=>c.table==='qb_projects'&&c.user==='u1'?pending:undefined;});
- await page.getByLabel('Organization').selectOption('b');
+ await page.getByLabel('Organization',{exact:true}).selectOption('b');
  await page.evaluate(()=>fixture.emit('SIGNED_IN','u2'));
  await expect(page.locator('.page')).toContainText('Beta');await expect(page.locator('.user-dot')).toHaveAttribute('title','u2@example.invalid');
  await page.evaluate(()=>release());await expect(page.locator('body')).not.toContainText('Alpha secret');
  await page.getByRole('button',{name:'Sign out',exact:true}).click();
- await expect(page.getByRole('button',{name:'Continue with Microsoft'})).toBeVisible();await expect(page.getByLabel('Organization')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Continue with Microsoft'})).toBeVisible();await expect(page.getByLabel('Organization',{exact:true})).toHaveCount(0);
  await expect(page.locator('body')).not.toContainText('Beta task');
 });
 test('Suspension revalidation removes active workspace on token refresh',async({page})=>{
  await start(page);await page.evaluate(()=>{fixture.tables.qb_org_members.forEach(m=>m.status='suspended');fixture.emit('TOKEN_REFRESHED','u1');});
- await expect(page.getByLabel('Organization')).toHaveCount(0);await expect(page.locator('body')).not.toContainText('Alpha secret');
+ await expect(page.getByLabel('Organization',{exact:true})).toHaveCount(0);await expect(page.locator('body')).not.toContainText('Alpha secret');
  await expect(page.getByRole('button',{name:'Sign out',exact:true})).toBeVisible();
 });
 
 test('Organization control remains usable on a narrow viewport',async({page})=>{
  await page.setViewportSize({width:390,height:844});await start(page);
- await expect(page.getByLabel('Organization')).toBeVisible();await page.getByLabel('Organization').selectOption('b');
+ await expect(page.getByLabel('Organization',{exact:true})).toBeVisible();await page.getByLabel('Organization',{exact:true}).selectOption('b');
  await expect(page.locator('.page')).toContainText('Beta');
- const box=await page.getByLabel('Organization').boundingBox();expect(box.x+box.width).toBeLessThanOrEqual(390);
+ const box=await page.getByLabel('Organization',{exact:true}).boundingBox();expect(box.x+box.width).toBeLessThanOrEqual(390);
 });
 
 test('Signed-out invitation and OAuth recovery remain usable on mobile',async({page})=>{
@@ -67,8 +67,8 @@ test('Large project loads every page before showing its task board',async({page}
   fixture.rowCap=71;
   fixture.tables.qb_tasks=Array.from({length:1105},(_,i)=>({id:'large-'+String(i).padStart(5,'0'),project_id:'pa',title:'Large task '+i,status:'backlog',priority:'normal',created_at:'2026-11-02T00:00:00Z'}));
  });
- await page.getByLabel('Organization').selectOption('b');await expect(page.locator('.page')).toContainText('Beta');
- await page.getByLabel('Organization').selectOption('a');
+ await page.getByLabel('Organization',{exact:true}).selectOption('b');await expect(page.locator('.page')).toContainText('Beta');
+ await page.getByLabel('Organization',{exact:true}).selectOption('a');
  await expect(page.locator('.project-card[data-id="pa"]')).toContainText('1105 tasks');
  await page.locator('.project-card[data-id="pa"]').click();
  await expect(page.locator('.board-task')).toHaveCount(1105);
@@ -108,8 +108,8 @@ test('Dependencies link and unlink through the task UI and show both directions'
    return Promise.resolve({data:null,error:null});
   };
  });
- await page.getByLabel('Organization').selectOption('b');await expect(page.locator('.page')).toContainText('Beta');
- await page.getByLabel('Organization').selectOption('a');await expect(page.locator('.page')).toContainText('Alpha');
+ await page.getByLabel('Organization',{exact:true}).selectOption('b');await expect(page.locator('.page')).toContainText('Beta');
+ await page.getByLabel('Organization',{exact:true}).selectOption('a');await expect(page.locator('.page')).toContainText('Alpha');
  await page.locator('.project-card[data-id="pa"]').click();await page.locator('.board-task[data-id="ta"]').click();
  await page.getByLabel('Add prerequisite').selectOption('pre');await page.getByRole('button',{name:'Link prerequisite',exact:true}).click();
  await expect(page.locator('.dependency-list').first()).toContainText('Finish prerequisite first');
@@ -173,7 +173,7 @@ test('Calendar filters, task navigation and mobile agenda preserve organization 
  expect(width.body).toBeLessThanOrEqual(width.viewport);
  await page.locator('.calendar-event').click();
  await expect(page.locator('h1')).toHaveText('Alpha secret task');
- await page.getByLabel('Organization').selectOption('b');
+ await page.getByLabel('Organization',{exact:true}).selectOption('b');
  await page.getByRole('button',{name:'Open menu'}).click();
  await page.locator('.nav-link[data-value="calendar"]').click();
  await expect(page.locator('.calendar-event')).toHaveCount(1);
@@ -196,7 +196,7 @@ test('Personal and manager dashboards support mobile navigation and reset on org
  expect(width.body).toBeLessThanOrEqual(width.viewport);
  await page.locator('.dashboard-workload [data-action="task"]').click();
  await expect(page.locator('h1')).toHaveText('Alpha secret task');
- await page.getByLabel('Organization').selectOption('b');
+ await page.getByLabel('Organization',{exact:true}).selectOption('b');
  await expect(page.getByRole('button',{name:'Overview',exact:true})).toHaveAttribute('aria-pressed','true');
  await expect(page.getByRole('button',{name:'Manager dashboard',exact:true})).toHaveCount(0);
  await expect(page.locator('body')).not.toContainText('Alpha secret');
@@ -223,6 +223,6 @@ test('New signup creates an organization then departments on mobile',async({page
  await page.getByLabel('Department name').fill('Technology');
  await page.getByRole('button',{name:'Create department',exact:true}).click();
  await expect(page.locator('.data-table').first()).toContainText('Technology');
- await expect(page.getByLabel('Organization')).toHaveValue('new');
+ await expect(page.getByLabel('Organization',{exact:true})).toHaveValue('new');
  const width=await page.evaluate(()=>({body:document.documentElement.scrollWidth,viewport:innerWidth}));expect(width.body).toBeLessThanOrEqual(width.viewport);
 });
