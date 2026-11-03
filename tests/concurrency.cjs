@@ -44,6 +44,16 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    values($1,'organization','member',$2,$3) returning id`,[ids.org,'questboard-viewer-'+ids.viewer+'@example.invalid',ids.admin])).rows[0].id;}
   async function finishWait(wait,code){await blocked(admin,pid);await a.query('commit');const r=await wait;if(code)assert.equal(r.error?.code,code,r.error?.message);else assert.equal(r.error,undefined);await b.query(code?'rollback':'commit');}
 
+  await scenario('Concurrent organization signup retries create exactly one organization',async ids=>{
+   await signed(a,ids.admin);await signed(b,ids.admin);
+   const request='cc000000-0000-0000-0000-000000000001';
+   const first=(await a.query('select public.qb_create_organization($1,$2) id',['Concurrent signup',request])).rows[0].id;
+   const wait=pending(b,'select public.qb_create_organization($1,$2) id',['Concurrent signup',request]);
+   await blocked(admin,pid);await a.query('commit');const second=await wait;assert.equal(second.error,undefined);await b.query('commit');
+   assert.equal(second.result.rows[0].id,first);
+   assert.equal((await admin.query('select count(*)::int n from qb_private.organization_creation_requests where user_id=$1 and request_id=$2',[ids.admin,request])).rows[0].n,1);
+  });
+
   await scenario('Checklist edit commits first: submission waits, then rejects incomplete work',async ids=>{
    await ready(ids);await signed(a,ids.admin);await signed(b,ids.admin);
    await a.query('select public.qb_toggle_checklist($1,false)',[ids.item]);
