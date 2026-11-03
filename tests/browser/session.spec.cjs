@@ -201,3 +201,28 @@ test('Personal and manager dashboards support mobile navigation and reset on org
  await expect(page.getByRole('button',{name:'Manager dashboard',exact:true})).toHaveCount(0);
  await expect(page.locator('body')).not.toContainText('Alpha secret');
 });
+
+test('New signup creates an organization then departments on mobile',async({page})=>{
+ await start(page);
+ await page.evaluate(()=>{
+  fixture.tables.qb_org_members=[];
+  const rpc=fixture.api.rpc;fixture.api.rpc=(name,args)=>{
+   if(name!=='qb_create_organization')return rpc(name,args);
+   fixture.tables.qb_organizations.push({id:'new',name:args.p_name});
+   fixture.tables.qb_org_members.push({org_id:'new',user_id:'u1',role:'admin',status:'active'});
+   return Promise.resolve({data:'new'});
+  };
+  const from=fixture.api.from;fixture.api.from=table=>{const query=from(table);if(table==='qb_departments')query.insert=row=>{fixture.tables.qb_departments.push({...row,id:'new-dept'});return Promise.resolve({data:null});};return query;};
+  fixture.emit('TOKEN_REFRESHED','u1');
+ });
+ await page.setViewportSize({width:390,height:844});
+ await expect(page.getByRole('heading',{name:'Create your organization',exact:true})).toBeVisible();
+ await page.getByLabel('Organization name').fill('My new organization');
+ await page.getByRole('button',{name:'Create organization',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Step 3 · Add your first department'})).toBeVisible();
+ await page.getByLabel('Department name').fill('Technology');
+ await page.getByRole('button',{name:'Create department',exact:true}).click();
+ await expect(page.locator('.data-table').first()).toContainText('Technology');
+ await expect(page.getByLabel('Organization')).toHaveValue('new');
+ const width=await page.evaluate(()=>({body:document.documentElement.scrollWidth,viewport:innerWidth}));expect(width.body).toBeLessThanOrEqual(width.viewport);
+});
