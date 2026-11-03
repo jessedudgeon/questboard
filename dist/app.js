@@ -9,6 +9,7 @@
     {id:'home',icon:'▦',pro:'Dashboard',rpg:'Guild Hall'},
     {id:'mywork',icon:'☷',pro:'My Work',rpg:'Quest Journal'},
     {id:'projects',icon:'◫',pro:'Projects',rpg:'Campaigns'},
+    {id:'calendar',icon:'▦',pro:'Calendar',rpg:'Quest Calendar'},
     {id:'team',icon:'♧',pro:'Team',rpg:'Party'},
     {id:'reports',icon:'◷',pro:'Reports',rpg:'Chronicle'},
     {id:'meetings',icon:'▤',pro:'Meetings',rpg:'Council'},
@@ -65,7 +66,7 @@
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
     for(const key of workspaceArrays)s[key]=[];
     Object.assign(s,{org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null});
-    if(resetNavigation)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:''});
+    if(resetNavigation)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:'',calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false});
     const notifications=document.getElementById('toast');if(notifications)notifications.innerHTML='';
     return epoch;
   }
@@ -76,7 +77,7 @@
   let candidateRequest = 0;
   let membershipRequest=0;
   const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
-  const s = { user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
+  const s = { calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -292,15 +293,15 @@
     const name=s.user?.user_metadata?.full_name||s.user?.user_metadata?.name||s.user?.email?.split('@')[0]||'Member';
     const defs=[...navDefs];
     return `<div class="shell ${s.menuOpen?'menu-open':''}"><aside class="sidebar"><div class="brand"><span class="logo">✦</span><span>QuestBoard<small>WORK, REIMAGINED</small></span></div>
-      <div class="sidebar-label">Workspace</div>${defs.slice(0,3).map(x=>navItem(x)).join('')}
-      <div class="sidebar-label">Collaboration</div>${defs.slice(3,6).map(x=>navItem(x)).join('')}
-      <div class="side-bottom">${membershipScopes().length?navItem(defs[6]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
+      <div class="sidebar-label">Workspace</div>${defs.slice(0,4).map(x=>navItem(x)).join('')}
+      <div class="sidebar-label">Collaboration</div>${defs.slice(4,7).map(x=>navItem(x)).join('')}
+      <div class="side-bottom">${membershipScopes().length?navItem(defs[7]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
       <main class="main">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
       <header class="topbar"><div class="top-left">${organizationSelector()}<button class="mobile-menu" data-action="menu" aria-label="Open menu">☰</button><select class="workspace-select" id="workspace-select" aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right"><label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
       <div class="page">${invitationNotice()}${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${pageContent()}</div></main></div>${modalHTML()}`;
   }
   function navItem(x){return `<button class="nav-link ${s.nav===x.id?'active':''}" data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
-  function pageContent(){switch(s.nav){case'home':return dashboard();case'mywork':return workPage();case'projects':return projectsPage();case'project':return projectPage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
+  function pageContent(){switch(s.nav){case'home':return dashboard();case'mywork':return workPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
   const pageTitle=(title,desc,actions='')=>`<div class="page-heading"><div><div class="eyebrow">${esc(s.org?.name||'QuestBoard')}</div><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p></div><div class="buttons">${actions}</div></div>`;
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
@@ -321,6 +322,51 @@
   function workPage(){let ts=myTasks();if(s.filter!=='all')ts=ts.filter(t=>t.status===s.filter);return pageTitle(term('My Work','Quest Journal'),term('Your assignments and work awaiting your review.','Your personal adventures, obstacles, and victories.'))+
     `<div class="filter-row">${[['all','All work'],['backlog','Backlog'],['ready','Ready'],['in_progress','In progress'],['blocked','Blocked'],['in_review','In review'],['complete','Completed']].map(([v,l])=>`<button class="filter-pill ${s.filter===v?'active':''}" data-action="filter" data-value="${v}">${esc(rpg()?((rpgStatusNames[v]||l)):l)}</button>`).join('')}</div><div class="panel"><div class="panel-head"><h3>${ts.length} ${term('tasks','quests')}</h3><small>Sorted by due date and status</small></div><div class="panel-body">${ts.length?ts.slice().sort((a,b)=>(a.due_date||'9999').localeCompare(b.due_date||'9999')).map(taskRow).join(''):empty('◇','Nothing here yet','Assigned work will appear as soon as your team adds it.')}</div></div>`;}
   function projectsPage(){const ps=visibleProjects(),canCreate=managedDepartments().length>0;return pageTitle(term('Projects','Campaigns'),term('Track the initiatives moving your departments forward.','See every active campaign and the quests required to complete it.'),canCreate?`<button class="btn primary" data-action="modal" data-value="project">＋ ${term('New Project','New Campaign')}</button>`:'')+`<div class="project-grid">${ps.map(projectCard).join('')}</div>${ps.length?'':empty('◈','A fresh start',canCreate?'Create a project to organize milestones, owners, and tasks.':'You can see projects once your department manager grants access.',canCreate?`<button class="btn primary" data-action="modal" data-value="project">Create project</button>`:'')}`;}
+
+  // Calendar dates are date-only values. Never parse them as UTC instants.
+  const dateKey = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  function calendarDate(value){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(value||''))return null;
+    const date=new Date(value+'T12:00:00');
+    return Number.isFinite(date.getTime())&&dateKey(date)===value?date:null;
+  }
+  function calendarData(){
+    const projects=s.projects.filter(p=>deptVisible(p.department_id));
+    if(!projects.some(p=>p.id===s.calendarProject))s.calendarProject='all';
+    const selected=p=>s.calendarProject==='all'||p.id===s.calendarProject;
+    const tasks=visibleTasks().filter(t=>selected(projectFor(t.project_id)))
+      .filter(t=>s.calendarScope!=='mine'||t.assignee_id===s.user?.id)
+      .filter(t=>s.calendarClosed||!['complete','cancelled'].includes(t.status));
+    const targets=s.calendarScope==='mine'?[]:visibleProjects().filter(selected)
+      .filter(p=>s.calendarClosed||!['complete','archived'].includes(p.status));
+    const events=[...tasks.filter(t=>calendarDate(t.due_date)).map(t=>({kind:'task',id:t.id,title:t.title,date:t.due_date,item:t})),
+      ...targets.filter(p=>calendarDate(p.target_date)).map(p=>({kind:'project',id:p.id,title:p.title,date:p.target_date,item:p}))]
+      .sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
+    const today=dateKey(new Date());
+    return {projects,tasks,events,overdue:tasks.filter(t=>calendarDate(t.due_date)&&t.due_date<today&&!['complete','cancelled'].includes(t.status)).sort((a,b)=>a.due_date.localeCompare(b.due_date)||a.title.localeCompare(b.title)),undated:tasks.filter(t=>!calendarDate(t.due_date))};
+  }
+  function calendarEvent(event){
+    const task=event.kind==='task',item=event.item,closed=task?['complete','cancelled'].includes(item.status):['complete','archived'].includes(item.status);
+    return `<button class="calendar-event ${task?'':'project-target'} ${closed?'closed':''}" data-action="${event.kind}" data-id="${esc(event.id)}"><span class="calendar-event-kind">${task?term('Task due','Quest due'):'Project target'}</span><strong>${esc(event.title)}</strong><small>${task?esc(projectFor(item.project_id)?.title||'')+' · '+esc(nameFor(item.assignee_id)):esc(deptFor(item.department_id)?.name||'')}</small><small>${esc(task?fmtStatus(item.status):item.status)}${task&&dependencyWaiting(item.id)?' · Waiting for prerequisites':''}</small></button>`;
+  }
+  function calendarPage(){
+    const today=dateKey(new Date()),month=calendarDate(s.calendarMonth)||new Date(new Date().getFullYear(),new Date().getMonth(),1,12);
+    s.calendarMonth=dateKey(month);
+    const {projects,events,overdue,undated}=calendarData(),prefix=s.calendarMonth.slice(0,7),monthEvents=events.filter(e=>e.date.startsWith(prefix));
+    const days=new Date(month.getFullYear(),month.getMonth()+1,0,12).getDate(),label=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    const byDate=new Map();for(const event of monthEvents){if(!byDate.has(event.date))byDate.set(event.date,[]);byDate.get(event.date).push(event);}
+    const cells=Array.from({length:month.getDay()},()=>'<div class="calendar-pad" aria-hidden="true"></div>').join('')+Array.from({length:days},(_,index)=>{
+      const key=prefix+'-'+String(index+1).padStart(2,'0'),entries=byDate.get(key)||[];
+      return `<section class="calendar-day ${entries.length?'has-events':'no-events'} ${key===today?'is-today':''}" aria-label="${esc(niceDate(key))}"><h3><time datetime="${key}" ${key===today?'aria-current="date"':''}><span class="calendar-day-number">${index+1}</span><span class="calendar-mobile-date">${esc(niceDate(key))}</span></time>${key===today?'<small>Today</small>':''}</h3>${entries.map(calendarEvent).join('')}</section>`;
+    }).join('');
+    return pageTitle(term('Work calendar','Quest Calendar'),'Task due dates and project targets across your visible workspaces.')+`
+      <div class="calendar-filters"><label>Project<select id="calendar-project" aria-label="Calendar project"><option value="all">All projects</option>${projects.map(p=>`<option value="${esc(p.id)}" ${p.id===s.calendarProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></label><label>Show<select id="calendar-scope" aria-label="Calendar work scope"><option value="all">All visible work</option><option value="mine" ${s.calendarScope==='mine'?'selected':''}>My assigned tasks</option></select></label><label class="calendar-closed"><input id="calendar-closed" type="checkbox" ${s.calendarClosed?'checked':''}> Include finished work</label></div>
+      <section class="panel calendar-panel"><div class="panel-head calendar-toolbar"><div><h2 id="calendar-month-label" aria-live="polite">${esc(label)}</h2><small>${monthEvents.length} dated items${s.calendarScope==='mine'?' · Project targets hidden':''}</small></div><div class="buttons"><button class="btn sm" data-action="calendar-month" data-value="-1" aria-label="Previous month">←</button><button class="btn sm" data-action="calendar-month" data-value="today">Today</button><button class="btn sm" data-action="calendar-month" data-value="1" aria-label="Next month">→</button></div></div>
+      ${!monthEvents.length?'<p class="calendar-empty" role="status">No matching deadlines this month. Try another month or adjust your filters.</p>':''}
+      <div class="calendar-grid" aria-labelledby="calendar-month-label">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(day=>`<div class="calendar-weekday" aria-hidden="true">${day}</div>`).join('')}${cells}</div></section>
+      <div class="calendar-followup"><section class="panel"><div class="panel-head"><h3>Overdue tasks · ${overdue.length}</h3><small>Across all months</small></div><div class="panel-body">${overdue.length?`<details><summary>View overdue tasks</summary>${overdue.map(taskRow).join('')}</details>`:'<p class="muted">No overdue tasks match these filters.</p>'}</div></section><section class="panel"><div class="panel-head"><h3>Tasks without a date · ${undated.length}</h3></div><div class="panel-body">${undated.length?`<details><summary>View tasks without a due date</summary>${undated.map(taskRow).join('')}</details>`:'<p class="muted">All matching tasks have a due date.</p>'}</div></section></div>`;
+  }
+
   function projectPage(){const p=projectFor(s.projectId);if(!p)return projectsPage();const ts=s.tasks.filter(t=>t.project_id===p.id),progress=pct(p),manager=canManage(p.id);const statuses=[['backlog',term('Backlog','Unclaimed')],['ready',term('To do','Available')],['in_progress',term('In progress','In battle')],['blocked',term('Blocked','Obstructed')],['in_review',term('Review','Verification')]];
     return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button>`:''}<button class="btn" data-action="nav" data-value="team">♧ Team</button></div></div>
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${ts.length}</div><div class="hint">${ts.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${ts.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
@@ -452,6 +498,7 @@
     if(action==='retry-candidates'){await loadAssignmentCandidates(s.candidateProject,s.candidateTask);return;}
     if(action==='load-memberships'){await loadMemberships(document.getElementById('membership-scope').value);return;}
     if(action==='nav'){s.nav=v;s.filter='all';s.projectId=null;s.taskId=null;s.menuOpen=false;render();return;}
+    if(action==='calendar-month'){const current=calendarDate(s.calendarMonth)||new Date();const next=v==='today'?new Date():new Date(current.getFullYear(),current.getMonth()+Number(v),1,12);s.calendarMonth=dateKey(new Date(next.getFullYear(),next.getMonth(),1,12));render();const control=root.querySelector(`[data-action="calendar-month"][data-value="${v}"]`);control?.focus();return;}
     if(action==='menu'){s.menuOpen=!s.menuOpen;render();return;}
     if(action==='mode'){s.mode=v;localStorage.setItem('qb-mode',v);if(!s.demo&&s.user){api?.from('qb_profiles').update({preferred_mode:v}).eq('user_id',s.user.id).then(()=>{});}render();return;}
     if(action==='demo'){loadDemo();return;}
@@ -541,7 +588,7 @@
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f);}});
-  document.addEventListener('change',e=>{if(e.target?.id==='organization-select')switchOrganization(e.target.value);if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select'){const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('change',e=>{if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select')switchOrganization(e.target.value);if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select'){const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
   document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){

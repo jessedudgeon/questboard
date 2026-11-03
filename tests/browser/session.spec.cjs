@@ -151,3 +151,33 @@ test('Create task with prerequisite saves in one call and retains draft on error
  const calls=await page.evaluate(()=>fixture.calls.filter(c=>c.rpc==='qb_create_task'));
  expect(calls[1].args.p_prerequisite).toBe('ta');
 });
+
+test('Calendar filters, task navigation and mobile agenda preserve organization boundaries',async({page})=>{
+ await start(page);
+ await page.evaluate(()=>{
+  const date=new Date(),key=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-15`;
+  fixture.tables.qb_tasks.find(t=>t.id==='ta').due_date=key;
+  fixture.tables.qb_tasks.find(t=>t.id==='tb').due_date=key;
+  fixture.tables.qb_projects.find(p=>p.id==='pa').target_date=key;
+  fixture.emit('TOKEN_REFRESHED','u1');
+ });
+ await expect(page.locator('.page')).toContainText('Alpha');
+ await page.locator('.nav-link[data-value="calendar"]').click();
+ await expect(page.locator('.calendar-event')).toHaveCount(2);
+ await expect(page.locator('.calendar-event')).not.toContainText(['Beta','Beta']);
+ await page.getByLabel('Calendar work scope').selectOption('mine');
+ await expect(page.locator('.calendar-event')).toHaveCount(1);
+ await page.setViewportSize({width:390,height:844});
+ await expect(page.locator('.calendar-day.has-events .calendar-mobile-date')).toBeVisible();
+ const width=await page.evaluate(()=>({body:document.documentElement.scrollWidth,viewport:innerWidth}));
+ expect(width.body).toBeLessThanOrEqual(width.viewport);
+ await page.locator('.calendar-event').click();
+ await expect(page.locator('h1')).toHaveText('Alpha secret task');
+ await page.getByLabel('Organization').selectOption('b');
+ await page.getByRole('button',{name:'Open menu'}).click();
+ await page.locator('.nav-link[data-value="calendar"]').click();
+ await expect(page.locator('.calendar-event')).toHaveCount(1);
+ await expect(page.locator('.calendar-event')).toContainText('Beta task');
+ await expect(page.getByLabel('Calendar work scope')).toHaveValue('all');
+ await expect(page.locator('body')).not.toContainText('Alpha secret');
+});
