@@ -181,3 +181,23 @@ test('Calendar filters, task navigation and mobile agenda preserve organization 
  await expect(page.getByLabel('Calendar work scope')).toHaveValue('all');
  await expect(page.locator('body')).not.toContainText('Alpha secret');
 });
+
+test('Personal and manager dashboards support mobile navigation and reset on organization switch',async({page})=>{
+ await start(page);
+ await page.getByRole('button',{name:'My dashboard',exact:true}).click();
+ await expect(page.locator('h1')).toHaveText('My dashboard');
+ await expect(page.locator('[data-dashboard-section]')).toHaveCount(4);
+ await page.getByRole('button',{name:'Manager dashboard',exact:true}).click();
+ await expect(page.locator('.dashboard-workload')).toContainText('1 open');
+ await page.setViewportSize({width:390,height:844});
+ await page.locator('.workload-person summary').click();
+ await expect(page.locator('.dashboard-workload')).toContainText('Alpha secret task');
+ const width=await page.evaluate(()=>({body:document.documentElement.scrollWidth,viewport:innerWidth}));
+ expect(width.body).toBeLessThanOrEqual(width.viewport);
+ await page.locator('.dashboard-workload [data-action="task"]').click();
+ await expect(page.locator('h1')).toHaveText('Alpha secret task');
+ await page.getByLabel('Organization').selectOption('b');
+ await expect(page.getByRole('button',{name:'Overview',exact:true})).toHaveAttribute('aria-pressed','true');
+ await expect(page.getByRole('button',{name:'Manager dashboard',exact:true})).toHaveCount(0);
+ await expect(page.locator('body')).not.toContainText('Alpha secret');
+});
