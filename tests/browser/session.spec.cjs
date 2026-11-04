@@ -226,3 +226,25 @@ test('New signup creates an organization then departments on mobile',async({page
  await expect(page.getByLabel('Organization',{exact:true})).toHaveValue('new');
  const width=await page.evaluate(()=>({body:document.documentElement.scrollWidth,viewport:innerWidth}));expect(width.body).toBeLessThanOrEqual(width.viewport);
 });
+
+test('Project list filters, search and finished work stay usable on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/');
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await page.getByRole('button',{name:'Explore sample workspace',exact:false}).click();
+ await page.locator('.project-card').first().click();
+ await page.locator('[data-action="project-view"][data-value="list"]').click();
+ await expect(page.locator('.project-task-list .task-item')).toHaveCount(2);
+ await page.locator('#project-owner').selectOption('mine');
+ await expect(page.locator('.project-task-list .task-item')).toHaveCount(1);
+ await page.locator('#search').fill('no matching title');
+ await expect(page.locator('.page')).toContainText('No matching tasks');
+ await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+ await page.locator('#project-closed').check();
+ await expect(page.locator('.project-task-list .task-item')).toHaveCount(4);
+ const bounds=await page.locator('#project-sort').boundingBox();expect(bounds.x+bounds.width).toBeLessThanOrEqual(390);
+ await page.locator('.project-task-list .task-item').first().press('Enter');
+ await expect(page.locator('.page')).toContainText('Work journal');
+});
