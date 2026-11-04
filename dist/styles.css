@@ -36,3 +36,6 @@
 .workload-person summary{cursor:pointer;font-weight:600;line-height:1.8}
 .workload-person summary .tag{margin-left:10px}
 @media(max-width:900px){.dashboard-focus-grid{grid-template-columns:minmax(0,1fr)}}
+
+.project-task-toolbar{display:grid;gap:16px;margin-bottom:22px}.project-task-filters{margin-bottom:0;gap:12px}.project-task-filters label{min-width:140px;flex:1}.project-task-filters select{width:100%;min-width:0}.project-task-filters .calendar-closed{display:flex;flex:0 1 auto;align-items:center;min-width:180px}.board-empty{display:block;text-align:center;padding:25px 0}.project-task-list .task-item{min-width:0}
+@media(max-width:560px){.project-task-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.project-task-filters label{min-width:0}.project-task-filters .calendar-closed{grid-column:1/-1}.project-task-list .task-item{flex-wrap:wrap}.project-task-list .task-title{overflow-wrap:anywhere}}
