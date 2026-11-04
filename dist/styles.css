@@ -39,3 +39,4 @@
 
 .project-task-toolbar{display:grid;gap:16px;margin-bottom:22px}.project-task-filters{margin-bottom:0;gap:12px}.project-task-filters label{min-width:140px;flex:1}.project-task-filters select{width:100%;min-width:0}.project-task-filters .calendar-closed{display:flex;flex:0 1 auto;align-items:center;min-width:180px}.board-empty{display:block;text-align:center;padding:25px 0}.project-task-list .task-item{min-width:0}
 @media(max-width:560px){.project-task-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.project-task-filters label{min-width:0}.project-task-filters .calendar-closed{grid-column:1/-1}.project-task-list .task-item{flex-wrap:wrap}.project-task-list .task-title{overflow-wrap:anywhere}}
+@media(max-width:1000px){.top-right{width:100%;flex-wrap:wrap}.top-right .search{display:flex;flex:1 0 100%;width:100%;box-sizing:border-box;order:2}.top-right .search input{min-width:0}}
