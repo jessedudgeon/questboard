@@ -405,9 +405,27 @@
     tasks.sort((a,b)=>(s.projectSort==='priority'?(rank[a.priority]??4)-(rank[b.priority]??4):0)||due(a).localeCompare(due(b))||String(a.title).localeCompare(String(b.title))||String(a.id).localeCompare(String(b.id)));
     return {all,tasks,owners};
   }
+  const projectViews={board:'Board',list:'List',dependencies:'Dependencies'};
+  function projectDependencies(data){
+    const byId=new Map(data.all.map(task=>[task.id,{task,before:[],after:[]}]));
+    for(const link of s.dependencies){
+      const prerequisite=byId.get(link.prerequisite_id);
+      const dependent=byId.get(link.task_id);
+      if(prerequisite&&dependent){
+        dependent.before.push(prerequisite.task);
+        prerequisite.after.push(dependent.task);
+      }
+    }
+    const taskButton=task=>`<button class="btn ghost" data-action="task" data-id="${esc(task.id)}">${esc(task.title)}</button>`;
+    const neighbors=(label,tasks)=>`<div><strong>${label}</strong>${tasks.length?`<ul>${tasks.map(task=>`<li>${taskButton(task)} ${tag(task.status,fmtStatus(task.status))}</li>`).join('')}</ul>`:'<p class="muted">None visible</p>'}</div>`;
+    return `<section class="panel project-dependencies" aria-label="Task dependencies">${data.tasks.map(task=>{
+      const {before,after}=byId.get(task.id);
+      return `<article><header><h3>${taskButton(task)}</h3>${tag(task.status,fmtStatus(task.status))}${dependencyWaiting(task.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</header><div class="dependency-neighbors">${neighbors('Depends on',before)}${neighbors('Needed by',after)}</div></article>`;
+    }).join('')}</section>`;
+  }
   function projectTaskControls(data){
     const options=(items,value)=>items.map(([id,label])=>`<option value="${esc(id)}" ${id===value?'selected':''}>${esc(label)}</option>`).join('');
-    return `<div class="project-task-toolbar"><div class="buttons" role="group" aria-label="Task display">${['board','list'].map(view=>`<button class="btn sm ${s.projectView===view?'primary':''}" data-action="project-view" data-value="${view}" aria-pressed="${s.projectView===view}">${view==='board'?'Board':'List'}</button>`).join('')}</div>
+    return `<div class="project-task-toolbar"><div class="buttons" role="group" aria-label="Task display">${Object.keys(projectViews).map(view=>`<button class="btn sm ${s.projectView===view?'primary':''}" data-action="project-view" data-value="${view}" aria-pressed="${s.projectView===view}">${projectViews[view]}</button>`).join('')}</div>
       <div class="calendar-filters project-task-filters">
       <label for="project-owner">Assigned to<select id="project-owner">${options([['all','Anyone'],['mine','Assigned to me'],['unassigned','Unassigned'],...data.owners.map(id=>['user:'+id,nameFor(id)])],s.projectOwner)}</select></label>
       <label for="project-priority">Priority<select id="project-priority">${options([['all','Any priority'],...Object.entries(priorityNames)],s.projectPriority)}</select></label>
@@ -422,7 +440,7 @@
     return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button>`:''}<button class="btn" data-action="nav" data-value="team">♧ Team</button></div></div>
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${all.length}</div><div class="hint">${all.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${all.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
     <div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
-    ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='list'?`<section class="panel project-task-list"><div class="panel-body">${ts.map(t=>taskRow(t,true)).join('')}</div></section>`:
+    ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='dependencies'?projectDependencies(data):s.projectView==='list'?`<section class="panel project-task-list"><div class="panel-body">${ts.map(t=>taskRow(t,true)).join('')}</div></section>`:
     `<div class="board" style="grid-template-columns:repeat(${statuses.length},minmax(225px,1fr))">${statuses.map(st=>`<div class="board-col"><div class="board-col-head">${esc(fmtStatus(st))} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${esc(t.id)}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}<small>✦ ${t.xp_reward||0} XP</small></div></div>`).join('')||'<small class="board-empty">No matching work</small>'}</div>`).join('')}</div>`}`;
   }
   function taskPage(){const t=taskFor(s.taskId);if(!t)return workPage();const p=projectFor(t.project_id),checks=s.checklist.filter(c=>c.task_id===t.id),updates=s.updates.filter(x=>x.task_id===t.id),events=s.events.filter(x=>x.task_id===t.id).slice(0,8),manager=canManage(t.project_id),actions=taskActions(t),xp=t.xp_reward||0;
@@ -566,7 +584,7 @@
   async function refresh(){if(s.demo){render();return;}const user=s.user?.id,org=s.org?.id;const loaded=await loadLive();if(!loaded||user!==s.user?.id||org!==s.org?.id)throw stale();}
   async function withBusy(work){if(s.busy)return;const generation=epoch;s.busy=true;try{await work();}catch(e){if(generation===epoch&&!e.stale)toast(e.message||'Something went wrong',true);}finally{if(generation===epoch)s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
-    if(action==='project-view'){if(['board','list'].includes(v)){s.projectView=v;render();root.querySelector(`[data-action="project-view"][data-value="${v}"]`)?.focus();}return;}
+    if(action==='project-view'){if(Object.hasOwn(projectViews,v)){s.projectView=v;render();root.querySelector(`[data-action="project-view"][data-value="${v}"]`)?.focus();}return;}
     if(action==='project-filters-reset'){Object.assign(s,{projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,query:''});render();root.querySelector('[data-action="project-filters-reset"]')?.focus();return;}
     if(action==='signup-mode'){if(!authPending){signupMode=!signupMode;render();}return;}
     if(action==='retry-candidates'){await loadAssignmentCandidates(s.candidateProject,s.candidateTask);return;}
