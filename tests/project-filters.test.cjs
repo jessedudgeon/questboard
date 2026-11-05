@@ -56,3 +56,28 @@ test('Project output escapes task and owner content; empty filters give recovery
  q.s.query='no-match';q.render();assert.match(dom.window.document.querySelector('.page').textContent,/No matching tasks/);
  }finally{dom.window.close();}
 });
+test('Dependencies view preserves link direction, filtered context and project boundaries',()=>{
+ const {dom,q}=setup();try{
+   q.s.tasks.find(t=>t.id==='done').title='<b>Finished</b>';
+   q.s.dependencies=[
+     {task_id:'late',prerequisite_id:'done'},
+     {task_id:'early',prerequisite_id:'late'},
+     {task_id:'late',prerequisite_id:'foreign'},
+     {task_id:'late',prerequisite_id:'unavailable'}
+   ];
+   q.s.projectOwner='mine';
+   q.render();
+   const d=dom.window.document;
+   d.querySelector('[data-value="dependencies"]').click();
+   const rows=d.querySelectorAll('.project-dependencies article');
+   assert.equal(rows.length,1);
+   const [before,after]=rows[0].querySelectorAll('.dependency-neighbors > div');
+   assert.match(before.textContent,/Depends on.*<b>Finished<\/b>/);
+   assert.equal(before.querySelector('b'),null);
+   assert.match(after.textContent,/Needed by.*Earlier normal/);
+   assert.doesNotMatch(rows[0].textContent,/Hidden|unavailable/);
+   before.querySelector('button').click();
+   assert.equal(q.s.taskId,'done');
+   assert.equal(q.s.nav,'task');
+ }finally{dom.window.close();}
+});
