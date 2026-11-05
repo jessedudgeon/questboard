@@ -248,3 +248,29 @@ test('Project list filters, search and finished work stay usable on mobile',asyn
  await page.locator('.project-task-list .task-item').first().press('Enter');
  await expect(page.locator('.page')).toContainText('Work journal');
 });
+
+test('Manager plans, exports and reschedules filtered work on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/');
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await page.getByRole('button',{name:'Explore sample workspace'}).click();
+ await page.getByRole('button',{name:'Workload planner'}).click();
+ await page.getByLabel('Group by',{exact:true}).selectOption('project');
+ await page.getByLabel('Show',{exact:true}).selectOption('blocked');
+ await page.locator('tbody [data-action="planner-cell"][data-value="all"]').click();
+ const detail=page.locator('.planner-detail');
+ await expect(detail.locator('.task-item')).toHaveCount(1);
+ const download=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export CSV'}).click();
+ expect((await download).suggestedFilename()).toMatch(/^questboard-workload-.*\.csv$/);
+ await detail.getByRole('button',{name:/^Edit Resolve/}).click();
+ const form=page.locator('form[data-form="edit-task"]');
+ await form.locator('[name="due_date"]').fill('2099-08-10');
+ await form.locator('[type="submit"]').click();
+ await expect(form).toHaveCount(0);
+ await expect(detail.locator('.task-item')).toContainText('2099');
+ await expect(page.locator('tbody [data-value="later"]')).toHaveText('1');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
