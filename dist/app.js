@@ -67,7 +67,7 @@
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
     for(const key of workspaceArrays)s[key]=[];
     Object.assign(s,{org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null});
-    if(resetNavigation)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:'',projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false});
+    if(resetNavigation)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:'',projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false});
     const notifications=document.getElementById('toast');if(notifications)notifications.innerHTML='';
     return epoch;
   }
@@ -78,7 +78,7 @@
   let candidateRequest = 0;
   let membershipRequest=0;
   const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
-  const s = { projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
+  const s = { projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -308,9 +308,10 @@
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
   function questProjectName(p){return p.title.replace('Critical Vulnerability Remediation','The Vulnerability Hydra').replace('Network Infrastructure Modernization','The Great Network Renewal').replace('Campus Facilities Improvements','Restoration of the Halls');}
   function taskRow(t,details=false){const p=projectFor(t.project_id);return `<div class="task-item" data-action="task" data-id="${t.id}"><div class="task-check">${t.status==='complete'?'✓':'◇'}</div><div class="task-grow"><div class="task-title">${esc(t.title)}</div><div class="task-sub">${esc(p?.title||'Project')} · ${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</div>${details===true&&dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</div><div class="task-right">${details===true?tag(t.priority,priorityNames[t.priority]):''}${tag(t.status,fmtStatus(t.status))}<span style="color:var(--muted)">›</span></div></div>`;}
+  const managedWork=t=>canManage(t.project_id)||isDeptManager(projectFor(t.project_id)?.department_id);
   function dashboardData(view=s.dashboardView,today=new Date()){
     const start=dateKey(today),endDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()+6,12),end=dateKey(endDate);
-    const tasks=visibleTasks().filter(t=>view==='personal'?(t.assignee_id===s.user?.id||t.reviewer_id===s.user?.id&&t.status==='in_review'):view==='manager'?canManage(t.project_id)||isDeptManager(projectFor(t.project_id)?.department_id):true);
+    const tasks=visibleTasks().filter(t=>view==='personal'?(t.assignee_id===s.user?.id||t.reviewer_id===s.user?.id&&t.status==='in_review'):view==='manager'?managedWork(t):true);
     const open=tasks.filter(t=>!['complete','cancelled'].includes(t.status));
     const dated=t=>!!calendarDate(t.due_date);
     const sort=rows=>rows.slice().sort((a,b)=>(dated(a)?a.due_date:'9999').localeCompare(dated(b)?b.due_date:'9999')||String(a.title).localeCompare(String(b.title)));
@@ -319,7 +320,77 @@
     return {open:sort(open),overdue:sort(open.filter(t=>dated(t)&&t.due_date<start)),due:sort(open.filter(t=>dated(t)&&t.due_date>=start&&t.due_date<=end)),blocked:sort(open.filter(t=>t.status==='blocked')),review:sort(open.filter(t=>t.status==='in_review'&&(view!=='personal'||t.reviewer_id===s.user?.id))),unassigned:sort(open.filter(t=>!t.assignee_id)),workload:[...groups].map(([id,tasks])=>({id,tasks:sort(tasks)})).sort((a,b)=>b.tasks.length-a.tasks.length||nameFor(a.id).localeCompare(nameFor(b.id)))};
   }
   const hasManagerDashboard=()=>managedDepartments().length>0||managedProjects().length>0;
-  function dashboardTabs(){return `<div class="filter-row" aria-label="Dashboard view">${[['overview','Overview'],['personal','My dashboard'],...(hasManagerDashboard()?[['manager','Manager dashboard']]:[])].map(([value,label])=>`<button class="filter-pill ${s.dashboardView===value?'active':''}" data-action="dashboard-view" data-value="${value}" aria-pressed="${s.dashboardView===value}">${label}</button>`).join('')}</div>`;}
+  function dashboardTabs(){return `<div class="filter-row" aria-label="Dashboard view">${[['overview','Overview'],['personal','My dashboard'],...(hasManagerDashboard()?[['manager','Manager dashboard'],['planner','Workload planner']]:[])].map(([value,label])=>`<button class="filter-pill ${s.dashboardView===value?'active':''}" data-action="dashboard-view" data-value="${value}" aria-pressed="${s.dashboardView===value}">${label}</button>`).join('')}</div>`;}
+  const planningWindows=[
+    ['overdue','Overdue'],['week','Next 7 days'],['month','Days 8–30'],['later','Later'],['undated','No due date']
+  ];
+  const planningSignals={all:'All open work',blocked:'Marked blocked',waiting:'Waiting for prerequisites',unassigned:'Unassigned',review:'In review'};
+  function plannerReport(today=new Date()){
+    const start=dateKey(today);
+    const through=days=>dateKey(new Date(today.getFullYear(),today.getMonth(),today.getDate()+days,12));
+    const weekEnd=through(6),monthEnd=through(29);
+    const windowFor=task=>{
+      if(!calendarDate(task.due_date))return 'undated';
+      if(task.due_date<start)return 'overdue';
+      if(task.due_date<=weekEnd)return 'week';
+      return task.due_date<=monthEnd?'month':'later';
+    };
+    const waiting=new Set(s.demo?s.dependencies.filter(link=>taskFor(link.prerequisite_id)?.status!=='complete').map(link=>link.task_id):s.dependencyReadiness.filter(row=>row.waiting).map(row=>row.task_id));
+    const open=visibleTasks().filter(t=>managedWork(t)&&!['complete','cancelled'].includes(t.status));
+    const signals={all:()=>true,blocked:t=>t.status==='blocked',waiting:t=>waiting.has(t.id),unassigned:t=>!t.assignee_id,review:t=>t.status==='in_review'};
+    const tasks=open.filter(signals[s.plannerSignal]).sort((a,b)=>(calendarDate(a.due_date)?a.due_date:'9999-99').localeCompare(calendarDate(b.due_date)?b.due_date:'9999-99')||a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
+    const groups=new Map(),totals=Object.fromEntries(planningWindows.map(([key])=>[key,0]));
+    const records=tasks.map(task=>{
+      const project=projectFor(task.project_id);
+      const byProject=s.plannerGroup==='project';
+      const groupId=byProject?project.id:task.assignee_id||'_unassigned';
+      const label=byProject?project.title:nameFor(task.assignee_id);
+      if(!groups.has(groupId))groups.set(groupId,{id:groupId,label,count:0,buckets:Object.fromEntries(planningWindows.map(([key])=>[key,0]))});
+      const window=windowFor(task),group=groups.get(groupId);
+      group.count++;group.buckets[window]++;totals[window]++;
+      return {task,project,groupId,window,waiting:waiting.has(task.id)};
+    });
+    const ordered=[...groups.values()].sort((a,b)=>b.count-a.count||a.label.localeCompare(b.label)||a.id.localeCompare(b.id));
+    const selection=s.plannerCell;
+    const selectedGroup=selection&&groups.get(selection.groupId);
+    const detail=records.filter(row=>(!selection?.groupId||row.groupId===selection.groupId)&&(!selection||selection.window==='all'||row.window===selection.window));
+    return {records,groups:ordered,totals,detail,selectedGroup};
+  }
+  function plannerCSV(rows){
+    const cell=value=>{
+      let str=String(value??'');
+      if(/^[\s]*[=+@-]|^[\t\r\n]/.test(str))str="'"+str;
+      return '"'+str.replaceAll('"','""')+'"';
+    };
+    const data=[['Project','Task','Assignee','Status','Priority','Due date','Deadline window','Waiting for prerequisites'],...rows.map(({task,project,window,waiting})=>[project.title,task.title,nameFor(task.assignee_id),fmtStatus(task.status),priorityNames[task.priority]||task.priority,task.due_date,Object.fromEntries(planningWindows)[window],waiting?'Yes':'No'])];
+    return data.map(row=>row.map(cell).join(',')).join('\r\n');
+  }
+  function downloadPlanner(){
+    if(!hasManagerDashboard()||s.dashboardView!=='planner')return;
+    const {detail}=plannerReport();
+    if(!detail.length)return;
+    const url=URL.createObjectURL(new Blob(['\uFEFF',plannerCSV(detail)],{type:'text/csv;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download='questboard-workload-'+dateKey(new Date())+'.csv';link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function workloadPlanner(){
+    const report=plannerReport(),cell=s.plannerCell;
+    const groupLabel=s.plannerGroup==='project'?'Project':'Assignee';
+    const number=(groupId,window,count,label)=>{
+      if(!count)return '<span class="muted">0</span>';
+      const selected=cell?.groupId===groupId&&cell?.window===window;
+      return `<button class="planner-count" data-action="planner-cell" data-id="${esc(groupId)}" data-value="${window}" aria-label="${esc(label)}: ${count} tasks" aria-pressed="${selected}">${count}</button>`;
+    };
+    const matrixRow=(id,label,buckets,count)=>`<tr><th scope="row">${esc(label)}</th>${planningWindows.map(([key,title])=>`<td>${number(id,key,buckets[key],label+' · '+title)}</td>`).join('')}<td>${number(id,'all',count,label+' · All dates')}</td></tr>`;
+    const windowLabel=planningWindows.find(([key])=>key===cell?.window)?.[1]||'All dates';
+    const detailLabel=(report.selectedGroup?.label||(cell?.groupId?'Selected group':'All groups'))+' · '+windowLabel;
+    return pageTitle('Workload planner','Plan open work across the projects you manage.')+dashboardTabs()+
+      `<section class="panel planner-panel"><div class="panel-head"><h3>Deadline distribution</h3></div><div class="panel-body">
+      <div class="calendar-filters"><label>Group by<select id="planner-group"><option value="owner" ${s.plannerGroup==='owner'?'selected':''}>Assignee</option><option value="project" ${s.plannerGroup==='project'?'selected':''}>Project</option></select></label>
+      <label>Show<select id="planner-signal">${Object.entries(planningSignals).map(([key,label])=>`<option value="${key}" ${key===s.plannerSignal?'selected':''}>${label}</option>`).join('')}</select></label></div>
+      ${report.records.length?`<div class="planner-scroll" tabindex="0" role="region" aria-label="Scrollable deadline distribution"><table class="planner-table"><caption>Select a count to see its tasks. The next 7 days include today.</caption><thead><tr><th scope="col">${groupLabel}</th>${planningWindows.map(([,label])=>`<th scope="col">${label}</th>`).join('')}<th scope="col">Total</th></tr></thead><tbody>${report.groups.map(g=>matrixRow(g.id,g.label,g.buckets,g.count)).join('')}</tbody><tfoot>${matrixRow('','All groups',report.totals,report.records.length)}</tfoot></table></div>`:empty('✓','No matching open work','Try a different department, search, or work filter.')}</div></section>
+      <section class="panel planner-detail"><div class="panel-head"><div><h3>Task detail (${report.detail.length})</h3><p role="status">${esc(detailLabel)}</p></div><div class="buttons">${cell?'<button class="btn sm" data-action="planner-clear">Show all dates and groups</button>':''}<button class="btn sm" data-action="planner-export" ${report.detail.length?'':'disabled'}>Export CSV</button></div></div><div class="panel-body">${report.detail.map(({task})=>`<div class="planner-task">${taskRow(task,true)}${canManage(task.project_id)?`<button class="btn sm" data-action="modal" data-value="edit-task" data-id="${esc(task.id)}" aria-label="Edit ${esc(task.title)}">Edit</button>`:''}</div>`).join('')||'<p class="muted">No matching tasks.</p>'}</div></section>`;
+  }
   function focusDashboard(){
     const manager=s.dashboardView==='manager',data=dashboardData();
     const panel=(key,title,description,rows)=>`<section class="panel" data-dashboard-section="${key}"><div class="panel-head"><div><h3>${title} (${rows.length})</h3><p>${description}</p></div></div><div class="panel-body">${rows.length?rows.map(taskRow).join(''):empty('✓','Nothing here','No matching open tasks.')}</div></section>`;
@@ -329,7 +400,8 @@
       (manager?`<section class="panel dashboard-workload"><div class="panel-head"><div><h3>Open workload (${data.open.length})</h3><p>Task counts show assignments, not effort or capacity. Includes current workspace and search filters.</p></div></div><div class="panel-body">${data.workload.length?data.workload.map(group=>`<details class="workload-person"><summary>${esc(nameFor(group.id))} <span class="tag">${group.tasks.length} open</span></summary><div>${group.tasks.map(taskRow).join('')}</div></details>`).join(''):empty('✓','No open work','There are no matching open tasks in your managed projects.')}</div></section>`:'');
   }
   function dashboard(){
-    if(!['overview','personal','manager'].includes(s.dashboardView)||s.dashboardView==='manager'&&!hasManagerDashboard())s.dashboardView='overview';
+    if(!['overview','personal','manager','planner'].includes(s.dashboardView)||['manager','planner'].includes(s.dashboardView)&&!hasManagerDashboard())s.dashboardView='overview';
+    if(s.dashboardView==='planner')return workloadPlanner();
     if(s.dashboardView!=='overview')return focusDashboard();
     const tasks=visibleTasks(),projects=visibleProjects(),open=tasks.filter(t=>!['complete','cancelled'].includes(t.status)),blocked=tasks.filter(t=>t.status==='blocked'),review=tasks.filter(t=>t.status==='in_review'),done=tasks.filter(t=>t.status==='complete');
     const urgent=[...blocked,...review,...open.filter(t=>t.priority==='critical'||t.priority==='high')].filter((x,i,a)=>a.findIndex(z=>z.id===x.id)===i).slice(0,5);
@@ -589,7 +661,16 @@
     if(action==='signup-mode'){if(!authPending){signupMode=!signupMode;render();}return;}
     if(action==='retry-candidates'){await loadAssignmentCandidates(s.candidateProject,s.candidateTask);return;}
     if(action==='load-memberships'){await loadMemberships(document.getElementById('membership-scope').value);return;}
-    if(action==='dashboard-view'){if(['overview','personal','manager'].includes(v)&&(v!=='manager'||hasManagerDashboard())){s.dashboardView=v;render();root.querySelector(`[data-action="dashboard-view"][data-value="${v}"]`)?.focus();}return;}
+    if(action==='planner-export'){downloadPlanner();return;}
+    if(action==='planner-clear'||action==='planner-cell'){
+      if(!hasManagerDashboard()||s.dashboardView!=='planner')return;
+      s.plannerCell=action==='planner-clear'?null:{groupId:id,window:v};
+      render();
+      const detail=root.querySelector('.planner-detail h3');
+      if(detail){detail.tabIndex=-1;detail.focus();}
+      return;
+    }
+    if(action==='dashboard-view'){if(['overview','personal','manager','planner'].includes(v)&&(!['manager','planner'].includes(v)||hasManagerDashboard())){s.dashboardView=v;render();root.querySelector(`[data-action="dashboard-view"][data-value="${v}"]`)?.focus();}return;}
     if(action==='nav'){s.nav=v;s.filter='all';s.projectId=null;s.taskId=null;s.menuOpen=false;render();return;}
     if(action==='calendar-month'){const current=calendarDate(s.calendarMonth)||new Date();const next=v==='today'?new Date():new Date(current.getFullYear(),current.getMonth()+Number(v),1,12);s.calendarMonth=dateKey(new Date(next.getFullYear(),next.getMonth(),1,12));render();const control=root.querySelector(`[data-action="calendar-month"][data-value="${v}"]`);control?.focus();return;}
     if(action==='menu'){s.menuOpen=!s.menuOpen;render();return;}
@@ -607,6 +688,11 @@
     if(action==='filter'){s.filter=v;render();return;}
     if(action==='modal'){
       if(v==='organization'&&(!s.user||s.demo||s.loading))return;
+      if(v==='edit-task'&&id){
+        const task=taskFor(id);
+        if(!task||!canManage(task.project_id))return;
+        s.taskId=id;
+      }
       s.modal=v;
       if(['task','edit-task'].includes(v)){
         const task=v==='edit-task'?taskFor(s.taskId):null;
@@ -699,8 +785,13 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f);}});
-  document.addEventListener('change',e=>{const projectFields={'project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;render();}if(e.target?.id==='task-project-select'){const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
-  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
+  document.addEventListener('change',e=>{if(['planner-signal','planner-group'].includes(e.target?.id)){
+      const id=e.target.id;
+      if(id==='planner-signal')s.plannerSignal=e.target.value;else s.plannerGroup=e.target.value;
+      s.plannerCell=null;render();document.getElementById(id)?.focus();return;
+    }
+    const projectFields={'project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;render();}if(e.target?.id==='task-project-select'){const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     readAuthReturn();

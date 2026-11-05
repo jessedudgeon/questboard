@@ -3,7 +3,7 @@ const {JSDOM}=require('jsdom');
 const source=fs.readFileSync(__dirname+'/../dist/app.js','utf8');
 function setup(){
  const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'https://projects.dudgeon.io',runScripts:'outside-only'});
- dom.window.eval(source.replace('  init();','  globalThis.qa={s,loadDemo,dashboardData,dashboard,handleClick,render,invalidateWorkspace};'));
+ dom.window.eval(source.replace('  init();','  globalThis.qa={s,loadDemo,dashboardData,plannerReport,plannerCSV,dashboard,handleClick,render,invalidateWorkspace};'));
  const q=dom.window.qa;q.loadDemo();q.s.demo=false;q.s.user.id='me';q.s.orgMembership={role:'member'};q.s.workspace='all';q.s.query='';
  q.s.departments=[{id:'d1',name:'Managed'},{id:'d2',name:'Other'}];q.s.departmentMembers=[{department_id:'d1',user_id:'me',role:'manager',status:'active'}];q.s.projectMembers=[];
  q.s.projects=[{id:'p1',department_id:'d1',title:'Managed project'},{id:'p2',department_id:'d2',title:'Other project'}];
@@ -45,3 +45,34 @@ test('Unauthorized manager view falls back and empty personal dashboard stays us
  q.s.tasks=[];await q.handleClick({dataset:{action:'dashboard-view',value:'personal'}});assert.equal(dom.window.document.querySelectorAll('[data-dashboard-section]').length,4);assert.match(dom.window.document.querySelector('.page').textContent,/No matching open tasks/);
  assert.equal(dom.window.document.querySelector('[data-action="dashboard-view"][data-value="manager"]'),null);
  }finally{dom.window.close();}});
+test('Planner groups every authorized open task once across a year boundary',()=>{
+ const {dom,q}=setup();try{
+   q.s.tasks.push({id:'last',project_id:'p1',title:'Day 30',status:'ready',due_date:'2027-01-29'},
+     {id:'after',project_id:'p1',title:'Day 31',status:'ready',due_date:'2027-01-30'});
+   const now=new Date(2026,11,31,12),report=q.plannerReport(now);
+   assert.deepEqual({...report.totals},{overdue:1,week:2,month:2,later:1,undated:2});
+   assert.equal(report.groups.reduce((sum,g)=>sum+g.count,0),8);
+   q.s.plannerGroup='project';q.s.plannerCell={groupId:'p1',window:'month'};
+   assert.deepEqual(Array.from(q.plannerReport(now).detail,r=>r.task.id),['later','last']);
+   q.s.query='End of week';assert.equal(q.plannerReport(now).records.length,1);
+   q.s.workspace='d2';assert.equal(q.plannerReport(now).records.length,0);
+   q.s.workspace='all';q.s.departmentMembers[0].status='suspended';assert.equal(q.plannerReport(now).records.length,0);
+ }finally{dom.window.close();}
+});
+test('Planner distinguishes a prerequisite wait from a blocked status and exports the drilldown safely',()=>{
+ const {dom,q}=setup();try{
+   q.s.dependencyReadiness=[{task_id:'today',waiting:true}];
+   q.s.tasks[1].title=' =SUM(1,2)"';
+   q.s.plannerSignal='waiting';
+   const r=q.plannerReport(new Date(2026,11,31,12));assert.equal(r.records.length,1);
+   const csv=q.plannerCSV(r.detail);
+   assert.match(csv,/"' =SUM\(1,2\)"""/);assert.match(csv,/"Next 7 days","Yes"/);
+   assert.doesNotMatch(csv,/Outside management|Overdue assignment/);
+   q.s.plannerSignal='blocked';assert.equal(q.plannerReport().detail[0].task.id,'old');
+   q.s.plannerSignal='unassigned';assert.equal(q.plannerReport().records.length,3);
+   q.s.plannerSignal='review';assert.equal(q.plannerReport().records.length,1);
+   q.s.plannerCell={groupId:'missing',window:'all'};assert.equal(q.plannerReport().detail.length,0);
+   q.invalidateWorkspace();assert.equal(q.s.plannerCell,null);assert.equal(q.s.plannerSignal,'all');
+   q.s.dashboardView='planner';q.dashboard();assert.equal(q.s.dashboardView,'overview');
+ }finally{dom.window.close();}
+});
