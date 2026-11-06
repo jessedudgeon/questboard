@@ -341,7 +341,8 @@ test('Milestones connect project planning, task editing and calendar on mobile',
  await page.locator('form[data-form="edit-task"] [name="due_date"]').fill(today);
  await page.getByRole('button',{name:'Save changes',exact:true}).click();
  await expect(page.locator('.milestone-signals')).toHaveCount(0);
- await page.locator('[data-action="nav"][data-value="calendar"]').click({force:true});
+ await page.getByRole('button',{name:'Open menu',exact:true}).click();
+ await page.locator('[data-action="nav"][data-value="calendar"]').click();
  await page.locator('.milestone-target').click();
  await expect(page.getByRole('heading',{name:'Campus rollout',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Edit milestone',exact:true}).click();
