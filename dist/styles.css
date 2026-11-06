@@ -80,3 +80,13 @@
 .archived-templates { margin-top: 1rem; }
 .archived-templates > summary { margin-bottom: 1rem; cursor: pointer; }
 .template-notice { padding: .75rem; border: 1px solid var(--border); border-radius: 8px; }
+
+.milestone-panel, .milestone-signals { margin-bottom: 1.5rem; }
+.milestone-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,250px),1fr)); gap: 1rem; }
+.milestone-card { display: grid; gap: .6rem; padding: 1rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; font: inherit; text-align: left; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.milestone-card:hover { border-color: currentColor; }
+.milestone-card > span, .milestone-card small { font-size: .8rem; color: var(--muted); }
+.milestone-card .progress-fill { display: block; height: 100%; }
+.archived-milestones { margin-top: 1rem; }
+.archived-milestones > summary { margin-bottom: 1rem; }
+.calendar-event.milestone-target { border-left: 3px solid #b08ee7; }
