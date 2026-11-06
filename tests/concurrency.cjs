@@ -56,6 +56,21 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    assert.equal((await admin.query('select count(*)::int n from qb_tasks where id=$1',[request])).rows[0].n,1);
    assert.equal((await admin.query('select count(*)::int n from qb_checklist where task_id=$1',[request])).rows[0].n,1);
   });
+  await scenario('Milestone retries create one task and concurrent edits reject stale revisions',async ids=>{
+   await signed(a,ids.admin);
+   const milestone=(await a.query("select qb_save_milestone(gen_random_uuid(),$1,'Delivery','Goal','2027-01-01',false,null) id",[ids.project])).rows[0].id;
+   await a.query('commit');await signed(a,ids.admin);await signed(b,ids.admin);
+   const request=(await admin.query('select gen_random_uuid() id')).rows[0].id;
+   const create="select qb_create_milestone_task($1,$2,$3,null,'Delivery task','Goal','normal',null,null,30,null)";
+   await a.query(create,[ids.project,request,milestone]);
+   await finishWait(pending(b,create,[ids.project,request,milestone]));
+   assert.equal((await admin.query('select count(*)::int n from qb_tasks where id=$1',[request])).rows[0].n,1);
+   await signed(a,ids.admin);await signed(b,ids.admin);
+   const sql="select qb_save_milestone($1,$2,$3,'Goal','2027-01-01',false,1)";
+   await a.query(sql,[milestone,ids.project,'First edit']);
+   await finishWait(pending(b,sql,[milestone,ids.project,'Stale edit']),'40001');
+   assert.equal((await admin.query('select title from qb_milestones where id=$1',[milestone])).rows[0].title,'First edit');
+  });
   await scenario('Concurrent organization signup retries create exactly one organization',async ids=>{
    await signed(a,ids.admin);await signed(b,ids.admin);
    const request='cc000000-0000-0000-0000-000000000001';
