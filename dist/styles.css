@@ -68,3 +68,15 @@
   .planner-task { flex-wrap: wrap; margin-bottom: .75rem; }
   .planner-task .task-item { flex-basis: 100%; }
 }
+
+.template-library { margin-bottom: 1.5rem; }
+.template-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: 1rem; }
+.template-card { padding: 1rem; border: 1px solid var(--border); border-radius: 12px; min-width: 0; overflow-wrap: anywhere; }
+.template-card h3 { margin: 0 0 .5rem; }
+.template-card p { margin: .5rem 0; }
+.template-card small { color: var(--muted); }
+.template-card details { margin: .75rem 0; }
+.template-card .buttons { margin-top: 1rem; }
+.archived-templates { margin-top: 1rem; }
+.archived-templates > summary { margin-bottom: 1rem; cursor: pointer; }
+.template-notice { padding: .75rem; border: 1px solid var(--border); border-radius: 8px; }
