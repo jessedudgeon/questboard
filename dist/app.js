@@ -60,13 +60,13 @@
     finally{authPending=false;if(generation===epoch)render();}
   }
   const formEpoch=new WeakMap();
-  const workspaceArrays=['departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness'];
+  const workspaceArrays=['departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates'];
   function invalidateWorkspace(resetNavigation=true){
     epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
     candidateRequest++;membershipRequest++;
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
     for(const key of workspaceArrays)s[key]=[];
-    Object.assign(s,{org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null});
+    Object.assign(s,{org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null,creationTemplate:null,taskRequest:null});
     if(resetNavigation)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:'',projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false});
     const notifications=document.getElementById('toast');if(notifications)notifications.innerHTML='';
     return epoch;
@@ -78,7 +78,7 @@
   let candidateRequest = 0;
   let membershipRequest=0;
   const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
-  const s = { projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
+  const s = { templates:[],creationTemplate:null,taskRequest:null,projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -223,12 +223,13 @@
         pagedRows(()=>api.from('qb_projects').select('*').eq('org_id',org.id).order('created_at',{ascending:false}))
       ]);
       const projectIds=projects.map(p=>p.id),departmentIds=departments.map(d=>d.id);
-      const [departmentMembers,projectMembers,tasks,orgMembers,invitations]=await Promise.all([
+      const [departmentMembers,projectMembers,tasks,orgMembers,invitations,templates]=await Promise.all([
         scopedRows('qb_department_members','department_id',departmentIds),
         scopedRows('qb_project_members','project_id',projectIds),
         scopedRows('qb_tasks','project_id',projectIds,'*',q=>q.order('created_at',{ascending:false})),
         orgMembership.role==='admin'?pagedRows(()=>api.from('qb_org_members').select('*').eq('org_id',org.id),rowKeys.qb_org_members):Promise.resolve([]),
-        orgMembership.role==='admin'?pagedRows(()=>api.from('qb_invitations').select('*').eq('org_id',org.id).order('created_at',{ascending:false})):Promise.resolve([])
+        orgMembership.role==='admin'?pagedRows(()=>api.from('qb_invitations').select('*').eq('org_id',org.id).order('created_at',{ascending:false})):Promise.resolve([]),
+        scopedRows('qb_task_templates','project_id',projectIds)
       ]);
       const taskIds=tasks.map(t=>t.id);
       const [checklist,updates,events,xp,dependencies,dependencyReadiness]=await Promise.all([
@@ -248,7 +249,7 @@
       const current=await getResult(api.from('qb_org_members').select('org_id,role,status').eq('org_id',org.id).eq('user_id',user.id).eq('status','active'));
       if(!current.length||current[0].role!==orgMembership.role){s.organizations=[];rememberOrg(user.id,null);throw Error('Organization access changed. Reload your workspace.');}
       if(generation!==epoch)return;
-      Object.assign(s,{organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations,dependencies,dependencyReadiness});
+      Object.assign(s,{organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations,dependencies,dependencyReadiness,templates});
       rememberOrg(user.id,org.id);
       if(requestedOrg&&requestedOrg!==org.id)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:''});
       if(!departments.some(d=>d.id===s.workspace))s.workspace='all';
@@ -507,11 +508,38 @@
       <button class="btn sm" data-action="project-filters-reset">Clear filters</button></div>
       <p class="muted" role="status">Showing ${data.tasks.length} of ${data.all.length} tasks. Project totals above include all tasks.</p></div>`;
   }
+  function templateLibrary(projectId){
+    const templates=s.templates.filter(t=>t.project_id===projectId);
+    const card=t=>`<article class="template-card"><h3>${esc(t.name)}</h3><p>${esc(t.title)}</p><small>${t.checklist.length} checklist items · ${t.due_days===null?'Choose due date when creating':t.due_days===0?'Due on creation day':'Due '+t.due_days+' days after creation'}</small>
+      ${t.checklist.length?`<details><summary>Preview checklist</summary><ul>${t.checklist.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>`:''}
+      <div class="buttons">${!t.archived?`<button class="btn sm primary" data-action="use-template" data-id="${esc(t.id)}">Create task</button>`:''}<button class="btn sm" data-action="archive-template" data-id="${esc(t.id)}" data-value="${t.archived?'false':'true'}">${t.archived?'Restore':'Archive'}</button></div></article>`;
+    const active=templates.filter(t=>!t.archived),archived=templates.filter(t=>t.archived);
+    return `<section class="panel template-library"><div class="panel-head"><h3>Task templates</h3></div><div class="panel-body">${active.length?`<div class="template-grid">${active.map(card).join('')}</div>`:'<p class="muted">Open a task and choose Save as template to reuse its instructions and checklist.</p>'}
+      ${archived.length?`<details class="archived-templates"><summary>Archived templates (${archived.length})</summary><div class="template-grid">${archived.map(card).join('')}</div></details>`:''}</div></section>`;
+  }
+  function creationTemplate(){
+    return s.templates.find(t=>t.id===s.creationTemplate&&!t.archived&&canManage(t.project_id));
+  }
+  function templateDefaults(){
+    const template=creationTemplate(),form=root.querySelector('form[data-form="task"]');
+    if(!template||!form)return;
+    for(const key of ['title','description','priority','xp_reward']){
+      const field=form.elements.namedItem(key);
+      if(key==='xp_reward'&&![...field.options].some(option=>option.value===String(template[key]))){
+        const option=document.createElement('option');option.value=template[key];option.textContent=template[key]+' XP';field.append(option);
+      }
+      field.value=template[key];
+    }
+    if(template.due_days!==null){
+      const now=new Date();
+      form.elements.namedItem('due_date').value=dateKey(new Date(now.getFullYear(),now.getMonth(),now.getDate()+template.due_days,12));
+    }
+  }
   function projectPage(){const p=projectFor(s.projectId);if(!p)return projectsPage();const data=projectTaskData(p.id),ts=data.tasks,all=data.all,progress=pct(p),manager=canManage(p.id);
     const statuses=['backlog','ready','in_progress','blocked','in_review',...(s.projectClosed?['complete','cancelled']:[])];
     return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button>`:''}<button class="btn" data-action="nav" data-value="team">♧ Team</button></div></div>
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${all.length}</div><div class="hint">${all.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${all.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
-    <div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
+    ${manager?templateLibrary(p.id):''}<div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
     ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='dependencies'?projectDependencies(data):s.projectView==='list'?`<section class="panel project-task-list"><div class="panel-body">${ts.map(t=>taskRow(t,true)).join('')}</div></section>`:
     `<div class="board" style="grid-template-columns:repeat(${statuses.length},minmax(225px,1fr))">${statuses.map(st=>`<div class="board-col"><div class="board-col-head">${esc(fmtStatus(st))} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${esc(t.id)}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}<small>✦ ${t.xp_reward||0} XP</small></div></div>`).join('')||'<small class="board-empty">No matching work</small>'}</div>`).join('')}</div>`}`;
   }
@@ -524,7 +552,7 @@
     <form data-form="update" class="journal-form"><textarea name="body" required maxlength="8000" placeholder="What did you do? What happened? What's next?"></textarea><div class="submit-row"><select name="kind"><option value="note">General note</option><option value="action">Action taken</option><option value="blocker">Blocker</option><option value="resolution">Resolution</option><option value="next_step">Next step</option></select><button class="btn primary" type="submit">Post update</button></div></form></div></section>
     ${events.length?`<section class="panel"><div class="panel-head"><h3>Activity history</h3></div><div class="panel-body">${events.map(e=>`<div class="journal-item"><span class="task-check">↻</span><div><strong>${esc(e.event_type)}</strong><p>${esc(JSON.stringify(e.after_data||{}))}</p><small>${niceDate(e.created_at)}</small></div></div>`).join('')}</div></section>`:''}</div>
     <aside><section class="panel"><div class="panel-head"><h3>${term('Task details','Quest details')}</h3></div><div class="panel-body"><div class="info-list"><div class="info-pair"><span class="key">Status</span>${tag(t.status,fmtStatus(t.status))}</div><div class="info-pair"><span class="key">Assigned to</span><span class="val">${esc(nameFor(t.assignee_id))}</span></div><div class="info-pair"><span class="key">Reviewer</span><span class="val">${esc(nameFor(t.reviewer_id))}</span></div><div class="info-pair"><span class="key">Due date</span><span class="val">${niceDate(t.due_date)}</span></div><div class="info-pair"><span class="key">Priority</span>${tag(t.priority,priorityNames[t.priority])}</div><div class="info-pair"><span class="key">Experience</span><span class="val">✦ ${xp} XP</span></div></div>
-    <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:18px;display:grid;gap:8px">${actions.length?actions.map(([st,label],i)=>`<button class="btn ${i===0?'primary':''} block" data-action="status" data-value="${st}" data-id="${t.id}">${esc(label)}</button>`).join(''):`<small style="text-align:center">No available transitions</small>`}${manager?`<button class="btn block" data-action="modal" data-value="edit-task">✎ Edit details</button>`:''}</div></div></section>
+    <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:18px;display:grid;gap:8px">${actions.length?actions.map(([st,label],i)=>`<button class="btn ${i===0?'primary':''} block" data-action="status" data-value="${st}" data-id="${t.id}">${esc(label)}</button>`).join(''):`<small style="text-align:center">No available transitions</small>`}${manager?`<button class="btn block" data-action="modal" data-value="edit-task">✎ Edit details</button>${t.visibility!=='restricted'?`<button class="btn block" data-action="modal" data-value="save-template">Save as template</button>`:''}`:''}</div></div></section>
     <div class="panel" style="margin-top:20px"><div class="panel-head"><h3>What counts as done?</h3></div><div class="panel-body"><p class="muted" style="font-size:12px">Complete the objectives, log verification, then submit for review. Experience is granted only when work is approved.</p></div></div></aside></div>`;
   }
   function teamPage(){const members=s.orgMembers.filter(m=>m.status==='active');return pageTitle(term('Team workspace','Party management'),'See workload, ownership, and collaboration across your authorized workspaces.',isAdmin()?`<button class="btn primary" data-action="modal" data-value="invite">＋ Invite member</button>`:'')+`<div class="panel"><div class="panel-head"><h3>Department members</h3><small>${s.departmentMembers.length} scoped memberships</small></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Member</th><th>Department</th><th>Role</th><th>Assigned work</th></tr></thead><tbody>${s.departmentMembers.map(m=>`<tr><td class="strong">${esc(nameFor(m.user_id))}</td><td>${esc(deptFor(m.department_id)?.name||'Department')}</td><td>${tag(m.role,m.role)}</td><td>${s.tasks.filter(t=>t.assignee_id===m.user_id&&t.status!=='complete').length} open</td></tr>`).join('')||`<tr><td colspan="4">${empty('♧','No team members','Members will appear once invited.')}</td></tr>`}</tbody></table></div></div>`;}
@@ -578,8 +606,9 @@
   function login(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Meaningful work, real progress</div><h1>Your work is an <em>adventure.</em></h1><p>Plan projects. Rally your team. Make every accomplishment count. One workspace, two ways to experience progress.</p><div class="login-points"><span>✓ Department workspaces</span><span>✓ Verified progress</span><span>✓ Optional RPG mode</span></div></div><div class="login-foot">QuestBoard · ${esc(cfg.buildLabel||'Pilot')}</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>${signupMode?'Create your account':'Welcome to QuestBoard'}</h2><p>${signupMode?'Step 1 · Continue with Google to create your account. Then create an organization and add its departments.':'Sign in to your organizations, or create an account to start your own.'}</p><button class="btn block" data-action="signup-mode">${signupMode?'Already have an account? Sign in':'New here? Sign up'}</button>${invitationNotice()}${authError?`<div class="auth-error" role="alert">${esc(authError)}</div>`:''}<button class="auth-provider" data-action="login" data-value="azure" ${!providerEnabled('azure')||authPending?'disabled':''}><span class="provider-icon ms">▦</span>${providerEnabled('azure')?'Continue with Microsoft':'Microsoft sign-in unavailable'}</button><button class="auth-provider" data-action="login" data-value="google" ${!providerEnabled('google')||authPending?'disabled':''}><span class="provider-icon google">G</span>${providerEnabled('google')?'Continue with Google':'Google sign-in unavailable'}</button>${authPending?'<p role="status">Opening sign-in…</p>':''}<div class="auth-divider">OR EXPLORE FIRST</div><button class="btn demo-btn" data-action="demo">✦ Explore sample workspace</button>${signOutFailed?'<button class="btn" data-action="logout">Retry sign out</button>':''}<div class="auth-fine">Google handles your sign-in securely. To accept an invitation, use the invited email address. Demo data is fictional and not saved.</div></div></div></div>`;}
   function modalHTML(){if(!s.modal)return '';let content='',title='';
     if(s.modal==='organization'){title='Create organization';content=`<div class="modal-body">${organizationForm()}</div>`;}
+    if(s.modal==='save-template'){const task=taskFor(s.taskId);title='Save task template';content=`<form data-form="save-template" data-request="${esc(s.taskRequest)}"><div class="modal-body"><p>Reuse this task’s instructions, priority, XP, and checklist in this project. Choose an owner when creating each task.</p><div class="form-field"><label for="template-name">Template name</label><input id="template-name" name="name" required maxlength="120" value="${esc(task.title.slice(0,120))}"></div><div class="form-field"><label for="template-days">Due after how many days?</label><input id="template-days" type="number" name="due_days" min="0" max="3650" step="1"><small>Leave blank to choose a due date each time. Enter 0 for the creation day.</small></div></div>${modalFooter('Save template')}</form>`;}
     if(s.modal==='project'){title=term('Create a project','Begin a campaign');content=`<form data-form="project"><div class="modal-body"><div class="form-field"><label>Project name</label><input name="title" required maxlength="140" placeholder="e.g. Network Infrastructure Modernization"></div><div class="form-field"><label>Goal / description</label><textarea name="summary" maxlength="1200" placeholder="What outcome are we trying to achieve?"></textarea></div><div class="form-grid"><div class="form-field"><label>Department</label><select name="department_id" required>${managedDepartments().map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></div><div class="form-field"><label>Target date</label><input type="date" name="target_date"></div></div><div class="form-field"><label>Visibility</label><select name="visibility"><option value="department">Department private</option><option value="invited">Invited project members</option><option value="restricted">Restricted project</option></select><small class="field-hint">Cross-department access requires explicit project membership.</small></div></div>${modalFooter('Create project')}</form>`;}
-    if(s.modal==='task'){const selectedProject=s.candidateProject||s.projectId||managedProjects()[0]?.id;title=term('Add a task','Post a quest');content=`<form data-form="task"><div class="modal-body"><div class="form-field"><label>Task title</label><input name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label>Expected outcome</label><textarea name="description" maxlength="2500" placeholder="What does success look like?"></textarea></div><div class="form-field"><label>Project</label><select name="project_id" id="task-project-select" required>${managedProjects().map(p=>`<option value="${p.id}" ${p.id===selectedProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label for="creation-prerequisite">Depends on (optional)</label><select id="creation-prerequisite" name="prerequisite_id">${creationDependencyOptions(selectedProject)}</select><small class="field-hint">Choose a task that must finish first. You can add more prerequisites after creation.</small></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date"></div><div class="form-field"><label>Assign to</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions(selectedProject)}</select></div><div class="form-field"><label>XP on approval</label><select name="xp_reward"><option value="15">15 · Small</option><option value="30" selected>30 · Standard</option><option value="60">60 · Complex</option><option value="100">100 · Major</option></select></div></div></div>${candidateNotice()}${modalFooter('Create task')}</form>`;}
+    if(s.modal==='task'){const selectedProject=s.candidateProject||s.projectId||managedProjects()[0]?.id;title=term('Add a task','Post a quest');content=`<form data-form="task" data-request="${esc(s.taskRequest)}" data-template="${esc(s.creationTemplate||'')}"><div class="modal-body">${creationTemplate()?`<p class="template-notice">Using ${esc(creationTemplate().name)} · ${creationTemplate().checklist.length} checklist items will be added.</p>`:''}<div class="form-field"><label>Task title</label><input name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label>Expected outcome</label><textarea name="description" maxlength="2500" placeholder="What does success look like?"></textarea></div><div class="form-field"><label>Project</label><select name="project_id" id="task-project-select" required>${managedProjects().filter(p=>!creationTemplate()||p.id===creationTemplate().project_id).map(p=>`<option value="${p.id}" ${p.id===selectedProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label for="creation-prerequisite">Depends on (optional)</label><select id="creation-prerequisite" name="prerequisite_id">${creationDependencyOptions(selectedProject)}</select><small class="field-hint">Choose a task that must finish first. You can add more prerequisites after creation.</small></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date"></div><div class="form-field"><label>Assign to</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions(selectedProject)}</select></div><div class="form-field"><label>XP on approval</label><select name="xp_reward"><option value="15">15 · Small</option><option value="30" selected>30 · Standard</option><option value="60">60 · Complex</option><option value="100">100 · Major</option></select></div></div></div>${candidateNotice()}${modalFooter('Create task')}</form>`;}
     if(s.modal==='edit-task'){const t=taskFor(s.taskId);title='Edit task';content=`<form data-form="edit-task"><div class="modal-body"><div class="form-field"><label>Title</label><input name="title" required maxlength="160" value="${esc(t.title)}"></div><div class="form-field"><label>Description</label><textarea name="description">${esc(t.description)}</textarea></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority">${Object.entries(priorityNames).map(([k,v])=>`<option value="${k}" ${t.priority===k?'selected':''}>${v}</option>`).join('')}</select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date" value="${esc(t.due_date||'')}"></div><div class="form-field"><label>Assignee</label><select name="assignee_id"><option value="">Unassigned</option>${memberOptions(t.project_id,t.assignee_id,t.id)}</select></div><div class="form-field"><label>Reviewer</label><select name="reviewer_id"><option value="">Project lead</option>${memberOptions(t.project_id,t.reviewer_id,t.id)}</select></div></div></div>${candidateNotice()}${modalFooter('Save changes')}</form>`;}
     if(s.modal==='department'){title=s.departments.length?'Create department':'Step 3 · Add your first department';content=`<form data-form="department"><div class="modal-body"><div class="form-field"><label>Department name</label><input name="name" required maxlength="120" placeholder="e.g. Facilities"></div><div class="form-field"><label>Color</label><input name="color" type="color" value="#658be7" style="height:45px"></div></div>${modalFooter('Create department')}</form>`;}
     if(s.modal==='invite'){title='Invite a team member';content=`<form data-form="invite"><div class="modal-body"><div class="form-field"><label>Email address</label><input name="invited_email" type="email" required placeholder="person@university.edu"></div><div class="form-field"><label>Access scope</label><select name="scope" id="invite-scope"><option value="organization">Organization member</option>${s.departments.map(d=>`<option value="dept:${d.id}">Department · ${esc(d.name)}</option>`).join('')}${s.projects.map(p=>`<option value="project:${p.id}">Project · ${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label>Role</label><select name="invite_role" id="invite-role"><option value="member">Organization member</option></select></div><div class="invite-box"><p>After creating the invitation, copy its secure link to share with the recipient. Automatic invitation emails are not enabled in this pilot.</p></div></div>${modalFooter('Create invitation')}</form>`;}
@@ -686,6 +715,22 @@
     if(action==='project'){if(s.projectId!==id)Object.assign(s,{projectOwner:'all',projectPriority:'all',projectReadiness:'all'});s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
     if(action==='task'){s.taskId=id;s.nav='task';s.menuOpen=false;render();return;}
     if(action==='filter'){s.filter=v;render();return;}
+    if(action==='use-template'){
+      const template=s.templates.find(t=>t.id===id&&!t.archived&&canManage(t.project_id));
+      if(!template)return;
+      s.creationTemplate=id;s.projectId=template.project_id;
+      await handleClick({dataset:{action:'modal',value:'task',template:id}});
+      return;
+    }
+    if(action==='archive-template'){
+      const template=s.templates.find(t=>t.id===id&&canManage(t.project_id));
+      if(!template)return;
+      await withBusy(async()=>{
+        if(s.demo)template.archived=v==='true';
+        else await getResult(api.from('qb_task_templates').update({archived:v==='true'}).eq('id',id));
+        await refresh();toast(v==='true'?'Template archived':'Template restored');
+      });return;
+    }
     if(action==='modal'){
       if(v==='organization'&&(!s.user||s.demo||s.loading))return;
       if(v==='edit-task'&&id){
@@ -693,12 +738,18 @@
         if(!task||!canManage(task.project_id))return;
         s.taskId=id;
       }
+      if(v==='save-template'){
+        const task=taskFor(s.taskId);
+        if(!task||!canManage(task.project_id)||task.visibility==='restricted')return;
+      }
+      if(v==='task'){s.creationTemplate=a.dataset.template||null;s.taskRequest=uid();}
+      if(v==='save-template')s.taskRequest=uid();
       s.modal=v;
       if(['task','edit-task'].includes(v)){
         const task=v==='edit-task'?taskFor(s.taskId):null;
         const projectId=task?.project_id||managedProjects().find(p=>p.id===s.projectId)?.id||managedProjects()[0]?.id;
         s.candidateProject=projectId;s.candidateTask=task?.id||null;s.candidateRows=[];s.candidateError=null;s.candidatesLoading=true;
-        render();await loadAssignmentCandidates(projectId,task?.id||null);
+        render();if(v==='task')templateDefaults();await loadAssignmentCandidates(projectId,task?.id||null);
       }else{candidateRequest++;render();}
       return;
     }
@@ -758,9 +809,19 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         const row={project_id:get('project_id'),title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:s.user.id,xp_reward:get('xp_reward')===''?30:Number(get('xp_reward')),created_by:s.user.id};
         const prerequisite=get('prerequisite_id');
         if(prerequisite&&!s.tasks.some(t=>t.id===prerequisite&&t.project_id===row.project_id))throw Error('Choose a prerequisite from this project');
-        if(s.demo){row.id=uid();row.status='backlog';row.created_at=new Date().toISOString();s.tasks.unshift(row);if(prerequisite)await setDependency(row.id,prerequisite,true);s.taskId=row.id;}
+        const template=form.dataset.template?s.templates.find(t=>t.id===form.dataset.template&&!t.archived&&t.project_id===row.project_id):null;
+        if(form.dataset.template&&!template)throw Error('Template unavailable. Close this form and try again.');
+        if(s.demo){row.id=uid();row.status='backlog';row.created_at=new Date().toISOString();s.tasks.unshift(row);if(template){row.source_template_id=template.id;s.checklist.push(...template.checklist.map((title,position)=>({id:uid(),task_id:row.id,title,position,done:false})));}if(prerequisite)await setDependency(row.id,prerequisite,true);s.taskId=row.id;}
+        else if(template){s.taskId=await getResult(api.rpc('qb_create_template_task',{p_template:template.id,p_request:form.dataset.request,p_title:row.title,p_description:row.description,p_priority:row.priority,p_due_date:row.due_date,p_assignee:row.assignee_id,p_xp_reward:row.xp_reward,p_prerequisite:prerequisite||null}));}
         else{s.taskId=await getResult(api.rpc('qb_create_task',{p_project:row.project_id,p_title:row.title,p_description:row.description,p_priority:row.priority,p_due_date:row.due_date,p_assignee:row.assignee_id,p_xp_reward:row.xp_reward,p_prerequisite:prerequisite||null}));}
         s.nav='task';toast('Task created');
+      }else if(type==='save-template'){
+        const task=taskFor(s.taskId),days=get('due_days')===''?null:Number(get('due_days'));
+        if(!task||!canManage(task.project_id)||task.visibility==='restricted')throw Error('Task unavailable');
+        if(days!==null&&(!Number.isInteger(days)||days<0||days>3650))throw Error('Enter a whole number of days from 0 to 3650');
+        if(s.demo)s.templates.push({id:uid(),project_id:task.project_id,name:get('name'),title:task.title,description:task.description,priority:task.priority,xp_reward:task.xp_reward,due_days:days,checklist:s.checklist.filter(c=>c.task_id===task.id).map(c=>c.title),archived:false});
+        else await getResult(api.rpc('qb_save_task_template',{p_task:task.id,p_name:get('name'),p_due_days:days,p_request:form.dataset.request}));
+        toast('Template saved. Find it on the project page.');
       }else if(type==='edit-task'){
         const row={title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:get('reviewer_id')||null,updated_at:new Date().toISOString()};
         if(s.demo)Object.assign(taskFor(s.taskId),row);else await getResult(api.from('qb_tasks').update(row).eq('id',s.taskId));toast('Task updated');

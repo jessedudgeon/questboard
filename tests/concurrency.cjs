@@ -44,6 +44,18 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    values($1,'organization','member',$2,$3) returning id`,[ids.org,'questboard-viewer-'+ids.viewer+'@example.invalid',ids.admin])).rows[0].id;}
   async function finishWait(wait,code){await blocked(admin,pid);await a.query('commit');const r=await wait;if(code)assert.equal(r.error?.code,code,r.error?.message);else assert.equal(r.error,undefined);await b.query(code?'rollback':'commit');}
 
+  await scenario('Concurrent template creation retries create one task and checklist',async ids=>{
+   const request=(await admin.query('select gen_random_uuid() id')).rows[0].id;
+   await signed(a,ids.admin);
+   const template=(await a.query("select qb_save_task_template($1,'Repeat work',7,gen_random_uuid()) id",[ids.task])).rows[0].id;
+   await a.query('commit');
+   await signed(a,ids.admin);await signed(b,ids.admin);
+   const sql="select qb_create_template_task($1,$2,'Repeat','Outcome','normal',null,null,30,null) id";
+   const args=[template,request];
+   await a.query(sql,args);await finishWait(pending(b,sql,args));
+   assert.equal((await admin.query('select count(*)::int n from qb_tasks where id=$1',[request])).rows[0].n,1);
+   assert.equal((await admin.query('select count(*)::int n from qb_checklist where task_id=$1',[request])).rows[0].n,1);
+  });
   await scenario('Concurrent organization signup retries create exactly one organization',async ids=>{
    await signed(a,ids.admin);await signed(b,ids.admin);
    const request='cc000000-0000-0000-0000-000000000001';
