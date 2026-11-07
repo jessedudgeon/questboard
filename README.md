@@ -133,3 +133,17 @@ Task access is checked on every read, including after suspension or visibility c
 Apply `20261107125642_questboard_notification_inbox.sql` before deploying this frontend.
 The additive migration creates RLS-protected notifications, trigger-only producers and
 invoker-rights list/count/read RPCs. It does not alter MeetingDesk objects or existing tasks.
+
+## Project portfolio reports
+
+Reports opens a portfolio snapshot with project health, task signals, missed and upcoming
+milestones, and a CSV export. Department, project search and health filters apply to the
+cards, totals and export together. Click a task count to inspect its tasks; open a milestone
+or project to continue planning. Closed projects are optional. Progress & recognition
+retains the existing completion and XP view.
+
+Health is rule-based, not a forecast. Past targets, overdue work, blocked/waiting tasks and
+missed milestones flag attention. Unassigned/undated work, pending review and paused
+projects flag watch. Cancelled tasks are excluded from completion percentages. All figures
+use the current authorized workspace snapshot; hidden tasks are not counted. No schema
+migration or additional data access is required for this build.

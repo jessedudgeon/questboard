@@ -377,3 +377,36 @@ test('Inbox supports unread filters, page read and task links on mobile',async({
  await page.locator('.inbox-open').first().click();
  await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();
 });
+
+test('Portfolio filters, task drill-down and CSV export work on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/');
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await page.getByRole('button',{name:'Explore sample workspace'}).click();
+ await page.getByRole('button',{name:'Open menu',exact:true}).click();
+ await page.locator('[data-action="nav"][data-value="reports"]').click();
+ await expect(page.locator('.portfolio-card').first()).toBeVisible();
+ const project=await page.locator('.portfolio-card h2').first().textContent();
+ await page.getByLabel('Search projects and tasks').fill(project);
+ await expect(page.locator('.portfolio-card')).toHaveCount(1);
+ await page.locator('.portfolio-card [data-action="report-detail"][data-value="open"]').click();
+ await expect(page.locator('.report-detail')).toBeVisible();
+ await expect(page.locator('.report-task').first()).toBeVisible();
+ const taskTitle=await page.locator('.report-task button').first().textContent();
+ const downloadEvent=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Export project CSV',exact:true}).click();
+ const download=await downloadEvent;
+ expect(download.suggestedFilename()).toMatch(/^questboard-project-health-\d{4}-\d{2}-\d{2}\.csv$/);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+ await page.locator('.report-task button').first().click();
+ await expect(page.getByRole('heading',{name:taskTitle,exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Open menu',exact:true}).click();
+ await page.locator('[data-action="nav"][data-value="reports"]').click();
+ await page.getByLabel('Health',{exact:true}).selectOption('closed');
+ await expect(page.locator('.portfolio-card')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Export project CSV',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Progress & recognition',exact:true}).click();
+ await expect(page.getByText('Experience earned',{exact:true})).toBeVisible();
+});
