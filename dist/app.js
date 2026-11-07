@@ -75,6 +75,11 @@
       <section class="panel inbox-list" aria-busy="${inbox.loading}" aria-label="Notifications">${inbox.loading?'<div class="panel-body" role="status">Loading notifications…</div>':inbox.rows.length?inbox.rows.map(n=>`<article class="inbox-item ${n.read_at?'':'is-unread'}"><button class="inbox-open" data-action="inbox-open" data-id="${esc(n.id)}"><span>${esc(notificationLabels[n.kind]||'Task update')} · ${n.read_at?'Read':'Unread'}</span><strong>${esc(n.task_title)}</strong><span>${esc(n.project_title)} · ${esc(new Date(n.created_at).toLocaleString())}</span></button><button class="btn sm" data-action="inbox-read" data-id="${esc(n.id)}" data-value="${n.read_at?'false':'true'}">Mark ${n.read_at?'unread':'read'}</button></article>`).join(''):empty('✓','No notifications here','Try All or adjust your workspace and search filters. New notifications appear after assignments, reviews, or task updates.')}</section>
       <div class="inbox-pagination"><button class="btn sm" data-action="inbox-newer" ${inbox.loading||inbox.cursors.length===1?'disabled':''}>Newer</button><span>Page ${inbox.cursors.length}</span><button class="btn sm" data-action="inbox-older" ${inbox.loading||!inbox.more?'disabled':''}>Older</button></div>`;
   }
+  function renderInbox(){
+    const input=document.activeElement,searching=input?.id==='search',caret=searching?input.selectionStart:null;
+    render();
+    if(searching){const search=document.getElementById('search');search?.focus();search?.setSelectionRange(caret,caret);}
+  }
   async function loadInbox(mode='reset'){
     if(!s.org||s.loading||s.nav!=='inbox')return;
     if(mode==='older'){
@@ -84,7 +89,7 @@
       if(inbox.cursors.length===1)return;inbox.cursors.pop();
     }else if(mode==='reset')inbox.cursors=[null];
     const generation=epoch,request=++inboxRequest,cursor=inbox.cursors.at(-1);
-    inbox.loading=true;inbox.error=null;inbox.rows=[];inbox.more=false;render();
+    inbox.loading=true;inbox.error=null;inbox.rows=[];inbox.more=false;renderInbox();
     try{
       let rows,summary;
       if(s.demo){
@@ -100,7 +105,7 @@
       if(!Array.isArray(rows))throw Error('Invalid notification response');
       inbox.rows=rows.slice(0,50);inbox.more=rows.length>50;inbox.unread=Number(summary?.[0]?.unread_count||0);
     }catch(error){if(generation===epoch&&request===inboxRequest&&!error.stale)inbox.error=true;}
-    finally{if(generation===epoch&&request===inboxRequest){inbox.loading=false;render();}}
+    finally{if(generation===epoch&&request===inboxRequest){inbox.loading=false;renderInbox();}}
   }
   function scheduleInboxSearch(){
     clearTimeout(inboxTimer);inboxRequest++;
