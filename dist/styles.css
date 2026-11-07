@@ -90,3 +90,12 @@
 .archived-milestones { margin-top: 1rem; }
 .archived-milestones > summary { margin-bottom: 1rem; }
 .calendar-event.milestone-target { border-left: 3px solid #b08ee7; }
+
+.inbox-list { overflow: hidden; }
+.inbox-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--border); }
+.inbox-item:last-child { border-bottom: 0; }
+.inbox-item.is-unread { border-left: 4px solid #6585e5; }
+.inbox-open { flex: 1; min-width: 0; display: grid; gap: .5rem; background: transparent; color: var(--text); border: 0; text-align: left; font: inherit; cursor: pointer; overflow-wrap: anywhere; padding: .25rem; }
+.inbox-open span { color: var(--muted); font-size: .8rem; }
+.inbox-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
+@media(max-width:560px) { .inbox-item { flex-wrap: wrap; }.inbox-open { flex-basis: 100%; } }

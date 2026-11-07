@@ -353,3 +353,27 @@ test('Milestones connect project planning, task editing and calendar on mobile',
  await expect(page.getByRole('button',{name:'Add task',exact:true})).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('Inbox supports unread filters, page read and task links on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/');
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await page.getByRole('button',{name:'Explore sample workspace'}).click();
+ await page.getByRole('button',{name:'Open menu',exact:true}).click();
+ await page.locator('[data-action="nav"][data-value="inbox"]').click();
+ await expect(page.locator('.inbox-item')).toHaveCount(3);
+ await page.locator('[data-action="inbox-filter"][data-value="unread"]').click();
+ await expect(page.locator('.inbox-item')).toHaveCount(2);
+ await page.getByRole('button',{name:'Mark this page read',exact:true}).click();
+ await expect(page.locator('.inbox-item')).toHaveCount(0);
+ await page.locator('[data-action="inbox-filter"][data-value="all"]').click();
+ await expect(page.locator('.inbox-item')).toHaveCount(3);
+ await page.getByRole('button',{name:'Mark unread',exact:true}).first().click();
+ await expect(page.locator('.inbox-item.is-unread')).toHaveCount(1);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+ const title=await page.locator('.inbox-open strong').first().textContent();
+ await page.locator('.inbox-open').first().click();
+ await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();
+});

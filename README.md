@@ -120,3 +120,16 @@ reviewed Session 2, 3 and 4 migrations before enabling the Session 4 Pages gate
 queries and stale-request cancellation. No new migration; the Session 4 schema gate still
 applies. `npm run test:browser` runs synthetic Chromium integration tests; install its
 browser with `npx playwright install --with-deps chromium`. Tests never sign into production.
+
+## Notification inbox
+
+Inbox shows assignments, review requests and decisions, reopened tasks, due-date changes,
+and journal updates. Notifications begin after deployment; historical activity is not
+backfilled. Self-actions do not notify the actor. Use Refresh inbox to fetch new activity.
+Unread counts are organization-wide; department and search filters narrow the list.
+The inbox uses stable pages of 50 with individual and page-level read controls.
+Task access is checked on every read, including after suspension or visibility changes.
+
+Apply `20261107125642_questboard_notification_inbox.sql` before deploying this frontend.
+The additive migration creates RLS-protected notifications, trigger-only producers and
+invoker-rights list/count/read RPCs. It does not alter MeetingDesk objects or existing tasks.
