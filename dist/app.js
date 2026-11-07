@@ -59,9 +59,66 @@
     }catch{if(generation===epoch)authError='Unable to start sign-in. Check your connection and try again. If it continues, contact your administrator.';}
     finally{authPending=false;if(generation===epoch)render();}
   }
+  let inboxRequest=0,inboxTimer=null;
+  const inbox={rows:[],unread:0,onlyUnread:false,loading:false,error:null,more:false,cursors:[null],demoRows:[]};
+  const notificationLabels={assigned:'Assigned to you',review_requested:'Ready for your review',completed:'Task approved',changes_requested:'Changes requested',task_update:'New journal update',schedule_changed:'Due date changed',reopened:'Task reopened'};
+  function resetInbox(resetFilters){
+    inboxRequest++;clearTimeout(inboxTimer);
+    Object.assign(inbox,{rows:[],unread:0,loading:false,error:null,more:false,cursors:[null],demoRows:[]});
+    if(resetFilters)inbox.onlyUnread=false;
+  }
+  function inboxPage(){
+    const controls=`<button class="btn sm" data-action="inbox-refresh" ${inbox.loading?'disabled':''}>Refresh inbox</button><button class="btn sm" data-action="inbox-read-page" ${inbox.loading||!inbox.rows.some(n=>!n.read_at)?'disabled':''}>Mark this page read</button>`;
+    return pageTitle('Inbox','Assignments, reviews, and updates for this organization.',controls)+
+      `<div class="filter-row" role="group" aria-label="Notification filter">${[['all','All'],['unread','Unread']].map(([value,label])=>`<button class="filter-pill ${inbox.onlyUnread===(value==='unread')?'active':''}" data-action="inbox-filter" data-value="${value}" aria-pressed="${inbox.onlyUnread===(value==='unread')}">${label}</button>`).join('')}<span role="status">${inbox.unread===null?'Unread count unavailable':inbox.unread+' unread in this organization'}</span></div>
+      ${inbox.error?`<div class="auth-error" role="alert">Unable to load notifications. Use Refresh inbox to retry.</div>`:''}
+      <section class="panel inbox-list" aria-busy="${inbox.loading}" aria-label="Notifications">${inbox.loading?'<div class="panel-body" role="status">Loading notifications…</div>':inbox.rows.length?inbox.rows.map(n=>`<article class="inbox-item ${n.read_at?'':'is-unread'}"><button class="inbox-open" data-action="inbox-open" data-id="${esc(n.id)}"><span>${esc(notificationLabels[n.kind]||'Task update')} · ${n.read_at?'Read':'Unread'}</span><strong>${esc(n.task_title)}</strong><span>${esc(n.project_title)} · ${esc(new Date(n.created_at).toLocaleString())}</span></button><button class="btn sm" data-action="inbox-read" data-id="${esc(n.id)}" data-value="${n.read_at?'false':'true'}">Mark ${n.read_at?'unread':'read'}</button></article>`).join(''):empty('✓','No notifications here','Try All or adjust your workspace and search filters. New notifications appear after assignments, reviews, or task updates.')}</section>
+      <div class="inbox-pagination"><button class="btn sm" data-action="inbox-newer" ${inbox.loading||inbox.cursors.length===1?'disabled':''}>Newer</button><span>Page ${inbox.cursors.length}</span><button class="btn sm" data-action="inbox-older" ${inbox.loading||!inbox.more?'disabled':''}>Older</button></div>`;
+  }
+  function renderInbox(){
+    const input=document.activeElement,searching=input?.id==='search',caret=searching?input.selectionStart:null;
+    render();
+    if(searching){const search=document.getElementById('search');search?.focus();search?.setSelectionRange(caret,caret);}
+  }
+  async function loadInbox(mode='reset'){
+    if(!s.org||s.loading||s.nav!=='inbox')return;
+    if(mode==='older'){
+      const last=inbox.rows.at(-1);if(!inbox.more||!last)return;
+      inbox.cursors.push({created_at:last.created_at,id:last.id});
+    }else if(mode==='newer'){
+      if(inbox.cursors.length===1)return;inbox.cursors.pop();
+    }else if(mode==='reset')inbox.cursors=[null];
+    const generation=epoch,request=++inboxRequest,cursor=inbox.cursors.at(-1);
+    inbox.loading=true;inbox.error=null;inbox.rows=[];inbox.more=false;renderInbox();
+    try{
+      let rows,summary;
+      if(s.demo){
+        const query=s.query.trim().toLowerCase();
+        const all=inbox.demoRows.filter(n=>taskFor(n.task_id)).map(n=>({...n,task_title:taskFor(n.task_id).title,project_title:projectFor(taskFor(n.task_id).project_id).title,project_id:taskFor(n.task_id).project_id}));
+        summary=[{unread_count:all.filter(n=>!n.read_at).length}];
+        rows=all.filter(n=>(!inbox.onlyUnread||!n.read_at)&&deptVisible(projectFor(n.project_id).department_id)&&(!query||(n.task_title+' '+n.project_title).toLowerCase().includes(query))&&(!cursor||n.created_at<cursor.created_at||n.created_at===cursor.created_at&&n.id<cursor.id)).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id)).slice(0,51);
+      }else [rows,summary]=await Promise.all([
+        getResult(api.rpc('qb_notification_page',{p_org:s.org.id,p_unread:inbox.onlyUnread,p_department:s.workspace==='all'?null:s.workspace,p_query:s.query.trim(),p_before:cursor?.created_at||null,p_before_id:cursor?.id||null})),
+        getResult(api.rpc('qb_notification_summary',{p_org:s.org.id}))
+      ]);
+      if(generation!==epoch||request!==inboxRequest||s.nav!=='inbox')return;
+      if(!Array.isArray(rows))throw Error('Invalid notification response');
+      inbox.rows=rows.slice(0,50);inbox.more=rows.length>50;inbox.unread=Number(summary?.[0]?.unread_count||0);
+    }catch(error){if(generation===epoch&&request===inboxRequest&&!error.stale)inbox.error=true;}
+    finally{if(generation===epoch&&request===inboxRequest){inbox.loading=false;renderInbox();}}
+  }
+  function scheduleInboxSearch(){
+    clearTimeout(inboxTimer);inboxRequest++;
+    inboxTimer=setTimeout(()=>{if(s.nav==='inbox')loadInbox();},250);
+  }
+  async function readNotifications(ids,read){
+    if(s.demo){for(const n of inbox.demoRows)if(ids.includes(n.id))n.read_at=read?new Date().toISOString():null;inbox.unread=inbox.demoRows.filter(n=>!n.read_at).length;}
+    else await getResult(api.rpc('qb_read_notifications',{p_ids:ids,p_read:read}));
+  }
   const formEpoch=new WeakMap();
   const workspaceArrays=['departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates','milestones'];
   function invalidateWorkspace(resetNavigation=true){
+    resetInbox(resetNavigation);
     epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
     candidateRequest++;membershipRequest++;
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
@@ -201,6 +258,7 @@
     s.checklist=[{id:'c1',task_id:'t1',title:'Record model and serial',done:true},{id:'c2',task_id:'t1',title:'Record IP and firmware',done:true},{id:'c3',task_id:'t1',title:'Verify uplink ports',done:false},{id:'c4',task_id:'t5',title:'Validate image and license state',done:false},{id:'c5',task_id:'t5',title:'Document maintenance plan',done:false}];
     s.updates=[{id:'u1',task_id:'t5',author_id:'demo-user',kind:'blocker',body:'Image authentication is failing. Next action: validate download and licensing state.',created_at:'2026-10-24T15:00:00Z'},{id:'u2',task_id:'t1',author_id:'sam',kind:'action',body:'Completed physical inspection of the first closet. Uplinks still need verification.',created_at:'2026-10-25T14:00:00Z'}];
     s.events=[];s.xp=[{task_id:'t2',user_id:'demo-user',amount:30},{task_id:'t8',user_id:'demo-user',amount:40}];s.invitations=[];s.pendingInvitations=[];
+    inbox.demoRows=[{id:'sample-review',task_id:'t6',kind:'review_requested',created_at:'2026-11-07T12:00:00Z',read_at:null},{id:'sample-assignment',task_id:'t3',kind:'assigned',created_at:'2026-11-07T11:00:00Z',read_at:null},{id:'sample-update',task_id:'t5',kind:'task_update',created_at:'2026-11-07T10:00:00Z',read_at:'2026-11-07T10:05:00Z'}];inbox.unread=2;
     s.loading=false;s.nav='home';s.workspace='all';render();
   }
   async function loadLive(requestedOrg=s.org?.id||s.requestedOrg||rememberedOrg(s.user?.id),resetNavigation=false){
@@ -223,14 +281,15 @@
         pagedRows(()=>api.from('qb_projects').select('*').eq('org_id',org.id).order('created_at',{ascending:false}))
       ]);
       const projectIds=projects.map(p=>p.id),departmentIds=departments.map(d=>d.id);
-      const [departmentMembers,projectMembers,tasks,orgMembers,invitations,templates,milestones]=await Promise.all([
+      const [departmentMembers,projectMembers,tasks,orgMembers,invitations,templates,milestones,notificationSummary]=await Promise.all([
         scopedRows('qb_department_members','department_id',departmentIds),
         scopedRows('qb_project_members','project_id',projectIds),
         scopedRows('qb_tasks','project_id',projectIds,'*',q=>q.order('created_at',{ascending:false})),
         orgMembership.role==='admin'?pagedRows(()=>api.from('qb_org_members').select('*').eq('org_id',org.id),rowKeys.qb_org_members):Promise.resolve([]),
         orgMembership.role==='admin'?pagedRows(()=>api.from('qb_invitations').select('*').eq('org_id',org.id).order('created_at',{ascending:false})):Promise.resolve([]),
         scopedRows('qb_task_templates','project_id',projectIds),
-        scopedRows('qb_milestones','project_id',projectIds)
+        scopedRows('qb_milestones','project_id',projectIds),
+        getResult(api.rpc('qb_notification_summary',{p_org:org.id})).catch(()=>null)
       ]);
       const taskIds=tasks.map(t=>t.id);
       const [checklist,updates,events,xp,dependencies,dependencyReadiness]=await Promise.all([
@@ -251,6 +310,7 @@
       if(!current.length||current[0].role!==orgMembership.role){s.organizations=[];rememberOrg(user.id,null);throw Error('Organization access changed. Reload your workspace.');}
       if(generation!==epoch)return;
       Object.assign(s,{organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations,dependencies,dependencyReadiness,templates,milestones});
+      inbox.unread=notificationSummary===null?null:Number(notificationSummary?.[0]?.unread_count||0);
       rememberOrg(user.id,org.id);
       if(requestedOrg&&requestedOrg!==org.id)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:''});
       if(!departments.some(d=>d.id===s.workspace))s.workspace='all';
@@ -262,7 +322,7 @@
       const linked=s.org?.id===intent.org?taskFor(intent.task):null;
       if(linked){s.taskId=linked.id;s.projectId=linked.project_id;s.nav='task';}else linkUnavailable=true;
     }
-    render();if(linkUnavailable)toast('This task link is unavailable to your account.',true);return !s.lastError;
+    render();if(linkUnavailable)toast('This task link is unavailable to your account.',true);if(!s.lastError&&s.nav==='inbox')await loadInbox();return !s.lastError;
   }
   async function switchOrganization(id){
     if(s.demo||!s.user)return;
@@ -297,14 +357,14 @@
     const defs=[...navDefs];
     return `<div class="shell ${s.menuOpen?'menu-open':''}"><aside class="sidebar"><div class="brand"><span class="logo">✦</span><span>QuestBoard<small>WORK, REIMAGINED</small></span></div>
       <div class="sidebar-label">Workspace</div>${defs.slice(0,4).map(x=>navItem(x)).join('')}
-      <div class="sidebar-label">Collaboration</div>${defs.slice(4,7).map(x=>navItem(x)).join('')}
+      <div class="sidebar-label">Collaboration</div>${defs.slice(4,7).map(x=>navItem(x)).join('')}${navItem({id:'inbox',icon:'✉',pro:'Inbox',rpg:'Inbox'})}
       <div class="side-bottom">${membershipScopes().length?navItem(defs[7]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
       <main class="main">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
       <header class="topbar"><div class="top-left">${organizationSelector()}<button class="mobile-menu" data-action="menu" aria-label="Open menu">☰</button><select class="workspace-select" id="workspace-select" ${s.loading?'disabled':''} aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right"><label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
       <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():s.lastError?loadError():`${invitationNotice()}${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${pageContent()}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
   }
-  function navItem(x){return `<button class="nav-link ${s.nav===x.id?'active':''}" data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
-  function pageContent(){switch(s.nav){case'home':return dashboard();case'mywork':return workPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
+  function navItem(x){return `<button class="nav-link ${s.nav===x.id?'active':''}" data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='inbox'&&inbox.unread>0?`<span class="pill-count" aria-label="${inbox.unread} unread notifications">${inbox.unread}</span>`:''}${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
+  function pageContent(){switch(s.nav){case'home':return dashboard();case'inbox':return inboxPage();case'mywork':return workPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
   const pageTitle=(title,desc,actions='')=>`<div class="page-heading"><div><div class="eyebrow">${esc(s.org?.name||'QuestBoard')}</div><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p></div><div class="buttons">${actions}</div></div>`;
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
@@ -741,7 +801,7 @@
       return;
     }
     if(action==='dashboard-view'){if(['overview','personal','manager','planner'].includes(v)&&(!['manager','planner'].includes(v)||hasManagerDashboard())){s.dashboardView=v;render();root.querySelector(`[data-action="dashboard-view"][data-value="${v}"]`)?.focus();}return;}
-    if(action==='nav'){s.nav=v;s.filter='all';s.projectId=null;s.taskId=null;s.menuOpen=false;render();return;}
+    if(action==='nav'){inboxRequest++;clearTimeout(inboxTimer);s.nav=v;s.filter='all';s.projectId=null;s.taskId=null;s.menuOpen=false;render();if(v==='inbox')await loadInbox();return;}
     if(action==='calendar-month'){const current=calendarDate(s.calendarMonth)||new Date();const next=v==='today'?new Date():new Date(current.getFullYear(),current.getMonth()+Number(v),1,12);s.calendarMonth=dateKey(new Date(next.getFullYear(),next.getMonth(),1,12));render();const control=root.querySelector(`[data-action="calendar-month"][data-value="${v}"]`);control?.focus();return;}
     if(action==='menu'){s.menuOpen=!s.menuOpen;render();return;}
     if(action==='mode'){s.mode=v;localStorage.setItem('qb-mode',v);if(!s.demo&&s.user){api?.from('qb_profiles').update({preferred_mode:v}).eq('user_id',s.user.id).then(()=>{});}render();return;}
@@ -756,6 +816,26 @@
     if(action==='project'){if(s.projectId!==id)Object.assign(s,{projectMilestone:'all',projectOwner:'all',projectPriority:'all',projectReadiness:'all'});s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
     if(action==='task'){s.taskId=id;s.nav='task';s.menuOpen=false;render();return;}
     if(action==='filter'){s.filter=v;render();return;}
+    if(action==='inbox-filter'){
+      inbox.onlyUnread=v==='unread';await loadInbox();return;
+    }
+    if(action==='inbox-refresh'||action==='inbox-older'||action==='inbox-newer'){
+      await loadInbox(action==='inbox-older'?'older':action==='inbox-newer'?'newer':'reset');return;
+    }
+    if(action==='inbox-read'||action==='inbox-read-page'){
+      const ids=action==='inbox-read-page'?inbox.rows.filter(n=>!n.read_at).map(n=>n.id):inbox.rows.filter(n=>n.id===id).map(n=>n.id);
+      if(!ids.length)return;
+      await withBusy(async()=>{await readNotifications(ids,action==='inbox-read-page'||v==='true');await loadInbox('current');});return;
+    }
+    if(action==='inbox-open'){
+      const notification=inbox.rows.find(n=>n.id===id);if(!notification)return;
+      await withBusy(async()=>{
+        await readNotifications([id],true);await refresh();
+        const task=taskFor(notification.task_id);
+        if(!task){toast('This task is no longer available.',true);return;}
+        s.taskId=task.id;s.projectId=task.project_id;s.nav='task';render();
+      });return;
+    }
     if(action==='milestone'){
       const milestone=s.milestones.find(m=>m.id===id&&projectFor(m.project_id));
       if(!milestone)return;
@@ -920,8 +1000,8 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
       if(id==='planner-signal')s.plannerSignal=e.target.value;else s.plannerGroup=e.target.value;
       s.plannerCell=null;render();document.getElementById(id)?.focus();return;
     }
-    const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;render();}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
-  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
+    const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;render();if(s.nav==='inbox')loadInbox();}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     readAuthReturn();

@@ -44,6 +44,15 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    values($1,'organization','member',$2,$3) returning id`,[ids.org,'questboard-viewer-'+ids.viewer+'@example.invalid',ids.admin])).rows[0].id;}
   async function finishWait(wait,code){await blocked(admin,pid);await a.query('commit');const r=await wait;if(code)assert.equal(r.error?.code,code,r.error?.message);else assert.equal(r.error,undefined);await b.query(code?'rollback':'commit');}
 
+  await scenario('Concurrent notification reads preserve the first read timestamp',async ids=>{
+   const id=(await admin.query("insert into qb_notifications(org_id,task_id,recipient_id,kind) values($1,$2,$3,'assigned') returning id",[ids.org,ids.task,ids.viewer])).rows[0].id;
+   await signed(a,ids.viewer);await signed(b,ids.viewer);
+   assert.equal((await a.query('select qb_read_notifications(array[$1::uuid],true) n',[id])).rows[0].n,1);
+   const first=(await a.query('select read_at from qb_notifications where id=$1',[id])).rows[0].read_at;
+   const wait=pending(b,'select qb_read_notifications(array[$1::uuid],true) n',[id]);
+   await finishWait(wait);
+   assert.equal((await admin.query('select read_at from qb_notifications where id=$1',[id])).rows[0].read_at.toISOString(),first.toISOString());
+  });
   await scenario('Concurrent template creation retries create one task and checklist',async ids=>{
    const request=(await admin.query('select gen_random_uuid() id')).rows[0].id;
    await signed(a,ids.admin);
