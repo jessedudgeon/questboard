@@ -105,3 +105,6 @@
 @media(max-width:800px){.portfolio-grid{grid-template-columns:1fr}.report-task{grid-template-columns:1fr 1fr}.report-toolbar{align-items:flex-start;flex-direction:column}.report-toolbar label{flex-wrap:wrap}.portfolio-card{padding:16px}}
 
 .portfolio-card .text-link,.report-task .text-link{border:0;padding:0;background:transparent;color:var(--accent);font:inherit;cursor:pointer;text-align:left}.portfolio-card .text-link:hover,.report-task .text-link:hover{text-decoration:underline}.report-signal:hover{background:var(--surface2)}.mode-rpg .report-warning{color:#fca5a5}
+
+.project-history{margin-top:20px}.project-change{padding:18px 0;border-bottom:1px solid var(--border)}.project-change:last-child{border-bottom:0}.project-change header{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}.project-change header span{color:var(--muted);font-size:12px}.project-change dl{margin:14px 0 0}.project-change dl>div{margin-top:12px}.project-change dt{font-weight:700;margin-bottom:5px}.project-change dd{margin:3px 0;white-space:pre-wrap;overflow-wrap:anywhere}[data-project-settings-error]:not(:empty){color:var(--red);margin-top:16px}form[data-form="project-settings"] .field-hint{margin-top:12px}
+.detail-banner .banner-actions{flex-wrap:wrap}

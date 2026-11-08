@@ -147,3 +147,21 @@ missed milestones flag attention. Unassigned/undated work, pending review and pa
 projects flag watch. Cancelled tasks are excluded from completion percentages. All figures
 use the current authorized workspace snapshot; hidden tasks are not counted. No schema
 migration or additional data access is required for this build.
+
+## Project settings and change history
+
+Project managers and leads can edit a visible project's name, outcome, target date,
+and status from Project settings. Planned, active, paused, complete and archived are
+project-level labels: task workflow and access remain unchanged. A project can be restored
+by returning its status to active. Settings cannot change the organization, department,
+visibility or memberships.
+
+Saves check a revision under a database row lock. A stale form keeps its draft and explains
+how to reload before trying again. Refresh project fetches the current workspace. Change
+history shows the latest 50 settings changes, including before/after values and actor when
+that identity is available. History begins at rollout and follows current project access;
+clients cannot forge or modify entries. Unchanged saves do not create history.
+
+Apply `20261108112858_questboard_project_settings.sql` before deploying the frontend.
+The migration adds a project revision, immutable RLS-protected history, private triggers,
+and an invoker-rights save RPC. Existing project content and MeetingDesk data are preserved.

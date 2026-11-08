@@ -410,3 +410,38 @@ test('Portfolio filters, task drill-down and CSV export work on mobile',async({p
  await page.getByRole('button',{name:'Progress & recognition',exact:true}).click();
  await expect(page.getByText('Experience earned',{exact:true})).toBeVisible();
 });
+
+test('Project settings update lifecycle and preserve task history on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/');
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await page.getByRole('button',{name:'Explore sample workspace'}).click();
+ await page.locator('.project-card').first().click();
+ const taskCount=await page.locator('.board-task').count();
+ await page.getByRole('button',{name:'Project settings',exact:true}).click();
+ await page.getByLabel('Project name',{exact:true}).fill('Campus readiness');
+ await page.getByLabel('Desired outcome',{exact:true}).fill('Verified systems for the next semester');
+ await page.getByLabel('Project status',{exact:true}).selectOption('paused');
+ await page.getByLabel('Target date',{exact:true}).fill('2027-01-15');
+ await page.getByRole('button',{name:'Save project',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Campus readiness',exact:true})).toBeVisible();
+ await expect(page.locator('.detail-banner')).toContainText('PAUSED');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+ await expect(page.locator('.board-task')).toHaveCount(taskCount);
+ await page.getByRole('button',{name:'Change history',exact:true}).click();
+ await expect(page.locator('.project-change')).toHaveCount(1);
+ await expect(page.locator('.project-change')).toContainText('Campus readiness');
+ await expect(page.locator('.project-change')).toContainText('2027-01-15');
+ await page.locator('.breadcrumb button').click();
+ for(const status of ['archived','active']){
+  await page.getByRole('button',{name:'Project settings',exact:true}).click();
+  await page.getByLabel('Project status',{exact:true}).selectOption(status);
+  await page.getByRole('button',{name:'Save project',exact:true}).click();
+  await expect(page.locator('.detail-banner')).toContainText(status.toUpperCase());
+ }
+ await page.getByRole('button',{name:'Change history',exact:true}).click();
+ await expect(page.locator('.project-change')).toHaveCount(3);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});

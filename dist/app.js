@@ -115,10 +115,37 @@
     if(s.demo){for(const n of inbox.demoRows)if(ids.includes(n.id))n.read_at=read?new Date().toISOString():null;inbox.unread=inbox.demoRows.filter(n=>!n.read_at).length;}
     else await getResult(api.rpc('qb_read_notifications',{p_ids:ids,p_read:read}));
   }
+  const projectStatuses={planned:'Planned',active:'Active',paused:'Paused',complete:'Complete',archived:'Archived'};
+  let historyRequest=0;
+  const projectHistory={projectId:null,rows:[],loading:false,error:false};
+  function resetProjectHistory(){historyRequest++;Object.assign(projectHistory,{projectId:null,rows:[],loading:false,error:false});}
+  function projectSettingsForm(){
+    const p=projectFor(s.projectId);if(!p||!canManage(p.id))return '';
+    const open=s.tasks.filter(t=>t.project_id===p.id&&!['complete','cancelled'].includes(t.status)).length;
+    return `<form data-form="project-settings" data-project="${esc(p.id)}" data-revision="${p.revision||1}"><div class="modal-body"><div class="form-field"><label for="project-settings-title">Project name</label><input id="project-settings-title" name="title" required maxlength="160" value="${esc(p.title)}"></div><div class="form-field"><label for="project-settings-summary">Desired outcome</label><textarea id="project-settings-summary" name="summary" maxlength="5000">${esc(p.summary)}</textarea></div><div class="form-grid"><div class="form-field"><label for="project-settings-status">Project status</label><select id="project-settings-status" name="status">${Object.entries(projectStatuses).map(([id,label])=>`<option value="${id}" ${p.status===id?'selected':''}>${label}</option>`).join('')}</select></div><div class="form-field"><label for="project-settings-date">Target date</label><input id="project-settings-date" type="date" name="target_date" value="${esc(p.target_date||'')}"></div></div><p class="field-hint">${open} open tasks visible to you. Project status does not complete, freeze, or delete tasks. Archived projects remain accessible and can be restored by changing their status.</p><p class="field-hint">Department and access permissions are managed separately.</p><p data-project-settings-error role="alert"></p></div>${modalFooter('Save project')}</form>`;
+  }
+  async function loadProjectHistory(){
+    const project=projectFor(s.projectId);if(!project||s.loading||s.nav!=='project-history')return;
+    const generation=epoch,request=++historyRequest,id=project.id;
+    Object.assign(projectHistory,{projectId:id,rows:[],loading:true,error:false});render();
+    try{
+      const rows=s.demo?s.projectChanges.filter(e=>e.project_id===id).sort((a,b)=>b.revision-a.revision).slice(0,50):await getResult(api.from('qb_project_changes').select('*').eq('project_id',id).order('revision',{ascending:false}).limit(50));
+      if(generation!==epoch||request!==historyRequest||s.nav!=='project-history'||s.projectId!==id)return;
+      if(!Array.isArray(rows))throw Error('Invalid history response');
+      projectHistory.rows=rows;
+    }catch(e){if(generation===epoch&&request===historyRequest&&!e.stale)projectHistory.error=true;}
+    finally{if(generation===epoch&&request===historyRequest){projectHistory.loading=false;render();}}
+  }
+  function projectHistoryPage(){
+    const p=projectFor(s.projectId);if(!p)return projectsPage();
+    const labels={title:'Project name',summary:'Desired outcome',status:'Status',target_date:'Target date'};
+    const value=(key,val)=>val===null||val===''?'Not set':key==='status'?(projectStatuses[val]||val):val;
+    return `<div class="breadcrumb"><button data-action="project" data-id="${esc(p.id)}">${esc(p.title)}</button><span>›</span>Change history</div>`+pageTitle('Project change history',p.title,`<button class="btn" data-action="project-history" ${projectHistory.loading?'disabled':''}>Refresh history</button>`)+`<p class="muted">Latest 50 settings changes, newest first. History begins when this feature was enabled. Task activity remains in each task’s journal.</p><section class="panel project-history" aria-busy="${projectHistory.loading}"><div class="panel-body">${projectHistory.loading?'<p role="status">Loading project history…</p>':projectHistory.error?'<p role="alert">Unable to load history. Use Refresh history to retry.</p>':projectHistory.rows.map(e=>`<article class="project-change"><header><strong>${esc(e.actor_id?nameFor(e.actor_id):'System update')}</strong><span>${esc(new Date(e.created_at).toLocaleString())} · Revision ${esc(e.revision)}</span></header><dl>${Object.entries(labels).filter(([key])=>e.before_data?.[key]!==e.after_data?.[key]).map(([key,label])=>`<div><dt>${label}</dt><dd><span class="muted">Before:</span> ${esc(value(key,e.before_data?.[key]??null))}</dd><dd><span class="muted">After:</span> ${esc(value(key,e.after_data?.[key]??null))}</dd></div>`).join('')}</dl></article>`).join('')||'<p>No project settings changes recorded yet.</p>'}</div></section>`;
+  }
   const formEpoch=new WeakMap();
-  const workspaceArrays=['departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates','milestones'];
+  const workspaceArrays=['projectChanges','departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates','milestones'];
   function invalidateWorkspace(resetNavigation=true){
-    resetInbox(resetNavigation);
+    resetInbox(resetNavigation);resetProjectHistory();
     epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
     candidateRequest++;membershipRequest++;
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
@@ -135,7 +162,7 @@
   let candidateRequest = 0;
   let membershipRequest=0;
   const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
-  const s = { reportView:'portfolio',reportHealth:'all',reportClosed:false,reportProject:null,reportSignal:'all', milestones:[],milestoneId:null,projectMilestone:'all',editMilestoneId:null,milestoneRequest:null,creationMilestone:null,templates:[],creationTemplate:null,taskRequest:null,projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
+  const s = { projectChanges:[], reportView:'portfolio',reportHealth:'all',reportClosed:false,reportProject:null,reportSignal:'all', milestones:[],milestoneId:null,projectMilestone:'all',editMilestoneId:null,milestoneRequest:null,creationMilestone:null,templates:[],creationTemplate:null,taskRequest:null,projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],orgMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -322,7 +349,7 @@
       const linked=s.org?.id===intent.org?taskFor(intent.task):null;
       if(linked){s.taskId=linked.id;s.projectId=linked.project_id;s.nav='task';}else linkUnavailable=true;
     }
-    render();if(linkUnavailable)toast('This task link is unavailable to your account.',true);if(!s.lastError&&s.nav==='inbox')await loadInbox();return !s.lastError;
+    render();if(linkUnavailable)toast('This task link is unavailable to your account.',true);if(!s.lastError&&s.nav==='inbox')await loadInbox();if(!s.lastError&&s.nav==='project-history')await loadProjectHistory();return !s.lastError;
   }
   async function switchOrganization(id){
     if(s.demo||!s.user)return;
@@ -364,7 +391,7 @@
       <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():s.lastError?loadError():`${invitationNotice()}${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${pageContent()}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
   }
   function navItem(x){return `<button class="nav-link ${s.nav===x.id?'active':''}" data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='inbox'&&inbox.unread>0?`<span class="pill-count" aria-label="${inbox.unread} unread notifications">${inbox.unread}</span>`:''}${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
-  function pageContent(){switch(s.nav){case'home':return dashboard();case'inbox':return inboxPage();case'mywork':return workPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
+  function pageContent(){switch(s.nav){case'home':return dashboard();case'inbox':return inboxPage();case'mywork':return workPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
   const pageTitle=(title,desc,actions='')=>`<div class="page-heading"><div><div class="eyebrow">${esc(s.org?.name||'QuestBoard')}</div><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p></div><div class="buttons">${actions}</div></div>`;
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
@@ -637,7 +664,7 @@
   }
   function projectPage(){const p=projectFor(s.projectId);if(!p)return projectsPage();const data=projectTaskData(p.id),ts=data.tasks,all=data.all,progress=pct(p),manager=canManage(p.id);
     const statuses=['backlog','ready','in_progress','blocked','in_review',...(s.projectClosed?['complete','cancelled']:[])];
-    return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button>`:''}<button class="btn" data-action="nav" data-value="team">♧ Team</button></div></div>
+    return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button><button class="btn" data-action="modal" data-value="project-settings">Project settings</button>`:''}<button class="btn" data-action="nav" data-value="team">♧ Team</button><button class="btn" data-action="project-history">Change history</button><button class="btn" data-action="project-refresh">Refresh project</button></div></div>
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${all.length}</div><div class="hint">${all.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${all.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
     ${projectMilestones(p.id)}${manager?templateLibrary(p.id):''}<div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
     ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='dependencies'?projectDependencies(data):s.projectView==='list'?`<section class="panel project-task-list"><div class="panel-body">${ts.map(t=>taskRow(t,true)).join('')}</div></section>`:
@@ -756,6 +783,7 @@
   function onboarding(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Step 2 · Create your organization</div><h1>Your next chapter <em>starts here.</em></h1><p>Create a home for your team, then organize its work into departments. Joining an existing team? Accept an invitation below.</p></div><div class="login-foot">Your organizations stay separate</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>Create your organization</h2><p>Signed in as ${esc(s.user.email)}.</p>${organizationForm()}<div class="auth-divider">OR JOIN YOUR TEAM</div>${invitationNotice()}${s.pendingInvitations.length?s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}</strong><p>${esc(i.invite_role.replace(/_/g,' '))} · expires ${niceDate(i.expires_at)}</p><button class="btn primary block" style="margin-top:15px" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join(''):`<div class="invite-box"><strong>No pending invitations</strong><p>Ask your organization administrator to invite ${esc(s.user.email)}.</p></div>`}<button class="btn block" style="margin-top:20px" data-action="logout">Sign out</button></div></div></div>`;}
   function login(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Meaningful work, real progress</div><h1>Your work is an <em>adventure.</em></h1><p>Plan projects. Rally your team. Make every accomplishment count. One workspace, two ways to experience progress.</p><div class="login-points"><span>✓ Department workspaces</span><span>✓ Verified progress</span><span>✓ Optional RPG mode</span></div></div><div class="login-foot">QuestBoard · ${esc(cfg.buildLabel||'Pilot')}</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>${signupMode?'Create your account':'Welcome to QuestBoard'}</h2><p>${signupMode?'Step 1 · Continue with Google to create your account. Then create an organization and add its departments.':'Sign in to your organizations, or create an account to start your own.'}</p><button class="btn block" data-action="signup-mode">${signupMode?'Already have an account? Sign in':'New here? Sign up'}</button>${invitationNotice()}${authError?`<div class="auth-error" role="alert">${esc(authError)}</div>`:''}<button class="auth-provider" data-action="login" data-value="azure" ${!providerEnabled('azure')||authPending?'disabled':''}><span class="provider-icon ms">▦</span>${providerEnabled('azure')?'Continue with Microsoft':'Microsoft sign-in unavailable'}</button><button class="auth-provider" data-action="login" data-value="google" ${!providerEnabled('google')||authPending?'disabled':''}><span class="provider-icon google">G</span>${providerEnabled('google')?'Continue with Google':'Google sign-in unavailable'}</button>${authPending?'<p role="status">Opening sign-in…</p>':''}<div class="auth-divider">OR EXPLORE FIRST</div><button class="btn demo-btn" data-action="demo">✦ Explore sample workspace</button>${signOutFailed?'<button class="btn" data-action="logout">Retry sign out</button>':''}<div class="auth-fine">Google handles your sign-in securely. To accept an invitation, use the invited email address. Demo data is fictional and not saved.</div></div></div></div>`;}
   function modalHTML(){if(!s.modal)return '';let content='',title='';
+    if(s.modal==='project-settings'){title='Project settings';content=projectSettingsForm();}
     if(s.modal==='organization'){title='Create organization';content=`<div class="modal-body">${organizationForm()}</div>`;}
     if(s.modal==='milestone'){title=s.editMilestoneId?'Edit milestone':'Add milestone';content=milestoneForm();}
     if(s.modal==='save-template'){const task=taskFor(s.taskId);title='Save task template';content=`<form data-form="save-template" data-request="${esc(s.taskRequest)}"><div class="modal-body"><p>Reuse this task’s instructions, priority, XP, and checklist in this project. Choose an owner when creating each task.</p><div class="form-field"><label for="template-name">Template name</label><input id="template-name" name="name" required maxlength="120" value="${esc(task.title.slice(0,120))}"></div><div class="form-field"><label for="template-days">Due after how many days?</label><input id="template-days" type="number" name="due_days" min="0" max="3650" step="1"><small>Leave blank to choose a due date each time. Enter 0 for the creation day.</small></div></div>${modalFooter('Save template')}</form>`;}
@@ -867,6 +895,8 @@
     if(action==='project'){if(s.projectId!==id)Object.assign(s,{projectMilestone:'all',projectOwner:'all',projectPriority:'all',projectReadiness:'all'});s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
     if(action==='task'){s.taskId=id;s.nav='task';s.menuOpen=false;render();return;}
     if(action==='filter'){s.filter=v;render();return;}
+    if(action==='project-history'){s.nav='project-history';await loadProjectHistory();return;}
+    if(action==='project-refresh'){await withBusy(async()=>{await refresh();toast('Project refreshed');});return;}
     if(action==='report-view'){if(['portfolio','progression'].includes(v)){s.reportView=v;render();}return;}
     if(action==='report-export'){downloadPortfolio();return;}
     if(action==='report-detail'){s.reportProject=id;s.reportSignal=v==='open'?'all':v;render();root.querySelector('.report-detail')?.focus();return;}
@@ -919,6 +949,7 @@
       });return;
     }
     if(action==='modal'){
+      if(v==='project-settings'&&!canManage(s.projectId))return;
       if(v==='organization'&&(!s.user||s.demo||s.loading))return;
       if(v==='edit-task'&&id){
         const task=taskFor(id);
@@ -990,6 +1021,20 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         await refresh();
         if(membershipScopes().some(x=>x.value===scope))await loadMemberships(scope);
         toast('Membership updated');return;
+      }
+      if(type==='project-settings'){
+        const project=projectFor(form.dataset.project),revision=Number(form.dataset.revision);
+        if(!project||!canManage(project.id))throw Error('Project settings unavailable');
+        const row={title:get('title'),summary:get('summary'),status:get('status'),target_date:get('target_date')||null};
+        if(!row.title||row.title.length>160||row.summary.length>5000||!projectStatuses[row.status]||row.target_date&&!calendarDate(row.target_date))throw Error('Check the project name, outcome, status, and target date');
+        try{
+          if(s.demo){
+            if((project.revision||1)!==revision)throw Error('Project changed. Close settings, refresh the project, and review your changes before saving again.');
+            const before=Object.fromEntries(Object.keys(row).map(key=>[key,project[key]??null]));
+            if(Object.keys(row).some(key=>before[key]!==row[key])){project.revision=revision+1;s.projectChanges.unshift({id:uid(),project_id:project.id,actor_id:s.user.id,revision:project.revision,before_data:before,after_data:{...row},created_at:new Date().toISOString()});Object.assign(project,row);}
+          }else await getResult(api.rpc('qb_save_project_settings',{p_project:project.id,p_revision:revision,p_title:row.title,p_summary:row.summary,p_status:row.status,p_target_date:row.target_date}));
+        }catch(e){const error=form.querySelector('[data-project-settings-error]');if(error&&!e.stale)error.textContent=e.message;throw e;}
+        s.modal=null;await refresh();toast('Project settings saved');return;
       }
       if(type==='project'){
         if(!get('title'))throw Error('Project name is required');
