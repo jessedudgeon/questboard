@@ -445,3 +445,38 @@ test('Project settings update lifecycle and preserve task history on mobile',asy
  await expect(page.locator('.project-change')).toHaveCount(3);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('All tasks saves and restores filters, exports matches and opens tasks on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/');
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await page.getByRole('button',{name:'Explore sample workspace'}).click();
+ await page.getByRole('button',{name:'Open menu',exact:true}).click();
+ await page.locator('[data-action="nav"][data-value="alltasks"]').click();
+ await page.getByLabel('Assignee or review',{exact:true}).selectOption('mine');
+ await page.getByLabel('Task status',{exact:true}).selectOption('all');
+ const matches=await page.locator('.task-explorer-list .task-item').count();expect(matches).toBeGreaterThan(0);
+ const title=await page.locator('.task-explorer-list .task-title').first().textContent();
+ await page.getByRole('button',{name:'Save current view',exact:true}).click();
+ await page.getByLabel('View name',{exact:true}).fill('My follow-up');
+ await page.getByRole('button',{name:'Save view',exact:true}).click();
+ await expect(page.locator('#tasks-view option:checked')).toHaveText('My follow-up');
+ await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+ await expect(page.getByLabel('Assignee or review',{exact:true})).toHaveValue('all');
+ await page.getByLabel('Saved view',{exact:true}).selectOption({label:'My follow-up'});
+ await expect(page.getByLabel('Assignee or review',{exact:true})).toHaveValue('mine');
+ await expect(page.locator('.task-explorer-list .task-item')).toHaveCount(matches);
+ const event=page.waitForEvent('download');await page.getByRole('button',{name:'Export matching tasks',exact:true}).click();
+ const download=await event;expect(download.suggestedFilename()).toMatch(/^questboard-tasks-.*\.csv$/);
+ const csv=await require('node:fs/promises').readFile(await download.path(),'utf8');expect(csv).toContain(title);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+ await page.locator('.task-explorer-list .task-item').first().click();
+ await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Open menu',exact:true}).click();
+ await page.locator('[data-action="nav"][data-value="alltasks"]').click();
+ await page.getByRole('button',{name:'Remove saved view',exact:true}).click();
+ await expect(page.getByLabel('Saved view',{exact:true}).locator('option')).toHaveCount(1);
+ await expect(page.getByLabel('Assignee or review',{exact:true})).toHaveValue('mine');
+});

@@ -142,10 +142,101 @@
     const value=(key,val)=>val===null||val===''?'Not set':key==='status'?(projectStatuses[val]||val):val;
     return `<div class="breadcrumb"><button data-action="project" data-id="${esc(p.id)}">${esc(p.title)}</button><span>›</span>Change history</div>`+pageTitle('Project change history',p.title,`<button class="btn" data-action="project-history" ${projectHistory.loading?'disabled':''}>Refresh history</button>`)+`<p class="muted">Latest 50 settings changes, newest first. History begins when this feature was enabled. Task activity remains in each task’s journal.</p><section class="panel project-history" aria-busy="${projectHistory.loading}"><div class="panel-body">${projectHistory.loading?'<p role="status">Loading project history…</p>':projectHistory.error?'<p role="alert">Unable to load history. Use Refresh history to retry.</p>':projectHistory.rows.map(e=>`<article class="project-change"><header><strong>${esc(e.actor_id?nameFor(e.actor_id):'System update')}</strong><span>${esc(new Date(e.created_at).toLocaleString())} · Revision ${esc(e.revision)}</span></header><dl>${Object.entries(labels).filter(([key])=>e.before_data?.[key]!==e.after_data?.[key]).map(([key,label])=>`<div><dt>${label}</dt><dd><span class="muted">Before:</span> ${esc(value(key,e.before_data?.[key]??null))}</dd><dd><span class="muted">After:</span> ${esc(value(key,e.after_data?.[key]??null))}</dd></div>`).join('')}</dl></article>`).join('')||'<p>No project settings changes recorded yet.</p>'}</div></section>`;
   }
+  const taskViewDefaults={project:'all',owner:'all',status:'open',priority:'all',deadline:'all',dependency:'all',sort:'due'};
+  const taskDeadlineNames={all:'Any deadline',overdue:'Overdue (open)',today:'Due today (open)',week:'Next 7 days (open)',undated:'No due date'};
+  const taskExplorer={...taskViewDefaults,page:1,selected:''};
+  let demoTaskViews=[];
+  function resetTaskExplorer(){Object.assign(taskExplorer,taskViewDefaults,{page:1,selected:''});demoTaskViews=[];}
+  function validTaskViewFilters(value){
+    if(!value||typeof value!=='object')return null;
+    const f={};
+    for(const key of ['project','owner']){if(typeof value[key]!=='string'||value[key].length>128||!value[key])return null;f[key]=value[key];}
+    const options={status:['all','open',...Object.keys(statusNames)],priority:['all',...Object.keys(priorityNames)],deadline:Object.keys(taskDeadlineNames),dependency:['all','waiting','clear'],sort:['due','priority','title','project']};
+    for(const [key,allowed] of Object.entries(options)){if(!allowed.includes(value[key]))return null;f[key]=value[key];}
+    if(typeof value.query!=='string'||value.query.length>200)return null;f.query=value.query;return f;
+  }
+  function taskViewsKey(){return s.user?.id&&s.org?.id?'qb-task-views:v1:'+s.user.id+':'+s.org.id:null;}
+  function savedTaskViews(){
+    if(s.demo)return {rows:demoTaskViews,error:null};
+    const key=taskViewsKey();if(!key)return {rows:[],error:null};
+    try{
+      const raw=localStorage.getItem(key);if(!raw)return {rows:[],error:null};
+      if(raw.length>40000)throw Error('Stored views are too large');
+      const data=JSON.parse(raw);if(data.version!==1||!Array.isArray(data.views)||data.views.length>12)throw Error('Invalid stored views');
+      const rows=data.views.map(v=>{
+        if(!v||typeof v.id!=='string'||v.id.length>128||!v.id||typeof v.name!=='string'||!v.name.trim()||v.name.length>60)throw Error('Invalid stored view');
+        const filters=validTaskViewFilters(v.filters);if(!filters)throw Error('Invalid filters');
+        return {id:v.id,name:v.name,filters};
+      });
+      if(new Set(rows.map(v=>v.id)).size!==rows.length)throw Error('Duplicate stored views');
+      return {rows,error:null};
+    }catch{return {rows:[],error:'Saved views are unavailable in this browser. Filters still work. You can reset saved views to try again.'};}
+  }
+  function writeTaskViews(rows){
+    if(s.loading||!taskViewsKey())throw Error('Open an organization before saving a view');
+    if(s.demo){demoTaskViews=rows;return;}
+    try{localStorage.setItem(taskViewsKey(),JSON.stringify({version:1,views:rows}));}catch{throw Error('Unable to save views in this browser. Your filters have been kept.');}
+  }
+  function saveTaskView(name){
+    name=name.trim();if(!name||name.length>60)throw Error('Enter a view name up to 60 characters');
+    const stored=savedTaskViews();if(stored.error)throw Error(stored.error);
+    const filters=validTaskViewFilters({...taskExplorer,query:s.query.trim()});if(!filters)throw Error('Search must be 200 characters or fewer');
+    const existing=stored.rows.find(v=>v.name.toLowerCase()===name.toLowerCase());
+    if(!existing&&stored.rows.length>=12)throw Error('You can save up to 12 views. Remove a view first.');
+    const view={id:existing?.id||uid(),name,filters};writeTaskViews([...stored.rows.filter(v=>v.id!==view.id),view]);taskExplorer.selected=view.id;return view;
+  }
+  function applyTaskView(id){
+    const view=savedTaskViews().rows.find(v=>v.id===id);if(!view)return;
+    const {query,...filters}=view.filters;Object.assign(taskExplorer,filters,{page:1,selected:id});s.query=query;
+  }
+  function allTasksData(today=new Date()){
+    const projects=s.projects.filter(p=>deptVisible(p.department_id)),projectMap=new Map(projects.map(p=>[p.id,p]));
+    const available=s.tasks.filter(t=>projectMap.has(t.project_id));
+    const owners=[...new Set(available.map(t=>t.assignee_id).filter(Boolean))].sort((a,b)=>nameFor(a).localeCompare(nameFor(b))||a.localeCompare(b));
+    const day=dateKey(today),end=dateKey(new Date(today.getFullYear(),today.getMonth(),today.getDate()+6,12)),query=s.query.trim().toLowerCase();
+    const open=t=>!['complete','cancelled'].includes(t.status);
+    const missingProject=taskExplorer.project!=='all'&&!projectMap.has(taskExplorer.project);
+    const rows=available.filter(t=>taskExplorer.project==='all'||t.project_id===taskExplorer.project)
+      .filter(t=>!query||(t.title+' '+(t.description||'')+' '+projectMap.get(t.project_id).title).toLowerCase().includes(query))
+      .filter(t=>taskExplorer.owner==='all'||(taskExplorer.owner==='mine'?t.assignee_id===s.user?.id:taskExplorer.owner==='review'?t.reviewer_id===s.user?.id&&t.status==='in_review':taskExplorer.owner==='unassigned'?!t.assignee_id:taskExplorer.owner==='user:'+t.assignee_id))
+      .filter(t=>taskExplorer.status==='all'||(taskExplorer.status==='open'?open(t):t.status===taskExplorer.status))
+      .filter(t=>taskExplorer.priority==='all'||t.priority===taskExplorer.priority)
+      .filter(t=>taskExplorer.dependency==='all'||(taskExplorer.dependency==='waiting'?dependencyWaiting(t.id):!dependencyWaiting(t.id)))
+      .filter(t=>{const date=calendarDate(t.due_date);switch(taskExplorer.deadline){case'overdue':return open(t)&&date&&t.due_date<day;case'today':return open(t)&&date&&t.due_date===day;case'week':return open(t)&&date&&t.due_date>=day&&t.due_date<=end;case'undated':return !date;default:return true;}});
+    const priority={critical:0,high:1,normal:2,low:3},due=t=>calendarDate(t.due_date)?t.due_date:'9999-99-99';
+    rows.sort((a,b)=>(taskExplorer.sort==='priority'?(priority[a.priority]??4)-(priority[b.priority]??4):taskExplorer.sort==='title'?a.title.localeCompare(b.title):taskExplorer.sort==='project'?projectMap.get(a.project_id).title.localeCompare(projectMap.get(b.project_id).title):0)||due(a).localeCompare(due(b))||a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
+    const pages=Math.max(1,Math.ceil(rows.length/50));taskExplorer.page=Math.max(1,Math.min(pages,Number(taskExplorer.page)||1));
+    return {rows,pageRows:rows.slice((taskExplorer.page-1)*50,taskExplorer.page*50),pages,projects,owners,missingProject,overdue:rows.filter(t=>open(t)&&calendarDate(t.due_date)&&t.due_date<day).length,waiting:rows.filter(t=>open(t)&&dependencyWaiting(t.id)).length};
+  }
+  function allTasksCSV(rows){
+    const cell=v=>{let text=String(v??'');if(/^[\s]*[=+@-]|^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';};
+    return [['Project','Department','Task','Assignee','Reviewer','Status','Priority','Due date','Waiting for prerequisites'],...rows.map(t=>[projectFor(t.project_id)?.title,deptFor(projectFor(t.project_id)?.department_id)?.name,t.title,nameFor(t.assignee_id),nameFor(t.reviewer_id),fmtStatus(t.status),priorityNames[t.priority],t.due_date,dependencyWaiting(t.id)?'Yes':'No'])].map(row=>row.map(cell).join(',')).join('\r\n');
+  }
+  function downloadAllTasks(){
+    if(s.nav!=='alltasks'||s.loading||s.lastError||!s.org)return;
+    const rows=allTasksData().rows;if(!rows.length)return;
+    const url=URL.createObjectURL(new Blob(['\uFEFF',allTasksCSV(rows)],{type:'text/csv;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download='questboard-tasks-'+dateKey(new Date())+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function allTasksPage(){
+    const data=allTasksData(),stored=savedTaskViews();
+    const active=stored.rows.find(v=>v.id===taskExplorer.selected);
+    if(active&&JSON.stringify(active.filters)!==JSON.stringify(validTaskViewFilters({...taskExplorer,query:s.query.trim()})))taskExplorer.selected='';
+    const picker=(key,label,options)=>`<label for="tasks-${key}">${label}<select id="tasks-${key}" aria-label="${label}">${options.map(([id,title])=>`<option value="${esc(id)}" ${taskExplorer[key]===id?'selected':''}>${esc(title)}</option>`).join('')}</select></label>`;
+    const ownerOptions=[['all','Anyone'],['mine','Assigned to me'],['review','Awaiting my review'],['unassigned','Unassigned'],...data.owners.map(id=>['user:'+id,nameFor(id)])];
+    if(!ownerOptions.some(([id])=>id===taskExplorer.owner))ownerOptions.push([taskExplorer.owner,'Saved owner — no visible assignments']);
+    const projectOptions=[['all','All projects'],...data.projects.map(p=>[p.id,p.title])];if(data.missingProject)projectOptions.push([taskExplorer.project,'Saved project — unavailable in this workspace']);
+    return pageTitle(term('All tasks','Quest explorer'),'Find and follow up on work across your accessible projects.',`<button class="btn" data-action="tasks-refresh">Refresh tasks</button><button class="btn" data-action="tasks-export" ${data.rows.length?'':'disabled'}>Export matching tasks</button>`)+
+      `<section class="panel task-explorer-controls"><div class="panel-body"><div class="task-view-toolbar"><label for="tasks-view">Saved view<select id="tasks-view" aria-label="Saved view"><option value="">Custom filters</option>${stored.rows.map(v=>`<option value="${esc(v.id)}" ${taskExplorer.selected===v.id?'selected':''}>${esc(v.name)}</option>`).join('')}</select></label><button class="btn sm" data-action="modal" data-value="task-view">Save current view</button><button class="btn sm" data-action="tasks-delete-view" ${stored.rows.some(v=>v.id===taskExplorer.selected)?'':'disabled'}>Remove saved view</button></div><p class="field-hint">Views save these filters and search text on this browser for your account and organization. The current workspace still applies. ${s.demo?'Demo views are temporary.':''}</p>${stored.error?`<p role="alert">${esc(stored.error)}</p><button class="btn sm" data-action="tasks-reset-storage">Reset saved views</button>`:''}
+      <div class="task-explorer-filters">${picker('project','Project',projectOptions)}${picker('owner','Assignee or review',ownerOptions)}${picker('status','Task status',[['open','Open tasks'],['all','All statuses'],...Object.keys(statusNames).map(id=>[id,fmtStatus(id)])])}${picker('priority','Priority',[['all','Any priority'],...Object.entries(priorityNames)])}${picker('deadline','Deadline',Object.entries(taskDeadlineNames))}${picker('dependency','Dependencies',[['all','Any dependency state'],['waiting','Waiting for prerequisites'],['clear','No outstanding prerequisites']])}${picker('sort','Sort tasks',[['due','Due date'],['priority','Priority, then due date'],['title','Task name'],['project','Project, then due date']])}<button class="btn sm" data-action="tasks-clear">Clear filters</button></div></div></section>
+      <p class="muted task-explorer-summary" role="status">${data.rows.length} matching tasks · ${data.overdue} overdue · ${data.waiting} waiting for prerequisites. Export includes all matches; pages show up to 50.</p>${data.missingProject?'<p class="auth-error" role="alert">The selected project is outside this workspace or no longer available. Choose another project or clear filters.</p>':''}
+      <section class="panel task-explorer-list" aria-label="Matching tasks"><div class="panel-body">${data.pageRows.length?data.pageRows.map(t=>taskRow(t,true)).join(''):empty('◇','No matching tasks','Try another filter, workspace, or search. Only work you can currently access appears here.')}</div></section>
+      <div class="inbox-pagination"><button class="btn sm" data-action="tasks-page" data-value="-1" ${taskExplorer.page===1?'disabled':''}>Previous tasks</button><span>Page ${taskExplorer.page} of ${data.pages}</span><button class="btn sm" data-action="tasks-page" data-value="1" ${taskExplorer.page===data.pages?'disabled':''}>Next tasks</button></div>`;
+  }
   const formEpoch=new WeakMap();
   const workspaceArrays=['projectChanges','departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates','milestones'];
   function invalidateWorkspace(resetNavigation=true){
-    resetInbox(resetNavigation);resetProjectHistory();
+    resetInbox(resetNavigation);resetProjectHistory();if(resetNavigation)resetTaskExplorer();
     epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
     candidateRequest++;membershipRequest++;
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
@@ -383,7 +474,7 @@
     const name=s.user?.user_metadata?.full_name||s.user?.user_metadata?.name||s.user?.email?.split('@')[0]||'Member';
     const defs=[...navDefs];
     return `<div class="shell ${s.menuOpen?'menu-open':''}"><aside class="sidebar"><div class="brand"><span class="logo">✦</span><span>QuestBoard<small>WORK, REIMAGINED</small></span></div>
-      <div class="sidebar-label">Workspace</div>${defs.slice(0,4).map(x=>navItem(x)).join('')}
+      <div class="sidebar-label">Workspace</div>${defs.slice(0,4).map(x=>navItem(x)).join('')}${navItem({id:'alltasks',icon:'☷',pro:'All tasks',rpg:'Quest explorer'})}
       <div class="sidebar-label">Collaboration</div>${defs.slice(4,7).map(x=>navItem(x)).join('')}${navItem({id:'inbox',icon:'✉',pro:'Inbox',rpg:'Inbox'})}
       <div class="side-bottom">${membershipScopes().length?navItem(defs[7]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
       <main class="main">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
@@ -391,7 +482,7 @@
       <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():s.lastError?loadError():`${invitationNotice()}${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${pageContent()}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
   }
   function navItem(x){return `<button class="nav-link ${s.nav===x.id?'active':''}" data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='inbox'&&inbox.unread>0?`<span class="pill-count" aria-label="${inbox.unread} unread notifications">${inbox.unread}</span>`:''}${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
-  function pageContent(){switch(s.nav){case'home':return dashboard();case'inbox':return inboxPage();case'mywork':return workPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
+  function pageContent(){switch(s.nav){case'home':return dashboard();case'inbox':return inboxPage();case'mywork':return workPage();case'alltasks':return allTasksPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
   const pageTitle=(title,desc,actions='')=>`<div class="page-heading"><div><div class="eyebrow">${esc(s.org?.name||'QuestBoard')}</div><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p></div><div class="buttons">${actions}</div></div>`;
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
@@ -783,6 +874,7 @@
   function onboarding(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Step 2 · Create your organization</div><h1>Your next chapter <em>starts here.</em></h1><p>Create a home for your team, then organize its work into departments. Joining an existing team? Accept an invitation below.</p></div><div class="login-foot">Your organizations stay separate</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>Create your organization</h2><p>Signed in as ${esc(s.user.email)}.</p>${organizationForm()}<div class="auth-divider">OR JOIN YOUR TEAM</div>${invitationNotice()}${s.pendingInvitations.length?s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}</strong><p>${esc(i.invite_role.replace(/_/g,' '))} · expires ${niceDate(i.expires_at)}</p><button class="btn primary block" style="margin-top:15px" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join(''):`<div class="invite-box"><strong>No pending invitations</strong><p>Ask your organization administrator to invite ${esc(s.user.email)}.</p></div>`}<button class="btn block" style="margin-top:20px" data-action="logout">Sign out</button></div></div></div>`;}
   function login(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Meaningful work, real progress</div><h1>Your work is an <em>adventure.</em></h1><p>Plan projects. Rally your team. Make every accomplishment count. One workspace, two ways to experience progress.</p><div class="login-points"><span>✓ Department workspaces</span><span>✓ Verified progress</span><span>✓ Optional RPG mode</span></div></div><div class="login-foot">QuestBoard · ${esc(cfg.buildLabel||'Pilot')}</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>${signupMode?'Create your account':'Welcome to QuestBoard'}</h2><p>${signupMode?'Step 1 · Continue with Google to create your account. Then create an organization and add its departments.':'Sign in to your organizations, or create an account to start your own.'}</p><button class="btn block" data-action="signup-mode">${signupMode?'Already have an account? Sign in':'New here? Sign up'}</button>${invitationNotice()}${authError?`<div class="auth-error" role="alert">${esc(authError)}</div>`:''}<button class="auth-provider" data-action="login" data-value="azure" ${!providerEnabled('azure')||authPending?'disabled':''}><span class="provider-icon ms">▦</span>${providerEnabled('azure')?'Continue with Microsoft':'Microsoft sign-in unavailable'}</button><button class="auth-provider" data-action="login" data-value="google" ${!providerEnabled('google')||authPending?'disabled':''}><span class="provider-icon google">G</span>${providerEnabled('google')?'Continue with Google':'Google sign-in unavailable'}</button>${authPending?'<p role="status">Opening sign-in…</p>':''}<div class="auth-divider">OR EXPLORE FIRST</div><button class="btn demo-btn" data-action="demo">✦ Explore sample workspace</button>${signOutFailed?'<button class="btn" data-action="logout">Retry sign out</button>':''}<div class="auth-fine">Google handles your sign-in securely. To accept an invitation, use the invited email address. Demo data is fictional and not saved.</div></div></div></div>`;}
   function modalHTML(){if(!s.modal)return '';let content='',title='';
+    if(s.modal==='task-view'){title='Save task view';content=`<form data-form="task-view"><div class="modal-body"><div class="form-field"><label for="task-view-name">View name</label><input id="task-view-name" name="name" required maxlength="60" placeholder="e.g. My overdue tasks"></div><p class="field-hint">Up to 12 views per organization on this browser. Using an existing name replaces its filters.</p></div>${modalFooter('Save view')}</form>`;}
     if(s.modal==='project-settings'){title='Project settings';content=projectSettingsForm();}
     if(s.modal==='organization'){title='Create organization';content=`<div class="modal-body">${organizationForm()}</div>`;}
     if(s.modal==='milestone'){title=s.editMilestoneId?'Edit milestone':'Add milestone';content=milestoneForm();}
@@ -895,6 +987,12 @@
     if(action==='project'){if(s.projectId!==id)Object.assign(s,{projectMilestone:'all',projectOwner:'all',projectPriority:'all',projectReadiness:'all'});s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
     if(action==='task'){s.taskId=id;s.nav='task';s.menuOpen=false;render();return;}
     if(action==='filter'){s.filter=v;render();return;}
+    if(action==='tasks-refresh'){await withBusy(async()=>{await refresh();toast('Tasks refreshed');});return;}
+    if(action==='tasks-export'){downloadAllTasks();return;}
+    if(action==='tasks-page'){taskExplorer.page+=Number(v);render();root.querySelector('.task-explorer-summary')?.scrollIntoView?.({block:'nearest'});return;}
+    if(action==='tasks-clear'){Object.assign(taskExplorer,taskViewDefaults,{page:1,selected:''});s.query='';render();return;}
+    if(action==='tasks-delete-view'){const views=savedTaskViews();if(views.error)throw Error(views.error);writeTaskViews(views.rows.filter(view=>view.id!==taskExplorer.selected));taskExplorer.selected='';render();toast('Saved view removed');return;}
+    if(action==='tasks-reset-storage'){if(s.demo)demoTaskViews=[];else if(taskViewsKey()){try{localStorage.removeItem(taskViewsKey());}catch{throw Error('Browser storage is unavailable');}}taskExplorer.selected='';render();return;}
     if(action==='project-history'){s.nav='project-history';await loadProjectHistory();return;}
     if(action==='project-refresh'){await withBusy(async()=>{await refresh();toast('Project refreshed');});return;}
     if(action==='report-view'){if(['portfolio','progression'].includes(v)){s.reportView=v;render();}return;}
@@ -949,6 +1047,7 @@
       });return;
     }
     if(action==='modal'){
+      if(v==='task-view'&&(!s.org||s.loading||s.nav!=='alltasks'))return;
       if(v==='project-settings'&&!canManage(s.projectId))return;
       if(v==='organization'&&(!s.user||s.demo||s.loading))return;
       if(v==='edit-task'&&id){
@@ -1022,6 +1121,7 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         if(membershipScopes().some(x=>x.value===scope))await loadMemberships(scope);
         toast('Membership updated');return;
       }
+      if(type==='task-view'){if(s.nav!=='alltasks')return;saveTaskView(get('name'));s.modal=null;render();toast('Task view saved');return;}
       if(type==='project-settings'){
         const project=projectFor(form.dataset.project),revision=Number(form.dataset.revision);
         if(!project||!canManage(project.id))throw Error('Project settings unavailable');
@@ -1095,14 +1195,18 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f);}});
-  document.addEventListener('change',e=>{if(['planner-signal','planner-group'].includes(e.target?.id)){
+  document.addEventListener('change',e=>{
+    if(e.target?.id==='tasks-view'){if(e.target.value)applyTaskView(e.target.value);else taskExplorer.selected='';render();document.getElementById('tasks-view')?.focus();return;}
+    const taskFields={'tasks-project':'project','tasks-owner':'owner','tasks-status':'status','tasks-priority':'priority','tasks-deadline':'deadline','tasks-dependency':'dependency','tasks-sort':'sort'};
+    if(taskFields[e.target?.id]){const id=e.target.id;taskExplorer[taskFields[id]]=e.target.value;taskExplorer.page=1;taskExplorer.selected='';render();document.getElementById(id)?.focus();return;}
+if(['planner-signal','planner-group'].includes(e.target?.id)){
       const id=e.target.id;
       if(id==='planner-signal')s.plannerSignal=e.target.value;else s.plannerGroup=e.target.value;
       s.plannerCell=null;render();document.getElementById(id)?.focus();return;
     }
     if(e.target?.id==='report-health'||e.target?.id==='report-closed'){const id=e.target.id;if(id==='report-health')s.reportHealth=e.target.value;else s.reportClosed=e.target.checked;s.reportProject=null;render();document.getElementById(id)?.focus();return;}
-    const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;render();if(s.nav==='inbox')loadInbox();}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
-  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
+    const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;taskExplorer.page=1;render();if(s.nav==='inbox')loadInbox();}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     readAuthReturn();
