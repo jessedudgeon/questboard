@@ -165,3 +165,18 @@ clients cannot forge or modify entries. Unchanged saves do not create history.
 Apply `20261108112858_questboard_project_settings.sql` before deploying the frontend.
 The migration adds a project revision, immutable RLS-protected history, private triggers,
 and an invoker-rights save RPC. Existing project content and MeetingDesk data are preserved.
+
+## All tasks and saved views
+
+All tasks searches accessible task titles/descriptions and project names across the current
+workspace. Combine project, assignee/reviewer, status, priority, deadline and dependency
+filters; sort by date, priority, task or project. Open tasks are the default. Deadline
+presets use local calendar dates; Next 7 days includes today and the following six days.
+The list shows 50 matches per page; CSV exports include all matching authorized tasks.
+
+Save up to 12 personal views per account and organization on this browser. Views store only
+filter values and search text, never task snapshots. The current workspace still applies.
+An existing view name replaces its filters; removing a saved view keeps current filters.
+Views do not synchronize between devices. Demo views remain temporary. Storage errors
+are reported without discarding filters, and unavailable saved project/owner filters do
+not broaden the results. Account and organization changes reset active filters.
