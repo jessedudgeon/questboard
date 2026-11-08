@@ -179,6 +179,8 @@ test('Additive upgrade preserves populated baseline and unrelated MeetingDesk da
   await applyMigrations(db);
   const after=await snapshot();
   for(const task of after.qb_tasks){assert.equal(task.source_template_id,null);delete task.source_template_id;assert.equal(task.milestone_id,null);delete task.milestone_id;}
+  for(const project of after.qb_projects){assert.equal(project.revision,1);delete project.revision;}
+  assert.equal(await scalar(db,'select count(*) from qb_project_changes'),0);
   assert.deepEqual(after,before);
   assert.deepEqual((await db.query("select * from pg_policies where tablename='meeting_workspaces'")).rows,policies);
   assert.equal(await scalar(db,"select relrowsecurity from pg_class where oid='public.meeting_workspaces'::regclass"),true);
