@@ -233,10 +233,85 @@
       <section class="panel task-explorer-list" aria-label="Matching tasks"><div class="panel-body">${data.pageRows.length?data.pageRows.map(t=>taskRow(t,true)).join(''):empty('◇','No matching tasks','Try another filter, workspace, or search. Only work you can currently access appears here.')}</div></section>
       <div class="inbox-pagination"><button class="btn sm" data-action="tasks-page" data-value="-1" ${taskExplorer.page===1?'disabled':''}>Previous tasks</button><span>Page ${taskExplorer.page} of ${data.pages}</span><button class="btn sm" data-action="tasks-page" data-value="1" ${taskExplorer.page===data.pages?'disabled':''}>Next tasks</button></div>`;
   }
+  const activityDefaults={project:'all',person:'all',kind:'all',period:'7',from:'',to:'',task:null,page:1};
+  const activity={...activityDefaults};
+  const activityKinds={journal:'Journal updates',status:'Status changes',checklist:'Checklist changes',metadata:'Task details',dependency:'Dependencies',other:'Other activity'};
+  const journalKinds={note:'Note',action:'Action taken',blocker:'Blocker reported',resolution:'Resolution',next_step:'Next step'};
+  function demoTaskEvent(taskId,type,before,after){s.events.unshift({id:uid(),task_id:taskId,actor_id:s.user.id,event_type:type,before_data:before,after_data:after,created_at:new Date().toISOString()});}
+  function resetActivity(){Object.assign(activity,activityDefaults);}
+  function describeTaskEvent(event){
+    const before=event.before_data||{},after=event.after_data||{};
+    const status=value=>statusNames[value]?fmtStatus(value):'Unknown status';
+    if(event.event_type==='status')return {kind:'status',label:'Status changed',text:(before.status?status(before.status)+' → ':'')+status(after.status)};
+    if(event.event_type==='dependency_linked'||event.event_type==='dependency_unlinked')return {kind:'dependency',label:'Dependencies changed',text:event.event_type==='dependency_linked'?'Prerequisite linked':'Prerequisite removed'};
+    if(event.event_type==='checklist'){
+      const title=after.title||s.checklist.find(c=>c.id===after.item_id&&c.task_id===event.task_id)?.title||'Checklist item';
+      const action=!event.before_data?'Checklist activity recorded':typeof before.done==='boolean'&&typeof after.done==='boolean'&&before.done!==after.done?(after.done?'Checklist item completed':'Checklist item reopened'):'Checklist item updated';
+      return {kind:'checklist',label:action,text:title};
+    }
+    if(event.event_type==='metadata'){
+      const format=(key,value)=>key==='assignee'?nameFor(value):key==='due'?(value?niceDate(value):'No due date'):key==='priority'?(priorityNames[value]||'Unknown priority'):String(value??'Not set');
+      const labels={title:'Title',priority:'Priority',assignee:'Assignee',due:'Due date'};
+      const changes=Object.entries(labels).filter(([key])=>Object.hasOwn(before,key)&&Object.hasOwn(after,key)&&before[key]!==after[key]).map(([key,label])=>label+': '+format(key,before[key])+' → '+format(key,after[key]));
+      return {kind:'metadata',label:'Task details updated',text:changes.join('\n')||'Task details updated. Earlier history may not include the changed field values.'};
+    }
+    return {kind:'other',label:'Task activity',text:'An activity record was added to this task.'};
+  }
+  function activityData(now=new Date()){
+    const projects=s.projects.filter(p=>deptVisible(p.department_id)),projectMap=new Map(projects.map(p=>[p.id,p]));
+    const taskMap=new Map(s.tasks.filter(t=>projectMap.has(t.project_id)).map(t=>[t.id,t]));
+    const source=[...s.updates.map((u,index)=>({key:'journal:'+String(u.id||index),taskId:u.task_id,actor:u.author_id,createdAt:u.created_at,kind:'journal',label:journalKinds[u.kind]||'Journal update',text:String(u.body||'')})),...s.events.map((e,index)=>({key:'event:'+String(e.id||index),taskId:e.task_id,actor:e.actor_id,createdAt:e.created_at,...describeTaskEvent(e)}))]
+      .filter(row=>taskMap.has(row.taskId)&&row.createdAt&&Number.isFinite(new Date(row.createdAt).getTime()))
+      .map(row=>({...row,task:taskMap.get(row.taskId),project:projectMap.get(taskMap.get(row.taskId).project_id),day:dateKey(new Date(row.createdAt))}));
+    const people=[...new Set(source.map(r=>r.actor).filter(Boolean))].sort((a,b)=>nameFor(a).localeCompare(nameFor(b))||a.localeCompare(b));
+    let from='',to='',error=null;
+    if(activity.period==='custom'){
+      from=activity.from;to=activity.to;
+      if(from&&!calendarDate(from)||to&&!calendarDate(to))error='Enter valid dates for the activity range.';
+      else if(from&&to&&from>to)error='The start date must be on or before the end date.';
+    }else if(activity.period!=='all'){
+      const days=activity.period==='today'?1:activity.period==='30'?30:7;
+      from=dateKey(new Date(now.getFullYear(),now.getMonth(),now.getDate()-days+1,12));to=dateKey(now);
+    }
+    const query=s.query.trim().toLowerCase();
+    const rows=error?[]:source.filter(r=>(activity.project==='all'||r.project.id===activity.project)&&(!activity.task||r.taskId===activity.task))
+      .filter(r=>activity.kind==='all'||r.kind===activity.kind)
+      .filter(r=>activity.person==='all'||(activity.person==='mine'?r.actor===s.user?.id:activity.person==='system'?!r.actor:activity.person==='user:'+r.actor))
+      .filter(r=>(!from||r.day>=from)&&(!to||r.day<=to))
+      .filter(r=>!query||(r.task.title+' '+r.project.title+' '+r.label+' '+r.text).toLowerCase().includes(query))
+      .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)||a.key.localeCompare(b.key));
+    const pages=Math.max(1,Math.ceil(rows.length/50));activity.page=Math.max(1,Math.min(pages,Number(activity.page)||1));
+    return {rows,pageRows:rows.slice((activity.page-1)*50,activity.page*50),pages,projects,people,error,task:activity.task?taskMap.get(activity.task):null};
+  }
+  function activityCSV(rows){
+    const cell=value=>{let text=String(value??'');if(/^[\s]*[=+@-]|^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';};
+    return [['Timestamp (UTC)','Project','Task','Person','Activity type','Summary'],...rows.map(r=>[new Date(r.createdAt).toISOString(),r.project.title,r.task.title,r.actor?nameFor(r.actor):'System',r.label,r.text])].map(row=>row.map(cell).join(',')).join('\r\n');
+  }
+  function downloadActivity(){
+    if(s.nav!=='activity'||s.loading||s.lastError||!s.org)return;
+    const rows=activityData().rows;if(!rows.length)return;
+    const url=URL.createObjectURL(new Blob(['\uFEFF',activityCSV(rows)],{type:'text/csv;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download='questboard-activity-'+dateKey(new Date())+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function activityPage(){
+    const data=activityData();
+    const select=(key,label,options)=>`<label for="activity-${key}">${label}<select id="activity-${key}" aria-label="${label}">${options.map(([id,title])=>`<option value="${esc(id)}" ${activity[key]===id?'selected':''}>${esc(title)}</option>`).join('')}</select></label>`;
+    const projects=[['all','All projects'],...data.projects.map(p=>[p.id,p.title])];if(!projects.some(([id])=>id===activity.project))projects.push([activity.project,'Project unavailable in this workspace']);
+    const people=[['all','Everyone'],['mine','My activity'],['system','System'],...data.people.map(id=>['user:'+id,nameFor(id)])];if(!people.some(([id])=>id===activity.person))people.push([activity.person,'Person has no visible activity']);
+    const groups=[];for(const row of data.pageRows){if(groups.at(-1)?.day!==row.day)groups.push({day:row.day,rows:[]});groups.at(-1).rows.push(row);}
+    return pageTitle(term('Activity','Guild activity'),'Catch up on recorded changes across the work you can access.',`<button class="btn" data-action="activity-refresh">Refresh activity</button><button class="btn" data-action="activity-export" ${data.rows.length?'':'disabled'}>Export activity</button>`)+
+      `<section class="panel"><div class="panel-body activity-filters">${select('project','Activity project',projects)}${select('person','Person',people)}${select('kind','Activity type',[['all','All activity'],...Object.entries(activityKinds)])}${select('period','Date range',[['today','Today'],['7','Last 7 days'],['30','Last 30 days'],['all','All recorded history'],['custom','Custom dates']])}${activity.period==='custom'?`<label for="activity-from">From<input id="activity-from" type="date" value="${esc(activity.from)}"></label><label for="activity-to">Through<input id="activity-to" type="date" value="${esc(activity.to)}"></label>`:''}<button class="btn sm" data-action="activity-clear">Clear activity filters</button></div></section>
+      ${activity.task?`<div class="invite-box">Task filter: <strong>${esc(data.task?.title||'Task no longer available in this workspace')}</strong> <button class="btn sm" data-action="activity-all-tasks">Show all tasks</button></div>`:''}
+      <p class="muted activity-scope" role="status">${data.rows.length} matching records across ${new Set(data.rows.map(r=>r.taskId)).size} tasks. Dates use your browser’s local time; CSV timestamps use UTC. Search matches task names, projects, and activity text. Current workspace applies.</p>
+      <p class="muted activity-scope">This is recorded task history, not a complete audit of every field. Counts show records, not unique actions. Refresh to fetch new activity.</p>
+      ${data.error?`<p class="auth-error" role="alert">${esc(data.error)}</p>`:''}
+      <section class="activity-feed" aria-label="Task activity">${groups.map(group=>`<section class="activity-day"><h2>${niceDate(group.day)}</h2><div class="panel">${group.rows.map(r=>`<article class="activity-record"><header><strong>${esc(r.actor?nameFor(r.actor):'System')}</strong><span>${esc(r.label)}</span><time datetime="${esc(r.createdAt)}">${esc(new Date(r.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}))}</time></header><button class="activity-task" data-action="task" data-id="${esc(r.taskId)}">${esc(r.task.title)}</button><p class="muted">${esc(r.project.title)}</p>${r.text.length>320?`<details><summary>Read full update</summary><p class="activity-text">${esc(r.text)}</p></details>`:`<p class="activity-text">${esc(r.text)}</p>`}</article>`).join('')}</div></section>`).join('')||empty('↻','No matching activity','Try another date range, project, person, or search. Only currently accessible tasks appear.')}</section>
+      <div class="inbox-pagination"><button class="btn sm" data-action="activity-page" data-value="-1" ${activity.page===1?'disabled':''}>Newer activity</button><span>Page ${activity.page} of ${data.pages}</span><button class="btn sm" data-action="activity-page" data-value="1" ${activity.page===data.pages?'disabled':''}>Older activity</button></div>`;
+  }
   const formEpoch=new WeakMap();
   const workspaceArrays=['projectChanges','departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates','milestones'];
   function invalidateWorkspace(resetNavigation=true){
-    resetInbox(resetNavigation);resetProjectHistory();if(resetNavigation)resetTaskExplorer();
+    resetInbox(resetNavigation);resetProjectHistory();if(resetNavigation){resetTaskExplorer();resetActivity();}
     epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
     candidateRequest++;membershipRequest++;
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
@@ -348,8 +423,10 @@
     if(link&&dependencyCycle(taskId,prerequisiteId))throw Error('This link would create a circular dependency');
     if(link&&['in_progress','in_review'].includes(t.status)&&p.status!=='complete')throw Error('Mark this task blocked before linking an unfinished prerequisite');
     if(s.demo){
-      if(link&&!prerequisites(taskId).some(d=>d.prerequisite_id===prerequisiteId))s.dependencies.push({id:uid(),project_id:t.project_id,task_id:taskId,prerequisite_id:prerequisiteId});
+      const existed=prerequisites(taskId).some(d=>d.prerequisite_id===prerequisiteId);
+      if(link&&!existed)s.dependencies.push({id:uid(),project_id:t.project_id,task_id:taskId,prerequisite_id:prerequisiteId});
       if(!link)s.dependencies=s.dependencies.filter(d=>d.task_id!==taskId||d.prerequisite_id!==prerequisiteId);
+      if(link!==existed)demoTaskEvent(taskId,link?'dependency_linked':'dependency_unlinked',null,{});
     }else await getResult(api.rpc('qb_set_task_dependency',{p_task:taskId,p_prerequisite:prerequisiteId,p_link:link}));
   }
   function dependencyPanel(t){
@@ -375,7 +452,7 @@
     s.tasks=[task('t1','p1','Complete Trinity switch inventory','in_progress','high','sam','2026-10-30',50),task('t2','p1','Document network naming standards','complete','normal','demo-user','2026-10-24',30),task('t3','p1','Upgrade Lafayette core firmware','ready','high','demo-user','2026-11-04',75),task('t4','p1','Identify unused wireless bridge','complete','low','sam','2026-10-20',25),task('t5','p2','Resolve PA-3220 image authentication issue','blocked','critical','demo-user','2026-11-02',100),task('t6','p2','Disable legacy SSH protocols','in_review','high','sam','2026-10-29',60),task('t7','p2','Verify Tenable critical findings','in_progress','high','eve','2026-10-31',55),task('t8','p2','Rescan remediated systems','complete','normal','demo-user','2026-10-23',40),task('t9','p3','Inspect network closets and UPS devices','ready','normal','sam','2026-11-06',40)];
     s.checklist=[{id:'c1',task_id:'t1',title:'Record model and serial',done:true},{id:'c2',task_id:'t1',title:'Record IP and firmware',done:true},{id:'c3',task_id:'t1',title:'Verify uplink ports',done:false},{id:'c4',task_id:'t5',title:'Validate image and license state',done:false},{id:'c5',task_id:'t5',title:'Document maintenance plan',done:false}];
     s.updates=[{id:'u1',task_id:'t5',author_id:'demo-user',kind:'blocker',body:'Image authentication is failing. Next action: validate download and licensing state.',created_at:'2026-10-24T15:00:00Z'},{id:'u2',task_id:'t1',author_id:'sam',kind:'action',body:'Completed physical inspection of the first closet. Uplinks still need verification.',created_at:'2026-10-25T14:00:00Z'}];
-    s.events=[];s.xp=[{task_id:'t2',user_id:'demo-user',amount:30},{task_id:'t8',user_id:'demo-user',amount:40}];s.invitations=[];s.pendingInvitations=[];
+    s.events=[{id:'demo-status',task_id:'t6',actor_id:'sam',event_type:'status',before_data:{status:'in_progress'},after_data:{status:'in_review'},created_at:new Date().toISOString()},{id:'demo-check',task_id:'t1',actor_id:'sam',event_type:'checklist',before_data:{done:false},after_data:{item_id:'c1',title:'Record model and serial',done:true},created_at:new Date(Date.now()-3600000).toISOString()}];s.xp=[{task_id:'t2',user_id:'demo-user',amount:30},{task_id:'t8',user_id:'demo-user',amount:40}];s.invitations=[];s.pendingInvitations=[];
     inbox.demoRows=[{id:'sample-review',task_id:'t6',kind:'review_requested',created_at:'2026-11-07T12:00:00Z',read_at:null},{id:'sample-assignment',task_id:'t3',kind:'assigned',created_at:'2026-11-07T11:00:00Z',read_at:null},{id:'sample-update',task_id:'t5',kind:'task_update',created_at:'2026-11-07T10:00:00Z',read_at:'2026-11-07T10:05:00Z'}];inbox.unread=2;
     s.loading=false;s.nav='home';s.workspace='all';render();
   }
@@ -475,14 +552,14 @@
     const defs=[...navDefs];
     return `<div class="shell ${s.menuOpen?'menu-open':''}"><aside class="sidebar"><div class="brand"><span class="logo">✦</span><span>QuestBoard<small>WORK, REIMAGINED</small></span></div>
       <div class="sidebar-label">Workspace</div>${defs.slice(0,4).map(x=>navItem(x)).join('')}${navItem({id:'alltasks',icon:'☷',pro:'All tasks',rpg:'Quest explorer'})}
-      <div class="sidebar-label">Collaboration</div>${defs.slice(4,7).map(x=>navItem(x)).join('')}${navItem({id:'inbox',icon:'✉',pro:'Inbox',rpg:'Inbox'})}
+      <div class="sidebar-label">Collaboration</div>${defs.slice(4,7).map(x=>navItem(x)).join('')}${navItem({id:'inbox',icon:'✉',pro:'Inbox',rpg:'Inbox'})}${navItem({id:'activity',icon:'↻',pro:'Activity',rpg:'Guild activity'})}
       <div class="side-bottom">${membershipScopes().length?navItem(defs[7]):''}<div class="sidebar-note"><strong>${term('Keep momentum visible','Every quest matters')}</strong>${term('Own the work, document the progress, celebrate verified results.','Complete objectives, help your party, and grow your mastery.')}</div><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
       <main class="main">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
       <header class="topbar"><div class="top-left">${organizationSelector()}<button class="mobile-menu" data-action="menu" aria-label="Open menu">☰</button><select class="workspace-select" id="workspace-select" ${s.loading?'disabled':''} aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right"><label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
       <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():s.lastError?loadError():`${invitationNotice()}${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${pageContent()}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
   }
   function navItem(x){return `<button class="nav-link ${s.nav===x.id?'active':''}" data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='inbox'&&inbox.unread>0?`<span class="pill-count" aria-label="${inbox.unread} unread notifications">${inbox.unread}</span>`:''}${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
-  function pageContent(){switch(s.nav){case'home':return dashboard();case'inbox':return inboxPage();case'mywork':return workPage();case'alltasks':return allTasksPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
+  function pageContent(){switch(s.nav){case'home':return dashboard();case'inbox':return inboxPage();case'mywork':return workPage();case'alltasks':return allTasksPage();case'activity':return activityPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();default:return dashboard();}}
   const pageTitle=(title,desc,actions='')=>`<div class="page-heading"><div><div class="eyebrow">${esc(s.org?.name||'QuestBoard')}</div><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p></div><div class="buttons">${actions}</div></div>`;
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
@@ -768,7 +845,7 @@
     ${dependencyPanel(t)}
     <section class="panel"><div class="panel-head"><div><h3>${term('Work journal','Adventure journal')}</h3><p>A living record of what was done, learned, or blocked</p></div></div><div class="panel-body">${updates.length?updates.map(u=>`<div class="journal-item"><span class="avatar">${esc(initials(nameFor(u.author_id)))}</span><div><strong>${esc(nameFor(u.author_id))} ${tag(u.kind,u.kind.replace('_',' '))}</strong><p>${esc(u.body)}</p><small>${niceDate(u.created_at)} · ${relative(u.created_at)}</small></div></div>`).join(''):empty('✎','No journal entries','Document work as it happens, so your next meeting has real context.')}
     <form data-form="update" class="journal-form"><textarea name="body" required maxlength="8000" placeholder="What did you do? What happened? What's next?"></textarea><div class="submit-row"><select name="kind"><option value="note">General note</option><option value="action">Action taken</option><option value="blocker">Blocker</option><option value="resolution">Resolution</option><option value="next_step">Next step</option></select><button class="btn primary" type="submit">Post update</button></div></form></div></section>
-    ${events.length?`<section class="panel"><div class="panel-head"><h3>Activity history</h3></div><div class="panel-body">${events.map(e=>`<div class="journal-item"><span class="task-check">↻</span><div><strong>${esc(e.event_type)}</strong><p>${esc(JSON.stringify(e.after_data||{}))}</p><small>${niceDate(e.created_at)}</small></div></div>`).join('')}</div></section>`:''}</div>
+    <section class="panel"><div class="panel-head"><h3>Activity history</h3><button class="btn sm" data-action="task-activity" data-id="${esc(t.id)}">View all task activity</button></div><div class="panel-body">${events.map(e=>{const description=describeTaskEvent(e);return `<div class="journal-item"><span class="task-check">↻</span><div><strong>${esc(description.label)}</strong><p class="activity-text">${esc(description.text)}</p><small>${esc(e.actor_id?nameFor(e.actor_id):'System')} · ${esc(niceDate(e.created_at))}</small></div></div>`;}).join('')||'<p class="muted">No recorded task changes yet.</p>'}</div></section></div>
     <aside><section class="panel"><div class="panel-head"><h3>${term('Task details','Quest details')}</h3></div><div class="panel-body"><div class="info-list"><div class="info-pair"><span class="key">Status</span>${tag(t.status,fmtStatus(t.status))}</div><div class="info-pair"><span class="key">Assigned to</span><span class="val">${esc(nameFor(t.assignee_id))}</span></div><div class="info-pair"><span class="key">Reviewer</span><span class="val">${esc(nameFor(t.reviewer_id))}</span></div><div class="info-pair"><span class="key">Due date</span><span class="val">${niceDate(t.due_date)}</span></div><div class="info-pair"><span class="key">Milestone</span><span class="val">${s.milestones.some(m=>m.id===t.milestone_id)?`<button class="btn sm" data-action="milestone" data-id="${esc(t.milestone_id)}">${esc(s.milestones.find(m=>m.id===t.milestone_id).title)}</button>`:'None'}</span></div><div class="info-pair"><span class="key">Priority</span>${tag(t.priority,priorityNames[t.priority])}</div><div class="info-pair"><span class="key">Experience</span><span class="val">✦ ${xp} XP</span></div></div>
     <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:18px;display:grid;gap:8px">${actions.length?actions.map(([st,label],i)=>`<button class="btn ${i===0?'primary':''} block" data-action="status" data-value="${st}" data-id="${t.id}">${esc(label)}</button>`).join(''):`<small style="text-align:center">No available transitions</small>`}${manager?`<button class="btn block" data-action="modal" data-value="edit-task">✎ Edit details</button>${t.visibility!=='restricted'?`<button class="btn block" data-action="modal" data-value="save-template">Save as template</button>`:''}`:''}</div></div></section>
     <div class="panel" style="margin-top:20px"><div class="panel-head"><h3>What counts as done?</h3></div><div class="panel-body"><p class="muted" style="font-size:12px">Complete the objectives, log verification, then submit for review. Experience is granted only when work is approved.</p></div></div></aside></div>`;
@@ -987,6 +1064,12 @@
     if(action==='project'){if(s.projectId!==id)Object.assign(s,{projectMilestone:'all',projectOwner:'all',projectPriority:'all',projectReadiness:'all'});s.projectId=id;s.nav='project';s.menuOpen=false;render();return;}
     if(action==='task'){s.taskId=id;s.nav='task';s.menuOpen=false;render();return;}
     if(action==='filter'){s.filter=v;render();return;}
+    if(action==='activity-refresh'){await withBusy(async()=>{await refresh();toast('Activity refreshed');});return;}
+    if(action==='activity-export'){downloadActivity();return;}
+    if(action==='activity-page'){activity.page+=Number(v);render();root.querySelector('.activity-feed')?.scrollIntoView?.({block:'start'});return;}
+    if(action==='activity-clear'){resetActivity();s.query='';render();return;}
+    if(action==='activity-all-tasks'){activity.task=null;activity.page=1;render();return;}
+    if(action==='task-activity'){if(!taskFor(id))return;resetActivity();activity.task=id;activity.period='all';s.query='';s.workspace='all';s.nav='activity';render();return;}
     if(action==='tasks-refresh'){await withBusy(async()=>{await refresh();toast('Tasks refreshed');});return;}
     if(action==='tasks-export'){downloadAllTasks();return;}
     if(action==='tasks-page'){taskExplorer.page+=Number(v);render();root.querySelector('.task-explorer-summary')?.scrollIntoView?.({block:'nearest'});return;}
@@ -1076,8 +1159,8 @@
       return;
     }
     if(action==='close-modal'){candidateRequest++;s.modal=null;render();return;}
-    if(action==='status'){await withBusy(async()=>{if(s.demo){const t=taskFor(id);if(!taskActions(t).some(([st])=>st===v))throw Error('Invalid status change');if(v==='in_review'&&s.checklist.some(c=>c.task_id===id&&!c.done))throw Error('Finish the checklist first');t.status=v;if(v!=='complete')t.completed_at=null;if(v==='complete'){t.completed_at=new Date().toISOString();if(!s.xp.some(x=>x.task_id===id))s.xp.push({task_id:id,user_id:t.assignee_id,amount:t.xp_reward});}s.events.unshift({task_id:id,event_type:'status',after_data:{status:v},created_at:new Date().toISOString()});}else await getResult(api.rpc('qb_transition_task',{p_task:id,p_new_status:v}));toast('Task updated');await refresh();});return;}
-    if(action==='check'){await withBusy(async()=>{const item=s.checklist.find(c=>c.id===id);if(s.demo)item.done=!item.done;else await getResult(api.rpc('qb_toggle_checklist',{p_item:id,p_done:!item.done}));await refresh();});return;}
+    if(action==='status'){await withBusy(async()=>{if(s.demo){const t=taskFor(id);if(!taskActions(t).some(([st])=>st===v))throw Error('Invalid status change');if(v==='in_review'&&s.checklist.some(c=>c.task_id===id&&!c.done))throw Error('Finish the checklist first');const priorStatus=t.status;t.status=v;if(v!=='complete')t.completed_at=null;if(v==='complete'){t.completed_at=new Date().toISOString();if(!s.xp.some(x=>x.task_id===id))s.xp.push({task_id:id,user_id:t.assignee_id,amount:t.xp_reward});}s.events.unshift({id:uid(),task_id:id,actor_id:s.user.id,event_type:'status',before_data:{status:priorStatus},after_data:{status:v},created_at:new Date().toISOString()});}else await getResult(api.rpc('qb_transition_task',{p_task:id,p_new_status:v}));toast('Task updated');await refresh();});return;}
+    if(action==='check'){await withBusy(async()=>{const item=s.checklist.find(c=>c.id===id);if(s.demo){const before={item_id:item.id,title:item.title,done:item.done};item.done=!item.done;demoTaskEvent(item.task_id,'checklist',before,{...before,done:item.done});}else await getResult(api.rpc('qb_toggle_checklist',{p_item:id,p_done:!item.done}));await refresh();});return;}
     if(action==='copy-invite'){const generation=epoch;const link=location.origin+location.pathname+'?invite='+encodeURIComponent(id);try{await navigator.clipboard.writeText(link);if(generation!==epoch)return;toast('Invitation link copied');}catch{if(generation!==epoch)return;prompt('Copy invitation link',link);}return;}
     if(action==='revoke-invite'){await withBusy(async()=>{if(s.demo)s.invitations.find(i=>i.id===id).status='revoked';else await getResult(api.rpc('qb_revoke_invitation',{p_invitation:id}));toast('Invitation revoked');await refresh();});return;}
     if(action==='accept-invite'){await withBusy(async()=>{const orgId=await getResult(api.rpc('qb_accept_invitation',{p_invitation:id}));if(inviteIntent===id)clearInviteIntent();toast('Welcome to your new workspace');await loadLive(orgId,true);});return;}
@@ -1173,12 +1256,12 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         toast('Template saved. Find it on the project page.');
       }else if(type==='edit-task'){
         const row={milestone_id:get('milestone_id')||null,title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:get('reviewer_id')||null,updated_at:new Date().toISOString()};
-        if(s.demo)Object.assign(taskFor(s.taskId),row);else await getResult(api.from('qb_tasks').update(row).eq('id',s.taskId));toast('Task updated');
+        if(s.demo){const task=taskFor(s.taskId),snapshot=t=>({title:t.title,priority:t.priority,assignee:t.assignee_id,due:t.due_date});const before=snapshot(task);Object.assign(task,row);demoTaskEvent(task.id,'metadata',before,snapshot(task));}else await getResult(api.from('qb_tasks').update(row).eq('id',s.taskId));toast('Task updated');
       }else if(type==='dependency'){
         await setDependency(s.taskId,get('prerequisite_id'),true);toast('Prerequisite linked');
       }else if(type==='checklist'){
         const row={task_id:s.taskId,title:get('title'),position:s.checklist.filter(c=>c.task_id===s.taskId).length};
-        if(s.demo){row.id=uid();row.done=false;s.checklist.push(row);}else await getResult(api.from('qb_checklist').insert(row));toast('Objective added');
+        if(s.demo){row.id=uid();row.done=false;s.checklist.push(row);demoTaskEvent(row.task_id,'checklist',null,{item_id:row.id,title:row.title,done:false,position:row.position});}else await getResult(api.from('qb_checklist').insert(row));toast('Objective added');
       }else if(type==='update'){
         const row={task_id:s.taskId,author_id:s.user.id,kind:get('kind'),body:get('body')};
         if(s.demo){row.id=uid();row.created_at=new Date().toISOString();s.updates.unshift(row);}else await getResult(api.from('qb_task_updates').insert(row));toast('Journal entry added');
@@ -1196,6 +1279,9 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f);}});
   document.addEventListener('change',e=>{
+    const activityFields={'activity-project':'project','activity-person':'person','activity-kind':'kind','activity-period':'period','activity-from':'from','activity-to':'to'};
+    if(activityFields[e.target?.id]){const id=e.target.id;activity[activityFields[id]]=e.target.value;activity.page=1;render();document.getElementById(id)?.focus();return;}
+
     if(e.target?.id==='tasks-view'){if(e.target.value)applyTaskView(e.target.value);else taskExplorer.selected='';render();document.getElementById('tasks-view')?.focus();return;}
     const taskFields={'tasks-project':'project','tasks-owner':'owner','tasks-status':'status','tasks-priority':'priority','tasks-deadline':'deadline','tasks-dependency':'dependency','tasks-sort':'sort'};
     if(taskFields[e.target?.id]){const id=e.target.id;taskExplorer[taskFields[id]]=e.target.value;taskExplorer.page=1;taskExplorer.selected='';render();document.getElementById(id)?.focus();return;}
@@ -1205,8 +1291,8 @@ if(['planner-signal','planner-group'].includes(e.target?.id)){
       s.plannerCell=null;render();document.getElementById(id)?.focus();return;
     }
     if(e.target?.id==='report-health'||e.target?.id==='report-closed'){const id=e.target.id;if(id==='report-health')s.reportHealth=e.target.value;else s.reportClosed=e.target.checked;s.reportProject=null;render();document.getElementById(id)?.focus();return;}
-    const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;taskExplorer.page=1;render();if(s.nav==='inbox')loadInbox();}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
-  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
+    const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;taskExplorer.page=1;activity.page=1;render();if(s.nav==='inbox')loadInbox();}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
+  document.addEventListener('input',e=>{if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='activity')activity.page=1;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     readAuthReturn();

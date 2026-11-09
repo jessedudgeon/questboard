@@ -180,3 +180,17 @@ An existing view name replaces its filters; removing a saved view keeps current 
 Views do not synchronize between devices. Demo views remain temporary. Storage errors
 are reported without discarding filters, and unavailable saved project/owner filters do
 not broaden the results. Account and organization changes reset active filters.
+
+## Activity feed
+
+Activity combines authorized journal posts and recorded status, checklist, task-detail,
+and dependency events. Filter by project, person, event category and date range, or search
+activity text, task names and projects. Presets use browser-local calendar days, including
+today; custom start/end dates are inclusive. Invalid ranges show an error rather than
+silently broadening results. Current workspace and task access always apply.
+
+The feed shows 50 records per page; CSV export includes all matches with UTC timestamps.
+Task history now uses readable summaries and links to all activity for that task. Unknown
+or legacy payloads use generic descriptions; hidden dependency identities are not expanded.
+This displays recorded history, not a complete audit of every field or a unique-action
+count. Refresh activity fetches the latest workspace snapshot. No schema changes required.
