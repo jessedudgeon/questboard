@@ -857,7 +857,7 @@
   }
   function projectPage(){const p=projectFor(s.projectId);if(!p)return projectsPage();const data=projectTaskData(p.id),ts=data.tasks,all=data.all,progress=pct(p),manager=canManage(p.id);
     const statuses=['backlog','ready','in_progress','blocked','in_review',...(s.projectClosed?['complete','cancelled']:[])];
-    return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button><button class="btn" data-action="modal" data-value="project-settings">Project settings</button>`:''}<button class="btn" data-action="nav" data-value="team">♧ Team</button><button class="btn" data-action="project-history">Change history</button><button class="btn" data-action="project-refresh">Refresh project</button></div></div>
+    return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button><button class="btn" data-action="modal" data-value="project-settings">Project settings</button>`:''}<button class="btn" data-action="modal" data-value="project-export">Export for staff</button><button class="btn" data-action="nav" data-value="team">♧ Team</button><button class="btn" data-action="project-history">Change history</button><button class="btn" data-action="project-refresh">Refresh project</button></div></div>
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${all.length}</div><div class="hint">${all.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${all.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
     ${projectBriefPanel(p.id)}${projectMilestones(p.id)}${manager?templateLibrary(p.id):''}<div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
     ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='dependencies'?projectDependencies(data):s.projectView==='list'?`<section class="panel project-task-list"><div class="panel-body">${ts.map(t=>taskRow(t,true)).join('')}</div></section>`:
@@ -960,6 +960,87 @@
     const win=window.open('','_blank');if(!win){toast('Allow pop-ups to print this report, or download the HTML file.',true);return;}
     win.opener=null;win.document.open();win.document.write(standaloneLeadershipHTML());win.document.close();win.focus();win.print();
   }
+  // Staff exports are copies of work already visible to the signed-in user. They do
+  // not inherit QuestBoard's access controls after leaving the application.
+  function staffExportData(projectId,options={}){
+    const project=projectFor(projectId);if(!project)return null;
+    const includeFinished=options.includeFinished===true,includeRestricted=options.includeRestricted===true;
+    const assignee=options.assignee||'all';
+    const all=s.tasks.filter(task=>task.project_id===projectId);
+    const tasks=all.filter(task=>includeRestricted||task.visibility!=='restricted')
+      .filter(task=>includeFinished||!['complete','cancelled'].includes(task.status))
+      .filter(task=>assignee==='all'||(assignee==='unassigned'?!task.assignee_id:task.assignee_id===assignee))
+      .sort((a,b)=>String(a.due_date||'9999-99-99').localeCompare(String(b.due_date||'9999-99-99'))||
+        ({critical:0,high:1,normal:2,low:3}[a.priority]??4)-({critical:0,high:1,normal:2,low:3}[b.priority]??4)||
+        String(a.title).localeCompare(String(b.title)));
+    const included=new Map(tasks.map(task=>[task.id,task]));
+    return {project,tasks,milestones:s.milestones.filter(m=>m.project_id===projectId&&!m.archived)
+      .sort((a,b)=>String(a.due_date||'').localeCompare(String(b.due_date||''))),
+      brief:latestBrief(projectId),includeChecklists:options.includeChecklists!==false,
+      restrictedOmitted:all.filter(task=>task.visibility==='restricted'&&!includeRestricted).length,
+      assignee,dependencies:task=>s.dependencies.filter(link=>link.task_id===task.id&&included.has(link.prerequisite_id))
+        .map(link=>included.get(link.prerequisite_id).title),
+      checklist:task=>s.checklist.filter(item=>item.task_id===task.id)};
+  }
+  function staffExportHTML(report){
+    if(!report)return '';
+    const {project,tasks,milestones,brief}=report;
+    const taskHTML=task=>{
+      const checks=report.includeChecklists?report.checklist(task):[],depends=report.dependencies(task);
+      return `<article class="task"><div class="task-head"><h3>${esc(task.title)}</h3><span class="status">${esc(fmtStatus(task.status))}</span></div>
+        <p class="meta"><strong>Owner:</strong> ${esc(nameFor(task.assignee_id))} · <strong>Due:</strong> ${esc(niceDate(task.due_date))} · <strong>Priority:</strong> ${esc(priorityNames[task.priority]||task.priority||'Not set')}${task.milestone_id&&milestones.some(m=>m.id===task.milestone_id)?' · <strong>Milestone:</strong> '+esc(milestones.find(m=>m.id===task.milestone_id).title):''}</p>
+        ${task.description?`<p class="description">${esc(task.description)}</p>`:''}
+        ${depends.length?`<p class="meta"><strong>Depends on:</strong> ${esc(depends.join(', '))}</p>`:''}
+        ${checks.length?`<h4>Checklist (${checks.filter(c=>c.done).length}/${checks.length})</h4><ul class="checklist">${checks.map(c=>`<li>${c.done?'☑':'☐'} ${esc(c.title)}</li>`).join('')}</ul>`:''}
+      </article>`;
+    };
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(project.title)} · Staff handoff</title>
+      <style>body{font:14px/1.5 system-ui,Arial,sans-serif;color:#17253a;max-width:920px;margin:35px auto;padding:0 24px}h1{font-size:27px;margin-bottom:5px}h2{font-size:19px;margin:28px 0 10px}h3{font-size:16px;margin:0}h4{margin:12px 0 5px}p{margin:7px 0}.meta,.subtle{color:#52627a}.description,.summary,.check-in{white-space:pre-wrap}.task{padding:17px 0;border-top:1px solid #d3dae5;break-inside:avoid}.task-head{display:flex;justify-content:space-between;gap:15px}.status{font-size:12px;font-weight:600;white-space:nowrap;background:#e9eff9;border-radius:12px;padding:3px 9px}.checklist{list-style:none;padding-left:10px}.checklist li{margin:4px 0}.milestones{padding-left:20px}.milestones li{margin:7px 0}.note{border-left:3px solid #5674aa;padding-left:12px}.footer{margin-top:28px;border-top:1px solid #d3dae5;padding-top:14px;font-size:12px;color:#52627a}@media print{body{margin:0;max-width:none}.task{break-inside:avoid}}</style></head><body>
+      <h1>${esc(project.title)}</h1><p class="subtle">Staff project handoff · ${esc(s.org?.name||'Organization')} · Prepared ${esc(new Date().toLocaleDateString())}</p>
+      <p class="meta"><strong>Project lead:</strong> ${esc(brief?.delivery_owner||nameFor(project.lead_id))} · <strong>Project status:</strong> ${esc(project.status||'Not set')} · <strong>Target:</strong> ${esc(niceDate(project.target_date))}</p>
+      <h2>Project goal</h2><p class="summary">${esc(project.summary||'No goal recorded.')}</p>
+      ${brief?.next_steps?`<section class="note"><h2>Current next steps</h2><p class="check-in">${esc(brief.next_steps)}</p><p class="subtle">From project check-in on ${esc(niceDate(brief.created_at))}</p></section>`:''}
+      <h2>Milestones</h2>${milestones.length?`<ul class="milestones">${milestones.map(m=>`<li><strong>${esc(m.title)}</strong> — ${esc(niceDate(m.due_date))}${m.description?`<p class="description">${esc(m.description)}</p>`:''}</li>`).join('')}</ul>`:'<p class="subtle">No active milestones recorded.</p>'}
+      <h2>Tasks to work on (${tasks.length})</h2>${tasks.map(taskHTML).join('')||'<p class="subtle">No tasks match these export choices.</p>'}
+      <p class="footer">Prepared from the project and tasks visible to the exporter, independent of their board filters. This file is a snapshot; updates in QuestBoard will not change it. Verify recipients before sharing, as downloaded files are outside QuestBoard permissions.</p></body></html>`;
+  }
+  function staffExportCSV(report){
+    if(!report)return '';
+    const csvCell=value=>{let valueText=String(value??'');if(/^[\s]*[=+@-]|^[\t\r\n]/.test(valueText))valueText="'"+valueText;return '"'+valueText.replaceAll('"','""')+'"';};
+    const {project,brief,milestones,tasks}=report;
+    const headers=['Record type','Project','Project goal','Project status','Project target','Project lead','Title','Description','Milestone','Owner','Task status','Priority','Due date','Checklist progress','Checklist items','Depends on'];
+    const base=[project.title,project.summary,project.status,project.target_date,brief?.delivery_owner||nameFor(project.lead_id)];
+    const rows=[['Project',...base,project.title,brief?.next_steps||'', '', '', '', '', '', '', '', '']];
+    for(const m of milestones)rows.push(['Milestone',...base,m.title,m.description||'','','','','',m.due_date,'','','']);
+    for(const task of tasks){
+      const checks=report.includeChecklists?report.checklist(task):[],milestone=milestones.find(m=>m.id===task.milestone_id);
+      rows.push(['Task',...base,task.title,task.description||'',milestone?.title||'',nameFor(task.assignee_id),
+        fmtStatus(task.status),priorityNames[task.priority]||task.priority||'',task.due_date||'',
+        checks.length?`${checks.filter(c=>c.done).length}/${checks.length}`:'',
+        checks.map(c=>(c.done?'[x] ':'[ ] ')+c.title).join('\n'),report.dependencies(task).join('; ')]);
+    }
+    return [headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n');
+  }
+  function currentStaffExport(){
+    if(s.nav!=='project'||s.modal!=='project-export'||s.loading||s.lastError)return null;
+    const chosen=root.querySelector('#staff-export-assignee')?.value||'all';
+    const options={assignee:chosen,includeFinished:!!root.querySelector('#staff-export-finished')?.checked,
+      includeRestricted:!!root.querySelector('#staff-export-restricted')?.checked,
+      includeChecklists:!!root.querySelector('#staff-export-checklists')?.checked};
+    return staffExportData(s.projectId,options);
+  }
+  function downloadStaffExport(format){
+    const report=currentStaffExport();if(!report)return;
+    const csv=format==='csv',content=csv?'\uFEFF'+staffExportCSV(report):staffExportHTML(report);
+    const filename='questboard-staff-handoff-'+dateKey(new Date())+(csv?'.csv':'.html');
+    const url=URL.createObjectURL(new Blob([content],{type:csv?'text/csv;charset=utf-8':'text/html;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function printStaffExport(){
+    const report=currentStaffExport();if(!report)return;
+    const win=window.open('','_blank');if(!win){toast('Allow pop-ups to print, or download the HTML handoff.',true);return;}
+    win.opener=null;win.document.open();win.document.write(staffExportHTML(report));win.document.close();win.focus();win.print();
+  }
   function reportsPage(){
     const tabs=`<div class="filter-row" role="group" aria-label="Report view">${[['accomplishments','What we accomplished'],['outlook','Where we stand & next steps'],['portfolio','Task health'],['progression','Progress & recognition']].map(([value,label])=>`<button class="filter-pill ${s.reportView===value?'active':''}" data-action="report-view" data-value="${value}" aria-pressed="${s.reportView===value}">${label}</button>`).join('')}</div>`;
     return pageTitle(term('Reports','Chronicle'),'Turn short project check-ins into leadership-ready updates.')+tabs+(s.reportView==='progression'?progressionReport():s.reportView==='portfolio'?portfolioPage():leadershipReportPage());
@@ -1014,6 +1095,20 @@
   function login(){return `<div class="login-page"><div class="login-left"><div class="login-brand"><span class="logo">✦</span> QuestBoard</div><div class="login-content"><div class="eyebrow">Meaningful work, real progress</div><h1>Your work is an <em>adventure.</em></h1><p>Plan projects. Rally your team. Make every accomplishment count. One workspace, two ways to experience progress.</p><div class="login-points"><span>✓ Department workspaces</span><span>✓ Verified progress</span><span>✓ Optional RPG mode</span></div></div><div class="login-foot">QuestBoard · ${esc(cfg.buildLabel||'Pilot')}</div></div><div class="login-right"><div class="auth-card"><div class="mini">✦</div><h2>${signupMode?'Create your account':'Welcome to QuestBoard'}</h2><p>${signupMode?'Step 1 · Continue with Google to create your account. Then create an organization and add its departments.':'Sign in to your organizations, or create an account to start your own.'}</p><button class="btn block" data-action="signup-mode">${signupMode?'Already have an account? Sign in':'New here? Sign up'}</button>${invitationNotice()}${authError?`<div class="auth-error" role="alert">${esc(authError)}</div>`:''}<button class="auth-provider" data-action="login" data-value="azure" ${!providerEnabled('azure')||authPending?'disabled':''}><span class="provider-icon ms">▦</span>${providerEnabled('azure')?'Continue with Microsoft':'Microsoft sign-in unavailable'}</button><button class="auth-provider" data-action="login" data-value="google" ${!providerEnabled('google')||authPending?'disabled':''}><span class="provider-icon google">G</span>${providerEnabled('google')?'Continue with Google':'Google sign-in unavailable'}</button>${authPending?'<p role="status">Opening sign-in…</p>':''}<div class="auth-divider">OR EXPLORE FIRST</div><button class="btn demo-btn" data-action="demo">✦ Explore sample workspace</button>${signOutFailed?'<button class="btn" data-action="logout">Retry sign out</button>':''}<div class="auth-fine">Google handles your sign-in securely. To accept an invitation, use the invited email address. Demo data is fictional and not saved.</div></div></div></div>`;}
   function modalHTML(){if(!s.modal)return '';let content='',title='';
     if(s.modal==='task-view'){title='Save task view';content=`<form data-form="task-view"><div class="modal-body"><div class="form-field"><label for="task-view-name">View name</label><input id="task-view-name" name="name" required maxlength="60" placeholder="e.g. My overdue tasks"></div><p class="field-hint">Up to 12 views per organization on this browser. Using an existing name replaces its filters.</p></div>${modalFooter('Save view')}</form>`;}
+    if(s.modal==='project-export'){
+      const project=projectFor(s.projectId),all=s.tasks.filter(task=>task.project_id===s.projectId);
+      const ids=[...new Set(all.map(task=>task.assignee_id).filter(Boolean))];
+      title='Export project for staff';
+      content=`<div class="modal-body">
+        <p>Prepare a handoff for <strong>${esc(project?.title||'this project')}</strong>. Exports use all project tasks you can access, regardless of board filters or search.</p>
+        <div class="form-field"><label for="staff-export-assignee">Tasks for</label><select id="staff-export-assignee"><option value="all">Everyone (all tasks)</option><option value="unassigned">Unassigned tasks only</option>${ids.map(id=>`<option value="${esc(id)}">${esc(nameFor(id))}</option>`).join('')}</select></div>
+        <label class="checkline"><input id="staff-export-checklists" type="checkbox" checked> Include task checklists</label>
+        <label class="checkline"><input id="staff-export-finished" type="checkbox"> Include completed and cancelled tasks</label>
+        ${all.some(task=>task.visibility==='restricted')?`<label class="checkline"><input id="staff-export-restricted" type="checkbox"> Include restricted tasks I can access (${all.filter(task=>task.visibility==='restricted').length})</label>`:'<input id="staff-export-restricted" type="checkbox" hidden disabled>'}
+        <p class="field-hint">The handoff includes the project goal, next steps, milestones, owners, dates, task instructions, and any selected checklists. CSV opens in spreadsheet apps; HTML can be attached to an email or printed to PDF.</p>
+        <p class="field-hint" role="note"><strong>Sharing caution:</strong> Downloads are outside QuestBoard permissions. Review the content and recipients before sending, especially for restricted projects or tasks.</p>
+      </div><div class="modal-footer staff-export-actions"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="button" class="btn" data-action="staff-export-csv">Download CSV</button><button type="button" class="btn" data-action="staff-export-html">Download handoff</button><button type="button" class="btn primary" data-action="staff-export-print">Print / Save PDF</button></div>`;
+    }
     if(s.modal==='project-settings'){title='Project settings';content=projectSettingsForm();}
     if(s.modal==='organization'){title='Create organization';content=`<div class="modal-body">${organizationForm()}</div>`;}
     if(s.modal==='milestone'){title=s.editMilestoneId?'Edit milestone':'Add milestone';content=milestoneForm();}
@@ -1193,6 +1288,9 @@
     if(action==='tasks-reset-storage'){if(s.demo)demoTaskViews=[];else if(taskViewsKey()){try{localStorage.removeItem(taskViewsKey());}catch{throw Error('Browser storage is unavailable');}}taskExplorer.selected='';render();return;}
     if(action==='project-history'){s.nav='project-history';await loadProjectHistory();return;}
     if(action==='project-refresh'){await withBusy(async()=>{await refresh();toast('Project refreshed');});return;}
+    if(action==='staff-export-csv'){downloadStaffExport('csv');return;}
+    if(action==='staff-export-html'){downloadStaffExport('html');return;}
+    if(action==='staff-export-print'){printStaffExport();return;}
     if(action==='report-view'){if(['portfolio','progression','accomplishments','outlook'].includes(v)){s.reportView=v;if(v==='accomplishments')s.reportClosed=true;if(v==='outlook')s.reportClosed=false;render();}return;}
     if(action==='report-export'){downloadPortfolio();return;}
     if(action==='leadership-download'&&s.nav==='reports'&&['accomplishments','outlook'].includes(s.reportView)){downloadLeadership();return;}
@@ -1248,6 +1346,7 @@
     }
     if(action==='modal'){
       if(v==='task-view'&&(!s.org||s.loading||s.nav!=='alltasks'))return;
+      if(v==='project-export'&&(s.nav!=='project'||!projectFor(s.projectId)||s.loading||s.lastError))return;
       if(v==='project-settings'&&!canManage(s.projectId))return;
       if(v==='organization'&&(!s.user||s.demo||s.loading))return;
       if(v==='edit-task'&&id){
