@@ -378,6 +378,33 @@ test('Inbox supports unread filters, page read and task links on mobile',async({
  await expect(page.getByRole('heading',{name:title,exact:true})).toBeVisible();
 });
 
+test('Project check-ins feed both leadership reports and export on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
+ await page.goto('http://127.0.0.1:4173/');
+ await page.addStyleTag({path:path.join(__dirname,'../../dist/styles.css')});
+ await page.addScriptTag({path:path.join(__dirname,'../../dist/app.js')});
+ await page.getByRole('button',{name:'Explore sample workspace'}).click();
+ await page.locator('.project-card').first().click();
+ await page.locator('.brief-entry summary').click();
+ await page.getByLabel('Delivery owner (for reporting)').fill('Assigned network technician');
+ await page.getByLabel('What did we accomplish?').fill('Completed network readiness checks');
+ await page.getByLabel('What happens next?').fill('Prepare the next maintenance window');
+ await page.getByLabel('Risks or blockers').fill('Awaiting vendor confirmation');
+ await page.getByRole('button',{name:'Save check-in'}).click();
+ await expect(page.locator('.project-briefs')).toContainText('Completed network readiness checks');
+ await expect(page.locator('.project-briefs')).toContainText('Assigned network technician');
+ await page.getByRole('button',{name:'Open menu',exact:true}).click();
+ await page.locator('[data-action="nav"][data-value="reports"]').click();
+ await expect(page.locator('.leadership-report')).toContainText('Prepare the next maintenance window');
+ await page.getByRole('button',{name:'What we accomplished',exact:true}).click();
+ await expect(page.locator('.leadership-report')).toContainText('Completed network readiness checks');
+ const downloadEvent=page.waitForEvent('download');
+ await page.getByRole('button',{name:'Download HTML'}).click();
+ expect((await downloadEvent).suggestedFilename()).toMatch(/^questboard-accomplishments-\d{4}-\d{2}-\d{2}\.html$/);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+});
+
 test('Portfolio filters, task drill-down and CSV export work on mobile',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:'<html><meta name="viewport" content="width=device-width, initial-scale=1"><body><div id="app"></div><div id="toast"></div></body></html>'}));
@@ -387,6 +414,7 @@ test('Portfolio filters, task drill-down and CSV export work on mobile',async({p
  await page.getByRole('button',{name:'Explore sample workspace'}).click();
  await page.getByRole('button',{name:'Open menu',exact:true}).click();
  await page.locator('[data-action="nav"][data-value="reports"]').click();
+ await page.getByRole('button',{name:'Task health',exact:true}).click();
  await expect(page.locator('.portfolio-card').first()).toBeVisible();
  const project=await page.locator('.portfolio-card h2').first().textContent();
  await page.getByLabel('Search projects and tasks').fill(project);
@@ -404,6 +432,7 @@ test('Portfolio filters, task drill-down and CSV export work on mobile',async({p
  await expect(page.getByRole('heading',{name:taskTitle,exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Open menu',exact:true}).click();
  await page.locator('[data-action="nav"][data-value="reports"]').click();
+ await page.getByRole('button',{name:'Task health',exact:true}).click();
  await page.getByLabel('Health',{exact:true}).selectOption('closed');
  await expect(page.locator('.portfolio-card')).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Export project CSV',exact:true})).toBeDisabled();

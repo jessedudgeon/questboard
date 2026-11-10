@@ -13,6 +13,37 @@ The frontend is plain HTML, CSS, and JavaScript in [`dist/`](dist/). It connects
 - Professional/RPG presentation toggle.
 - Link to the separate Minutes app; automatic action sync is not built yet.
 
+## Project leadership reporting
+
+QuestBoard records dated, append-only **project check-ins**. A project lead or authorized
+department manager opens a project and posts a brief update containing:
+
+- delivery owner (reporting-only; does not grant permissions) and delivery health
+  (on track, at risk, blocked, or complete),
+- meaningful accomplishments,
+- next steps, risks/blockers, and decisions or support needed.
+
+The **Reports** screen has two complementary, organization-scoped outputs:
+
+1. **What we accomplished** aggregates the accomplishment notes entered during the
+   selected 7-, 30-, 90-, or 365-day period.
+2. **Where we stand & next steps** uses each project's latest check-in, target date,
+   next active milestone, risks, and pending decisions. It flags check-ins more than
+   14 days old rather than silently assuming a project is on track.
+
+Both can be printed/saved as PDF through the browser or downloaded as standalone HTML.
+They respect the current department/search and closed-project filters. There is no
+automatic Microsoft Planner import; technicians may keep individual execution tasks in
+Planner while managers record project-level delivery in QuestBoard. The existing Task
+health report still measures only authorized QuestBoard tasks and should not be used as
+an all-Planner completion metric.
+
+Deploy the additive migration
+`supabase/migrations/20261110180000_questboard_project_briefs.sql` **before** the new
+frontend. The migration creates only `qb_project_briefs` with project-scoped read access,
+manager-only insert access, and immutable history. It does not modify MeetingDesk tables
+or existing QuestBoard records.
+
 ## Local preview
 
 Serve `dist/` with any static web server. For example, `python3 -m http.server 8000 --directory dist` and open `http://localhost:8000`.
