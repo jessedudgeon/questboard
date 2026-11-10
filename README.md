@@ -194,3 +194,17 @@ Task history now uses readable summaries and links to all activity for that task
 or legacy payloads use generic descriptions; hidden dependency identities are not expanded.
 This displays recorded history, not a complete audit of every field or a unique-action
 count. Refresh activity fetches the latest workspace snapshot. No schema changes required.
+
+## Quick tasks and Minutes
+
+The global **Quick task** button creates a task with an optional project and due date.
+**No project · Department** uses one shared department operations queue, preserving
+existing task permissions, review and approved XP. New quick tasks start unassigned
+with 15 XP; assign an owner and edit details from the task page. Creation remains
+restricted to department managers, organization admins and eligible project leads.
+
+Apply `20261110131119_quick_tasks_minutes.sql` before publishing this frontend.
+The migration adds a queue flag and invoker-rights destination/create RPCs. A stable
+request UUID prevents duplicate tasks on retries. It does not modify existing tasks
+or MeetingDesk data. Minutes explicitly copies an action into a selected destination;
+its local checkbox does not approve the QuestBoard task or grant XP.
