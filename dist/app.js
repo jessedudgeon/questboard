@@ -392,12 +392,20 @@
     throw Error('Unable to finish loading this workspace. Please retry.');
   }
   async function scopedRows(table,column,ids,select='*',configure=q=>q){
-    const generation=epoch,rows=[],uniqueIds=[...new Set(ids)];
-    for(let i=0;i<uniqueIds.length;i+=100){
-      if(generation!==epoch)throw stale();
-      rows.push(...await pagedRows(()=>configure(api.from(table).select(select).in(column,uniqueIds.slice(i,i+100))),rowKeys[table]||['id']));
-      if(rows.length>maxCollectionRows)throw Error('This workspace is too large to load at once. Contact your administrator. No partial results are shown.');
-    }
+    const generation=epoch,uniqueIds=[...new Set(ids)],chunks=[];
+    for(let i=0;i<uniqueIds.length;i+=100)chunks.push(uniqueIds.slice(i,i+100));
+    // Requests for unrelated ID batches need not wait on one another. Keep a
+    // small concurrency limit so large organizations do not flood the API.
+    const results=new Array(chunks.length);let next=0;
+    await Promise.all(Array.from({length:Math.min(3,chunks.length)},async()=>{
+      while(next<chunks.length){
+        if(generation!==epoch)throw stale();
+        const index=next++;
+        results[index]=await pagedRows(()=>configure(api.from(table).select(select).in(column,chunks[index])),rowKeys[table]||['id']);
+      }
+    }));
+    const rows=results.flat();
+    if(rows.length>maxCollectionRows)throw Error('This workspace is too large to load at once. Contact your administrator. No partial results are shown.');
     return rows;
   }
   async function loadDependencyReadiness(ids){
@@ -564,7 +572,9 @@
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
   function questProjectName(p){return p.title.replace('Critical Vulnerability Remediation','The Vulnerability Hydra').replace('Network Infrastructure Modernization','The Great Network Renewal').replace('Campus Facilities Improvements','Restoration of the Halls');}
-  function taskRow(t,details=false){const p=projectFor(t.project_id);return `<div class="task-item" data-action="task" data-id="${t.id}"><div class="task-check">${t.status==='complete'?'✓':'◇'}</div><div class="task-grow"><div class="task-title">${esc(t.title)}</div><div class="task-sub">${esc(p?.title||'Project')} · ${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</div>${details===true&&dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</div><div class="task-right">${details===true?tag(t.priority,priorityNames[t.priority]):''}${tag(t.status,fmtStatus(t.status))}<span style="color:var(--muted)">›</span></div></div>`;}
+  const quickStatusAction=t=>taskActions(t).find(([status])=>['ready','in_progress'].includes(status));
+  const quickStatusButton=t=>{const action=quickStatusAction(t);return action?`<button class="btn sm task-inline-action" data-action="status" data-value="${action[0]}" data-id="${esc(t.id)}" aria-label="${esc(action[1])}: ${esc(t.title)}">${esc(action[1])}</button>`:'';};
+  function taskRow(t,details=false){const p=projectFor(t.project_id);return `<div class="task-item" data-action="task" data-id="${t.id}"><div class="task-check">${t.status==='complete'?'✓':'◇'}</div><div class="task-grow"><div class="task-title">${esc(t.title)}</div><div class="task-sub">${esc(p?.title||'Project')} · ${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</div>${details===true&&dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</div><div class="task-right">${details===true?tag(t.priority,priorityNames[t.priority]):''}${tag(t.status,fmtStatus(t.status))}${quickStatusButton(t)}<span style="color:var(--muted)">›</span></div></div>`;}
   const managedWork=t=>canManage(t.project_id)||isDeptManager(projectFor(t.project_id)?.department_id);
   function dashboardData(view=s.dashboardView,today=new Date()){
     const start=dateKey(today),endDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()+6,12),end=dateKey(endDate);
@@ -836,7 +846,7 @@
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${all.length}</div><div class="hint">${all.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${all.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
     ${projectMilestones(p.id)}${manager?templateLibrary(p.id):''}<div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
     ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='dependencies'?projectDependencies(data):s.projectView==='list'?`<section class="panel project-task-list"><div class="panel-body">${ts.map(t=>taskRow(t,true)).join('')}</div></section>`:
-    `<div class="board" style="grid-template-columns:repeat(${statuses.length},minmax(225px,1fr))">${statuses.map(st=>`<div class="board-col"><div class="board-col-head">${esc(fmtStatus(st))} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${esc(t.id)}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}<small>✦ ${t.xp_reward||0} XP</small></div></div>`).join('')||'<small class="board-empty">No matching work</small>'}</div>`).join('')}</div>`}`;
+    `<div class="board" style="grid-template-columns:repeat(${statuses.length},minmax(225px,1fr))">${statuses.map(st=>`<div class="board-col"><div class="board-col-head">${esc(fmtStatus(st))} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${esc(t.id)}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(nameFor(t.assignee_id))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}<small>✦ ${t.xp_reward||0} XP</small></div>${quickStatusButton(t)}</div>`).join('')||'<small class="board-empty">No matching work</small>'}</div>`).join('')}</div>`}`;
   }
   function taskPage(){const t=taskFor(s.taskId);if(!t)return workPage();const p=projectFor(t.project_id),checks=s.checklist.filter(c=>c.task_id===t.id),updates=s.updates.filter(x=>x.task_id===t.id),events=s.events.filter(x=>x.task_id===t.id).slice(0,8),manager=canManage(t.project_id),actions=taskActions(t),xp=t.xp_reward||0;
     return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span><button data-action="project" data-id="${p?.id}">${esc(p?.title||'Project')}</button><span>›</span>${term('Task','Quest')}</div>
@@ -964,7 +974,7 @@
     if(s.modal==='invite'){title='Invite a team member';content=`<form data-form="invite"><div class="modal-body"><div class="form-field"><label>Email address</label><input name="invited_email" type="email" required placeholder="person@university.edu"></div><div class="form-field"><label>Access scope</label><select name="scope" id="invite-scope"><option value="organization">Organization member</option>${s.departments.map(d=>`<option value="dept:${d.id}">Department · ${esc(d.name)}</option>`).join('')}${s.projects.map(p=>`<option value="project:${p.id}">Project · ${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label>Role</label><select name="invite_role" id="invite-role"><option value="member">Organization member</option></select></div><div class="invite-box"><p>After creating the invitation, copy its secure link to share with the recipient. Automatic invitation emails are not enabled in this pilot.</p></div></div>${modalFooter('Create invitation')}</form>`;}
     return `<div class="modal-cover" data-action="close-modal"><div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal-head"><h2>${esc(title)}</h2><button class="icon-btn" data-action="close-modal" aria-label="Close">✕</button></div>${content}</div></div>`;
   }
-  const modalFooter=text=>`<div class="modal-footer"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn primary" ${['task','edit-task'].includes(s.modal)&&(s.candidatesLoading||s.candidateError)?'disabled':''}>${esc(text)}</button></div>`;
+  const modalFooter=text=>`<div class="modal-footer">${['task','quick-task'].includes(s.modal)?`<label class="creation-state">After creating<select name="initial_status"><option value="ready" selected>Ready to work</option><option value="in_progress">Start work now</option><option value="backlog">Save to backlog</option></select></label>`:''}<button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn primary" ${['task','edit-task'].includes(s.modal)&&(s.candidatesLoading||s.candidateError)?'disabled':''}>${esc(text)}</button></div>`;
   function demoCandidates(projectId){
     const project=projectFor(projectId);if(!project)return [];
     const ids=new Set(s.projectMembers.filter(m=>m.project_id===projectId&&m.status==='active').map(m=>m.user_id));
@@ -1033,6 +1043,58 @@
     root.querySelectorAll('.project-card,.task-item,.board-task,[data-action="project"]:not(button)').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;});
     root.querySelectorAll('.form-field').forEach((field,i)=>{const label=field.querySelector('label'),input=field.querySelector('input,select,textarea');if(label&&input){if(!input.id)input.id='field-'+i;label.htmlFor=input.id;}});}
   async function refresh(){if(s.demo){render();return;}const user=s.user?.id,org=s.org?.id;const loaded=await loadLive();if(!loaded||user!==s.user?.id||org!==s.org?.id)throw stale();}
+  // Ordinary task edits affect only a handful of records. Re-reading the entire
+  // organization after each click was downloading all projects, history and
+  // memberships, and replacing the task page with a loading screen.
+  async function refreshTask(taskId,{checklist=false,updates=false,events=true,xp=false,dependencies=false}={}){
+    if(s.demo){render();return;}
+    const generation=epoch,orgId=s.org?.id;
+    const related=[taskId,...dependents(taskId).map(d=>d.task_id)];
+    const [tasks,checks,journal,history,rewards,links,readiness]=await Promise.all([
+      getResult(api.from('qb_tasks').select('*').eq('id',taskId)),
+      checklist?pagedRows(()=>api.from('qb_checklist').select('*').eq('task_id',taskId).order('position')):null,
+      updates?pagedRows(()=>api.from('qb_task_updates').select('*').eq('task_id',taskId).order('created_at',{ascending:false})):null,
+      events?getResult(api.from('qb_task_events').select('*').eq('task_id',taskId).order('created_at',{ascending:false}).limit(25)):null,
+      xp?getResult(api.from('qb_xp_events').select('*').eq('task_id',taskId)):null,
+      dependencies?getResult(api.from('qb_task_dependencies').select('*').eq('task_id',taskId)):null,
+      loadDependencyReadiness(related)
+    ]);
+    if(generation!==epoch||s.org?.id!==orgId)throw stale();
+    if(tasks.length!==1||!projectFor(tasks[0].project_id))throw Error('Task access or destination changed');
+    const replace=(key,rows)=>{if(rows!==null){s[key]=s[key].filter(row=>row.task_id!==taskId).concat(rows);}};
+    const current=s.tasks.findIndex(t=>t.id===taskId);
+    if(current<0)s.tasks.unshift(tasks[0]);else s.tasks[current]=tasks[0];
+    replace('checklist',checks);replace('updates',journal);replace('xp',rewards);replace('dependencies',links);
+    if(history!==null){
+      const merged=new Map(s.events.filter(row=>row.task_id===taskId).map(row=>[row.id,row]));
+      for(const row of history)merged.set(row.id,row);
+      replace('events',[...merged.values()].sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))||String(a.id).localeCompare(String(b.id))));
+    }
+    const ready=new Map(readiness.map(row=>[row.task_id,row]));
+    s.dependencyReadiness=s.dependencyReadiness.filter(row=>!ready.has(row.task_id)).concat(readiness);
+    render();
+  }
+  async function syncTask(taskId,options){
+    try{await refreshTask(taskId,options);}catch(error){
+      if(error.stale)throw error;
+      // A missing task or changed scope is a reason to revalidate membership,
+      // not to trust the old task snapshot.
+      await refresh();
+    }
+  }
+  async function activateCreatedTask(taskId,requestedStatus){
+    if(!['ready','in_progress'].includes(requestedStatus))return null;
+    if(s.demo){
+      const task=taskFor(taskId);task.status='ready';
+      if(requestedStatus==='in_progress'&&!dependencyWaiting(taskId))task.status='in_progress';
+      return requestedStatus==='in_progress'&&task.status!=='in_progress'?'A prerequisite must finish before this task can start.':null;
+    }
+    try{
+      await getResult(api.rpc('qb_transition_task',{p_task:taskId,p_new_status:'ready'}));
+      if(requestedStatus==='in_progress')await getResult(api.rpc('qb_transition_task',{p_task:taskId,p_new_status:'in_progress'}));
+      return null;
+    }catch(e){if(e.stale)throw e;return 'Task saved, but its status could not be fully updated. Open the task to review its status.';}
+  }
   async function withBusy(work){if(s.busy)return;const generation=epoch;s.busy=true;try{await work();}catch(e){if(generation===epoch&&!e.stale)toast(e.message||'Something went wrong',true);}finally{if(generation===epoch)s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
     if(action==='project-view'){if(Object.hasOwn(projectViews,v)){s.projectView=v;render();root.querySelector(`[data-action="project-view"][data-value="${v}"]`)?.focus();}return;}
@@ -1058,7 +1120,7 @@
     if(action==='exit-demo'){location.reload();return;}
     if(action==='login'){await startSignIn(v);return;}
     if(action==='dismiss-invite'){clearInviteIntent();render();return;}
-    if(action==='unlink-dependency'){await withBusy(async()=>{await setDependency(s.taskId,id,false);await refresh();toast('Dependency removed');});return;}
+    if(action==='unlink-dependency'){await withBusy(async()=>{const taskId=s.taskId;await setDependency(taskId,id,false);await syncTask(taskId,{dependencies:true});toast('Dependency removed');});return;}
     if(action==='copy-task-link'){const task=taskFor(id);if(!task||s.demo)return;const generation=epoch;const link=location.origin+location.pathname+'?org='+encodeURIComponent(s.org.id)+'&task='+encodeURIComponent(id);try{await navigator.clipboard.writeText(link);if(generation===epoch)toast('Task link copied');}catch{if(generation===epoch)prompt('Copy task link',link);}return;}
     if(action==='logout'){await signOut();return;}
     if(action==='retry'){await loadLive();return;}
@@ -1161,8 +1223,8 @@
       return;
     }
     if(action==='close-modal'){candidateRequest++;s.modal=null;render();return;}
-    if(action==='status'){await withBusy(async()=>{if(s.demo){const t=taskFor(id);if(!taskActions(t).some(([st])=>st===v))throw Error('Invalid status change');if(v==='in_review'&&s.checklist.some(c=>c.task_id===id&&!c.done))throw Error('Finish the checklist first');const priorStatus=t.status;t.status=v;if(v!=='complete')t.completed_at=null;if(v==='complete'){t.completed_at=new Date().toISOString();if(!s.xp.some(x=>x.task_id===id))s.xp.push({task_id:id,user_id:t.assignee_id,amount:t.xp_reward});}s.events.unshift({id:uid(),task_id:id,actor_id:s.user.id,event_type:'status',before_data:{status:priorStatus},after_data:{status:v},created_at:new Date().toISOString()});}else await getResult(api.rpc('qb_transition_task',{p_task:id,p_new_status:v}));toast('Task updated');await refresh();});return;}
-    if(action==='check'){await withBusy(async()=>{const item=s.checklist.find(c=>c.id===id);if(s.demo){const before={item_id:item.id,title:item.title,done:item.done};item.done=!item.done;demoTaskEvent(item.task_id,'checklist',before,{...before,done:item.done});}else await getResult(api.rpc('qb_toggle_checklist',{p_item:id,p_done:!item.done}));await refresh();});return;}
+    if(action==='status'){await withBusy(async()=>{if(s.demo){const t=taskFor(id);if(!t||!taskActions(t).some(([st])=>st===v))throw Error('Invalid status change');if(v==='in_review'&&s.checklist.some(c=>c.task_id===id&&!c.done))throw Error('Finish the checklist first');const priorStatus=t.status;t.status=v;if(v!=='complete')t.completed_at=null;if(v==='complete'){t.completed_at=new Date().toISOString();if(!s.xp.some(x=>x.task_id===id))s.xp.push({task_id:id,user_id:t.assignee_id,amount:t.xp_reward});}s.events.unshift({id:uid(),task_id:id,actor_id:s.user.id,event_type:'status',before_data:{status:priorStatus},after_data:{status:v},created_at:new Date().toISOString()});}else await getResult(api.rpc('qb_transition_task',{p_task:id,p_new_status:v}));await syncTask(id,{xp:v==='complete'||v==='in_progress'});toast('Task updated');});return;}
+    if(action==='check'){await withBusy(async()=>{const item=s.checklist.find(c=>c.id===id);if(!item)return;if(s.demo){const before={item_id:item.id,title:item.title,done:item.done};item.done=!item.done;demoTaskEvent(item.task_id,'checklist',before,{...before,done:item.done});}else await getResult(api.rpc('qb_toggle_checklist',{p_item:id,p_done:!item.done}));await syncTask(item.task_id,{checklist:true});});return;}
     if(action==='copy-invite'){const generation=epoch;const link=location.origin+location.pathname+'?invite='+encodeURIComponent(id);try{await navigator.clipboard.writeText(link);if(generation!==epoch)return;toast('Invitation link copied');}catch{if(generation!==epoch)return;prompt('Copy invitation link',link);}return;}
     if(action==='revoke-invite'){await withBusy(async()=>{if(s.demo)s.invitations.find(i=>i.id===id).status='revoked';else await getResult(api.rpc('qb_revoke_invitation',{p_invitation:id}));toast('Invitation revoked');await refresh();});return;}
     if(action==='accept-invite'){await withBusy(async()=>{const orgId=await getResult(api.rpc('qb_accept_invitation',{p_invitation:id}));if(inviteIntent===id)clearInviteIntent();toast('Welcome to your new workspace');await loadLive(orgId,true);});return;}
@@ -1186,6 +1248,7 @@
     if(form.dataset.form==='organization'){await createOrganization(form);return;}
 const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').trim();
     await withBusy(async()=>{
+      let creationNotice=null;
       for(const field of form.querySelectorAll('[required]')){if(!String(fd.get(field.name)||'').trim())throw Error('Please complete all required fields');}
       if(['task','edit-task'].includes(type)&&!s.demo){
         const existing=type==='edit-task'?taskFor(s.taskId):null;
@@ -1232,7 +1295,8 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         if(kind==='department'&&!managedDepartments().some(d=>d.id===id)||kind==='project'&&!canManage(id))throw Error('Destination unavailable');
         if(s.demo){let project=kind==='project'?projectFor(id):s.projects.find(p=>p.department_id===id&&p.is_quick_queue);if(!project){project={id:uid(),org_id:s.org.id,department_id:id,title:'No project · '+deptFor(id).name,summary:'Shared quick tasks',status:'active',visibility:'department',is_quick_queue:true};s.projects.push(project);}s.taskId=form.dataset.request;s.tasks.push({id:s.taskId,project_id:project.id,title:get('title'),description:'',due_date:get('due_date')||null,priority:'normal',status:'backlog',xp_reward:15,reviewer_id:s.user.id,created_by:s.user.id});}
         else s.taskId=await getResult(api.rpc('qb_create_quick_task',{p_request:form.dataset.request,p_project:kind==='project'?id:null,p_department:kind==='department'?id:null,p_title:get('title'),p_description:'',p_due_date:get('due_date')||null,p_assignee:null,p_xp_reward:15}));
-        s.nav='task';toast('Quick task created');
+        creationNotice=await activateCreatedTask(s.taskId,get('initial_status'));
+        s.nav='task';
       }else if(type==='task'){
         const row={milestone_id:get('milestone_id')||null,project_id:get('project_id'),title:get('title'),description:get('description'),priority:get('priority'),due_date:get('due_date')||null,assignee_id:get('assignee_id')||null,reviewer_id:s.user.id,xp_reward:get('xp_reward')===''?30:Number(get('xp_reward')),created_by:s.user.id};
         if(row.milestone_id&&!s.milestones.some(m=>m.id===row.milestone_id&&m.project_id===row.project_id&&!m.archived))throw Error('Choose an active milestone in this project');
@@ -1244,7 +1308,8 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         else if(row.milestone_id){s.taskId=await getResult(api.rpc('qb_create_milestone_task',{p_project:row.project_id,p_request:form.dataset.request,p_milestone:row.milestone_id,p_template:template?.id||null,p_title:row.title,p_description:row.description,p_priority:row.priority,p_due_date:row.due_date,p_assignee:row.assignee_id,p_xp_reward:row.xp_reward,p_prerequisite:prerequisite||null}));}
         else if(template){s.taskId=await getResult(api.rpc('qb_create_template_task',{p_template:template.id,p_request:form.dataset.request,p_title:row.title,p_description:row.description,p_priority:row.priority,p_due_date:row.due_date,p_assignee:row.assignee_id,p_xp_reward:row.xp_reward,p_prerequisite:prerequisite||null}));}
         else{s.taskId=await getResult(api.rpc('qb_create_task',{p_project:row.project_id,p_title:row.title,p_description:row.description,p_priority:row.priority,p_due_date:row.due_date,p_assignee:row.assignee_id,p_xp_reward:row.xp_reward,p_prerequisite:prerequisite||null}));}
-        s.nav='task';toast('Task created');
+        creationNotice=await activateCreatedTask(s.taskId,get('initial_status'));
+        s.nav='task';
       }else if(type==='milestone'){
         const projectId=form.dataset.project,id=form.dataset.id,revision=form.dataset.revision?Number(form.dataset.revision):null;
         if(!canManage(projectId)||!calendarDate(get('due_date')))throw Error('Choose a target date in a project you manage');
@@ -1280,7 +1345,11 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         const row={org_id:s.org.id,invited_email:get('invited_email'),scope_type,scope_id,invite_role:get('invite_role'),created_by:s.user.id};
         if(s.demo){row.id=uid();row.status='pending';row.created_at=new Date().toISOString();s.invitations.unshift(row);}else await getResult(api.from('qb_invitations').insert(row));toast('Invitation created. Copy its link to share with the recipient.');
       }
-      s.modal=null;await refresh();
+      s.modal=null;
+      if(['quick-task','task','edit-task','checklist','update','dependency'].includes(type)){
+        await syncTask(s.taskId,{checklist:['task','quick-task','checklist'].includes(type),updates:type==='update',dependencies:['task','quick-task','dependency'].includes(type)});
+        if(['quick-task','task'].includes(type))toast(creationNotice||'Task created',!!creationNotice);
+      }else await refresh();
     });
   }
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
