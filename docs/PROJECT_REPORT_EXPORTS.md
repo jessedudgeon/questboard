@@ -15,7 +15,9 @@ Reports obey project access, workspace/search filters, and the include-closed se
 
 Project target and latest dated outstanding work are separate. Neither is a calculated completion forecast. Missing dates, overdue work, dependencies, and milestone evidence gaps are called out. Milestones without linked completion evidence require verification. Task-count completion excludes cancelled tasks and does not estimate effort.
 
-Timeline points show recorded due dates, not actual completion dates or task duration. Colours distinguish targets, milestones, open tasks, blocked tasks, and completed work. A dashed line marks the report date. Large schedules split into chart blocks with the same scale. Undated items are counted separately. Reports use the generating browser's dates and locale.
+Milestones are listed by end date, earliest first; milestones with missing/invalid dates appear last. In schedule and detailed exports, tasks are grouped under their active milestones and sorted by due date (undated tasks last). Tasks without an active milestone, including those attached to archived milestones, appear in a final section. Executive reports keep the milestone summary without the full task register.
+
+Timeline rows follow the same milestone sequence, with task rows before each milestone target; their horizontal points show recorded due dates, not actual completion dates or task duration. Colours distinguish targets, milestones, open tasks, blocked tasks, and completed work. A dashed line marks the report date. Large schedules split into chart blocks with the same scale. Undated items are counted separately. Reports use the generating browser's dates and locale.
 
 The site does not yet store planned task start dates, effort estimates, or a separately maintained expected finish date. Genuine Gantt duration bars and reliable calculated finish forecasts require those inputs. Teams Planner is not synchronized.
 
