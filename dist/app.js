@@ -1111,7 +1111,7 @@
 }
 
   function deliveryTaskRegister(r){
-  const heading='<h3 class="dr-section-title">Tasks by milestone</h3>';
+  const heading='<h3 class="dr-section-title">'+(s.deliveryType==='detailed'?'Task register by milestone':'Tasks by milestone')+'</h3>';
   if(!r.taskGroups.length)return heading+'<p class="dr-note">No tasks recorded.</p>';
   return heading+r.taskGroups.map((g,i)=>{
     const m=g.milestone,completed=g.tasks.filter(t=>t.status==='complete').length;
