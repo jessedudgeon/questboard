@@ -30,7 +30,9 @@ test('Status menu respects lead membership, independent review, dependencies, an
  q.s.demo=false;q.s.departmentMembers=[];q.s.projectMembers=[{project_id:q.s.projectId,user_id:q.s.user.id,role:'lead',status:'active'}];q.render();
  assert(d.querySelector('[data-task-status] option[value="in_review"]'));
  q.s.tasks[0].status='in_review';q.render();assert(d.querySelector('[data-task-status] option[value="complete"]'));
- q.s.tasks[0].assignee_id=q.s.user.id;q.render();assert.equal(d.querySelector('[data-task-status] option[value="complete"]'),null);
+ q.s.tasks[0].assignee_id=q.s.user.id;q.render();assert(d.querySelector('[data-task-status] option[value="complete"]'));
+ q.s.projectMembers=[];q.s.tasks[0].reviewer_id=q.s.user.id;q.render();assert.equal(d.querySelector('[data-task-status] option[value="complete"]'),null);
+ q.s.tasks[0].reviewer_id=null;q.s.projectMembers=[{project_id:q.s.projectId,user_id:q.s.user.id,role:'lead',status:'active'}];
  q.s.dependencyReadiness=[{task_id:'test-task',waiting:true}];q.render();assert.equal(d.querySelector('[data-task-status]'),null);
  q.s.dependencyReadiness=[];q.s.tasks[0].assignee_id='other';q.s.projectMembers=[];q.render();assert.equal(d.querySelector('[data-task-status]'),null);
  }finally{dom.window.close();}

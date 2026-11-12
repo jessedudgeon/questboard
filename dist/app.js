@@ -353,7 +353,7 @@
   const managedDepartments = () => s.departments.filter(d=>isDeptManager(d.id));
   const managedProjects = () => s.projects.filter(p=>canManage(p.id));
   const taskActions = t => {
-    const worker=s.demo||t.assignee_id===s.user?.id||canManage(t.project_id),reviewer=isReviewer(t),independent=s.demo||t.assignee_id!==s.user?.id;
+    const worker=s.demo||t.assignee_id===s.user?.id||canManage(t.project_id),reviewer=isReviewer(t),approvalAllowed=s.demo||canManage(t.project_id)||t.assignee_id!==s.user?.id;
     if(!worker&&!reviewer)return [];
     const a=[];
     if(t.status==='backlog'&&canManage(t.project_id))a.push(['ready','Mark Ready']);
@@ -361,7 +361,7 @@
     if(t.status==='in_progress'&&worker)a.push(['blocked','Mark Blocked'],['in_review','Submit for Review']);
     if(t.status==='blocked'&&worker)a.push(['in_progress','Resume Work']);
     if(t.status==='in_review'&&reviewer)a.push(['in_progress','Request Changes']);
-    if(t.status==='in_review'&&reviewer&&independent)a.push(['complete',term('Approve & Complete','Declare Victory')]);
+    if(t.status==='in_review'&&reviewer&&approvalAllowed)a.push(['complete',term('Approve & Complete','Declare Victory')]);
     if(t.status==='complete'&&canManage(t.project_id))a.push(['in_progress','Reopen']);
     return a.filter(([status])=>!(['in_progress','in_review','complete'].includes(status)&&dependencyWaiting(t.id))&&!(t.status==='complete'&&status==='in_progress'&&dependents(t.id).some(d=>['in_progress','in_review','complete'].includes(taskFor(d.task_id)?.status))));
   };
