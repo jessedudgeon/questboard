@@ -239,3 +239,17 @@ The migration adds a queue flag and invoker-rights destination/create RPCs. A st
 request UUID prevents duplicate tasks on retries. It does not modify existing tasks
 or MeetingDesk data. Minutes explicitly copies an action into a selected destination;
 its local checkbox does not approve the QuestBoard task or grant XP.
+
+## Weekly exception review
+
+Under **Reports → Weekly exceptions**, review active projects with decision/support
+requests, reported risks, blocked/waiting or overdue tasks, past-due milestones,
+passed project targets, paused delivery, and missing or stale check-ins. Decision
+requests appear first. Open a project from the report to record the next check-in.
+Print/save PDF or download HTML to share the same filtered snapshot.
+
+This is a current snapshot for a weekly review, not a seven-day change history.
+Department and search filters apply; completed/archived projects are excluded.
+Signals use only authorized QuestBoard records, not Teams Planner data. A milestone
+with no visible tasks is unverified, and old check-in notes remain dated until a new
+check-in supersedes them. No database migration is required for this report.

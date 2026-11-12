@@ -878,7 +878,7 @@
   function teamPage(){const members=s.orgMembers.filter(m=>m.status==='active');return pageTitle(term('Team workspace','Party management'),'See workload, ownership, and collaboration across your authorized workspaces.',isAdmin()?`<button class="btn primary" data-action="modal" data-value="invite">＋ Invite member</button>`:'')+`<div class="panel"><div class="panel-head"><h3>Department members</h3><small>${s.departmentMembers.length} scoped memberships</small></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Member</th><th>Department</th><th>Role</th><th>Assigned work</th></tr></thead><tbody>${s.departmentMembers.map(m=>`<tr><td class="strong">${esc(nameFor(m.user_id))}</td><td>${esc(deptFor(m.department_id)?.name||'Department')}</td><td>${tag(m.role,m.role)}</td><td>${s.tasks.filter(t=>t.assignee_id===m.user_id&&t.status!=='complete').length} open</td></tr>`).join('')||`<tr><td colspan="4">${empty('♧','No team members','Members will appear once invited.')}</td></tr>`}</tbody></table></div></div>`;}
   const portfolioHealth={attention:'Needs attention',watch:'Watch',clear:'No current flags',empty:'No visible tasks',closed:'Closed'};
   const portfolioSignals={all:'All open tasks',overdue:'Overdue',blocked:'Blocked / waiting',unassigned:'Unassigned',review:'Awaiting review',undated:'No due date'};
-  function portfolioReport(today=new Date()){
+  function portfolioReport(today=new Date(),healthFilter=s.reportHealth){
     const day=dateKey(today),soon=dateKey(new Date(today.getFullYear(),today.getMonth(),today.getDate()+14,12));
     const rows=visibleProjects().filter(p=>s.reportClosed||!['complete','archived'].includes(p.status)).map(project=>{
       const tasks=s.tasks.filter(t=>t.project_id===project.id),open=tasks.filter(t=>!['complete','cancelled'].includes(t.status));
@@ -895,7 +895,7 @@
     });
     const order={attention:0,watch:1,empty:2,clear:3,closed:4};
     rows.sort((a,b)=>order[a.health]-order[b.health]||b.overdue.length-a.overdue.length||(a.project.target_date||'9999').localeCompare(b.project.target_date||'9999')||a.project.title.localeCompare(b.project.title)||a.project.id.localeCompare(b.project.id));
-    const filtered=rows.filter(r=>s.reportHealth==='all'||r.health===s.reportHealth);
+    const filtered=rows.filter(r=>healthFilter==='all'||r.health===healthFilter);
     const selected=filtered.find(r=>r.project.id===s.reportProject);
     const detail=selected?(selected[s.reportSignal]||selected.open):[];
     return {rows:filtered,selected,detail,day,soon};
@@ -935,7 +935,33 @@
     if(s.reportView==='accomplishments')return rows.filter(r=>r.recent.some(b=>b.accomplishments.trim()));
     return rows;
   }
+  function exceptionReport(){
+    const health=new Map(portfolioReport(new Date(),'all').rows.map(r=>[r.project.id,r]));
+    return leadershipReport().filter(r=>!['complete','archived'].includes(r.project.status)).map(r=>{
+      const h=health.get(r.project.id),signals=[];
+      if(r.latest?.decisions?.trim())signals.push('Decision / support requested');
+      if(r.latest?.health==='blocked')signals.push('Reported blocked');
+      else if(r.latest?.health==='at_risk')signals.push('Reported at risk');
+      if(h?.blocked.length)signals.push(h.blocked.length+' blocked / waiting tasks');
+      if(h?.overdue.length)signals.push(h.overdue.length+' overdue tasks');
+      if(h?.missed.length)signals.push(h.missed.length+' past-due milestones requiring verification');
+      if(h?.targetLate)signals.push('Project target has passed');
+      if(r.project.status==='paused')signals.push('Project paused');
+      if(r.latest?.risks?.trim())signals.push('Risk / blocker note recorded');
+      if(r.needsUpdate)signals.push(r.latest?'Check-in over 14 days old':'No check-in recorded');
+      const priority=r.latest?.decisions?.trim()?0:r.latest?.health==='blocked'||h?.blocked.length?1:signals.some(x=>/overdue|past-due|passed|at risk/.test(x))?2:3;
+      return {...r,signals,priority};
+    }).filter(r=>r.signals.length).sort((a,b)=>a.priority-b.priority||a.project.title.localeCompare(b.project.title));
+  }
+  function exceptionReportBody(rows,interactive=false){
+    return rows.map(r=>`<article class="leadership-card"><h3>${esc(r.project.title)}</h3><p class="muted">Delivery owner: ${esc(r.latest?.delivery_owner||nameFor(r.project.lead_id))} · ${esc(deptFor(r.project.department_id)?.name||'Department')} · Target: ${esc(niceDate(r.project.target_date))}</p><ul>${r.signals.map(signal=>`<li>${esc(signal)}</li>`).join('')}</ul><div class="brief-grid"><div><h4>Decision / support requested</h4>${briefText(r.latest?.decisions)}</div><div><h4>Next steps</h4>${briefText(r.latest?.next_steps)}</div><div><h4>Risks / blockers</h4>${briefText(r.latest?.risks)}</div><div><h4>Latest accomplishment</h4>${briefText(r.latest?.accomplishments)}</div></div><p class="muted">Last check-in: ${r.latest?esc(niceDate(r.latest.created_at)):'Never'}. Notes reflect that check-in, not a new confirmation.</p>${interactive?`<button class="btn sm" data-action="project" data-id="${esc(r.project.id)}">Open project / check-in</button>`:''}</article>`).join('')||'<p class="muted">No exceptions found in the visible active projects. This is not a guarantee that delivery is on track.</p>';
+  }
+  function exceptionReportPage(){
+    const rows=exceptionReport(),active=leadershipReport().filter(r=>!['complete','archived'].includes(r.project.status));
+    return `<div class="buttons report-toolbar"><button class="btn sm" data-action="leadership-print">Print / Save PDF</button><button class="btn sm" data-action="leadership-download">Download HTML</button></div><section class="leadership-report" aria-label="Weekly exception report"><div class="leadership-report-head"><div><h2>Weekly exception report</h2><p>Current snapshot · ${esc(niceDate(dateKey(new Date())))}</p></div></div><div class="kpi-grid">${[['Active projects in view',active.length],['Projects needing attention',rows.length],['Decision / support requested',rows.filter(r=>r.latest?.decisions?.trim()).length],['Missing / stale check-ins',rows.filter(r=>r.needsUpdate).length]].map(([label,value])=>`<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div></div>`).join('')}</div><p class="muted">Use this snapshot for your weekly review. Decisions first, then blockers and schedule concerns. Counts include only visible QuestBoard work, not Teams Planner. Milestones with no visible tasks require verification; they are not assumed complete. Update the project check-in to resolve old notes.</p><div class="leadership-cards">${exceptionReportBody(rows,true)}</div></section>`;
+  }
   function leadershipReportBody(rows,mode=s.reportView){
+    if(mode==='exceptions')return exceptionReportBody(rows);
     if(mode==='accomplishments')return rows.map(r=>`<article class="leadership-card"><h3>${esc(r.project.title)}</h3><p class="muted">${esc(deptFor(r.project.department_id)?.name||'Department')} · Delivery owner: ${esc(r.latest?.delivery_owner||nameFor(r.project.lead_id))}</p><ul>${r.recent.filter(b=>b.accomplishments.trim()).map(b=>`<li><time datetime="${esc(b.created_at)}">${esc(niceDate(b.created_at))}</time> · <span class="brief-prose">${esc(b.accomplishments)}</span></li>`).join('')}</ul></article>`).join('')||'<p class="muted">No accomplishments recorded in this period. Add project check-ins to build the report.</p>';
     return rows.map(r=>`<article class="leadership-card"><div class="brief-heading"><h3>${esc(r.project.title)}</h3><span class="brief-health ${esc(r.latest?.health||'unknown')}">${esc(r.latest?briefHealth[r.latest.health]||'Not reported':'Not reported')}</span></div><p class="muted">Delivery owner: ${esc(r.latest?.delivery_owner||nameFor(r.project.lead_id))} · Target: ${esc(niceDate(r.project.target_date))} · Last check-in: ${r.latest?esc(niceDate(r.latest.created_at)):'Never'}${r.needsUpdate?' · Check-in overdue':''}</p><div class="brief-grid"><div><h4>Next steps</h4>${briefText(r.latest?.next_steps)}</div><div><h4>Next milestone</h4>${r.upcoming?`<p>${esc(r.upcoming.title)} · ${esc(niceDate(r.upcoming.due_date))}</p>`:'<p class="muted">No active milestone recorded.</p>'}</div><div><h4>Risks / blockers</h4>${briefText(r.latest?.risks)}</div><div><h4>Decisions / support needed</h4>${briefText(r.latest?.decisions)}</div></div></article>`).join('')||'<p class="muted">No matching projects.</p>';
   }
@@ -949,12 +975,12 @@
       <div class="leadership-cards">${leadershipReportBody(rows)}</div></section>`;
   }
   function standaloneLeadershipHTML(){
-    const title=s.reportView==='accomplishments'?'Accomplishments & delivered value':'Status, risks & next steps',rows=leadershipReport();
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · QuestBoard</title><style>body{font:14px/1.55 system-ui,Arial,sans-serif;color:#152238;max-width:920px;margin:36px auto;padding:0 24px}h1{font-size:25px}h2{font-size:19px}h3{font-size:17px;margin:0 0 5px}h4{margin:0 0 5px;font-size:13px}.muted{color:#64748b}.leadership-card{padding:20px 0;border-top:1px solid #cbd5e1;break-inside:avoid}.brief-heading{display:flex;justify-content:space-between;align-items:center;gap:15px}.brief-health{font-weight:700;padding:4px 8px;background:#e2e8f0;border-radius:20px}.brief-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.brief-prose{white-space:pre-wrap}.leadership-card li{margin:8px 0;white-space:pre-wrap}@media print{body{margin:0;max-width:none}.leadership-card{break-inside:avoid}}</style></head><body><h1>${esc(title)}</h1><p class="muted">QuestBoard · ${esc(s.org?.name||'Organization')} · Generated ${esc(new Date().toLocaleString())}${s.workspace==='all'?'':' · '+esc(deptFor(s.workspace)?.name||'Department')} · ${s.reportView==='accomplishments'?'Last '+esc(s.reportPeriod)+' days':'Current outlook'}</p><p>${rows.length} project${rows.length===1?'':'s'} in this report. Content is limited to projects visible to the generating user.</p>${leadershipReportBody(rows)}<p class="muted">Generated from recorded project check-ins. This document may contain internal project information.</p></body></html>`;
+    const title=s.reportView==='exceptions'?'Weekly exception report':s.reportView==='accomplishments'?'Accomplishments & delivered value':'Status, risks & next steps',rows=s.reportView==='exceptions'?exceptionReport():leadershipReport();
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · QuestBoard</title><style>body{font:14px/1.55 system-ui,Arial,sans-serif;color:#152238;max-width:920px;margin:36px auto;padding:0 24px}h1{font-size:25px}h2{font-size:19px}h3{font-size:17px;margin:0 0 5px}h4{margin:0 0 5px;font-size:13px}.muted{color:#64748b}.leadership-card{padding:20px 0;border-top:1px solid #cbd5e1;break-inside:avoid}.brief-heading{display:flex;justify-content:space-between;align-items:center;gap:15px}.brief-health{font-weight:700;padding:4px 8px;background:#e2e8f0;border-radius:20px}.brief-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.brief-prose{white-space:pre-wrap}.leadership-card li{margin:8px 0;white-space:pre-wrap}@media print{body{margin:0;max-width:none}.leadership-card{break-inside:avoid}}</style></head><body><h1>${esc(title)}</h1><p class="muted">QuestBoard · ${esc(s.org?.name||'Organization')} · Generated ${esc(new Date().toLocaleString())}${s.workspace==='all'?'':' · '+esc(deptFor(s.workspace)?.name||'Department')} · ${s.reportView==='accomplishments'?'Last '+esc(s.reportPeriod)+' days':'Current outlook'}</p><p>${rows.length} project${rows.length===1?'':'s'} in this report. Content is limited to projects visible to the generating user.</p>${s.reportView==='exceptions'?'<p>Current snapshot for weekly review, not changes over the last week. Only visible QuestBoard work is counted; Teams Planner is not synchronized. Past-due milestones require verification. Notes reflect the latest check-in and may be stale.</p>':''}${leadershipReportBody(rows)}<p class="muted">Generated from recorded project check-ins. This document may contain internal project information.</p></body></html>`;
   }
   function downloadLeadership(){
     const url=URL.createObjectURL(new Blob([standaloneLeadershipHTML()],{type:'text/html;charset=utf-8'}));
-    const link=document.createElement('a');link.href=url;link.download='questboard-'+(s.reportView==='accomplishments'?'accomplishments':'project-outlook')+'-'+dateKey(new Date())+'.html';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const link=document.createElement('a');link.href=url;link.download='questboard-'+(s.reportView==='exceptions'?'weekly-exceptions':s.reportView==='accomplishments'?'accomplishments':'project-outlook')+'-'+dateKey(new Date())+'.html';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   function printLeadership(){
     const win=window.open('','_blank');if(!win){toast('Allow pop-ups to print this report, or download the HTML file.',true);return;}
@@ -1042,8 +1068,8 @@
     win.opener=null;win.document.open();win.document.write(staffExportHTML(report));win.document.close();win.focus();win.print();
   }
   function reportsPage(){
-    const tabs=`<div class="filter-row" role="group" aria-label="Report view">${[['accomplishments','What we accomplished'],['outlook','Where we stand & next steps'],['portfolio','Task health'],['progression','Progress & recognition']].map(([value,label])=>`<button class="filter-pill ${s.reportView===value?'active':''}" data-action="report-view" data-value="${value}" aria-pressed="${s.reportView===value}">${label}</button>`).join('')}</div>`;
-    return pageTitle(term('Reports','Chronicle'),'Turn short project check-ins into leadership-ready updates.')+tabs+(s.reportView==='progression'?progressionReport():s.reportView==='portfolio'?portfolioPage():leadershipReportPage());
+    const tabs=`<div class="filter-row" role="group" aria-label="Report view">${[['exceptions','Weekly exceptions'],['accomplishments','What we accomplished'],['outlook','Where we stand & next steps'],['portfolio','Task health'],['progression','Progress & recognition']].map(([value,label])=>`<button class="filter-pill ${s.reportView===value?'active':''}" data-action="report-view" data-value="${value}" aria-pressed="${s.reportView===value}">${label}</button>`).join('')}</div>`;
+    return pageTitle(term('Reports','Chronicle'),'Turn short project check-ins into leadership-ready updates.')+tabs+(s.reportView==='progression'?progressionReport():s.reportView==='portfolio'?portfolioPage():s.reportView==='exceptions'?exceptionReportPage():leadershipReportPage());
   }
   function progressionReport(){const total=s.xp.filter(x=>s.demo||x.user_id===s.user?.id).reduce((n,x)=>n+(x.amount||0),0),level=Math.min(20,1+Math.floor(Math.sqrt(total/65))),next=65*level*level,ts=visibleTasks(),done=ts.filter(t=>t.status==='complete').length;
     return `<div class="kpi-grid"><div class="kpi green"><div class="label">Verified tasks</div><div class="value">${done}</div><div class="hint">Of ${ts.length} authorized tasks</div></div><div class="kpi"><div class="label">Experience earned</div><div class="value">${total}</div><div class="hint">From approved work</div></div><div class="kpi purple"><div class="label">${term('Progression level','Guild level')}</div><div class="value">${level}</div><div class="hint">20-level journey</div></div><div class="kpi amber"><div class="label">Next level</div><div class="value">${level===20?'MAX':Math.max(0,next-total)}</div><div class="hint">XP remaining</div></div></div>
@@ -1291,10 +1317,10 @@
     if(action==='staff-export-csv'){downloadStaffExport('csv');return;}
     if(action==='staff-export-html'){downloadStaffExport('html');return;}
     if(action==='staff-export-print'){printStaffExport();return;}
-    if(action==='report-view'){if(['portfolio','progression','accomplishments','outlook'].includes(v)){s.reportView=v;if(v==='accomplishments')s.reportClosed=true;if(v==='outlook')s.reportClosed=false;render();}return;}
+    if(action==='report-view'){if(['portfolio','progression','accomplishments','outlook','exceptions'].includes(v)){s.reportView=v;if(v==='accomplishments')s.reportClosed=true;if(['outlook','exceptions'].includes(v))s.reportClosed=false;render();}return;}
     if(action==='report-export'){downloadPortfolio();return;}
-    if(action==='leadership-download'&&s.nav==='reports'&&['accomplishments','outlook'].includes(s.reportView)){downloadLeadership();return;}
-    if(action==='leadership-print'&&s.nav==='reports'&&['accomplishments','outlook'].includes(s.reportView)){printLeadership();return;}
+    if(action==='leadership-download'&&s.nav==='reports'&&['accomplishments','outlook','exceptions'].includes(s.reportView)){downloadLeadership();return;}
+    if(action==='leadership-print'&&s.nav==='reports'&&['accomplishments','outlook','exceptions'].includes(s.reportView)){printLeadership();return;}
     if(action==='report-detail'){s.reportProject=id;s.reportSignal=v==='open'?'all':v;render();root.querySelector('.report-detail')?.focus();return;}
     if(action==='report-detail-close'){s.reportProject=null;render();return;}
     if(action==='inbox-filter'){
