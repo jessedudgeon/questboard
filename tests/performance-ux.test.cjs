@@ -53,7 +53,7 @@ test('Quick entry chooses an initial state in the creation form',async()=>{
     form.querySelector('[name="initial_status"]').value='in_progress';
     await qa.handleForm(form);
     assert.equal(qa.s.tasks.find(task=>task.title==='Quick note for the team')?.status,'in_progress');
-    assert.equal(qa.s.nav,'task');
+    assert.equal(qa.s.nav,'home');
   }finally{dom.window.close();}
 });
 

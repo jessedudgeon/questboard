@@ -146,6 +146,7 @@ test('Create task with prerequisite saves in one call and retains draft on error
  await expect(page.getByLabel('Depends on (optional)')).toHaveValue('ta');
  await page.evaluate(()=>window.failCreate=false);
  await form.getByRole('button',{name:'Create task',exact:true}).click();
+ await page.locator('.board-task,.task-item').filter({hasText:'New dependent task'}).first().click();
  await expect(page.locator('.dependency-list').first()).toContainText('Alpha secret task');
  await expect(page.locator('.detail-content')).toContainText('Waiting for prerequisites');
  const calls=await page.evaluate(()=>fixture.calls.filter(c=>c.rpc==='qb_create_task'));
@@ -301,6 +302,7 @@ test('Template workflow saves a snapshot, creates a fresh checklist and archives
  await form.locator('[name="due_date"]').fill('2027-01-10');
  await form.locator('[name="prerequisite_id"]').selectOption('t2');
  await form.getByRole('button',{name:'Create task',exact:true}).click();
+ await page.locator('.board-task,.task-item').filter({hasText:'Next closet inspection'}).first().click();
  await expect(page.getByRole('heading',{name:'Next closet inspection',exact:true})).toBeVisible();
  await expect(page.locator('.checkline')).toHaveCount(3);
  await expect(page.locator('.checkline input:checked')).toHaveCount(0);
@@ -334,7 +336,7 @@ test('Milestones connect project planning, task editing and calendar on mobile',
  await expect(taskForm.locator('[name="milestone_id"] option:checked')).toHaveText('Campus rollout');
  await taskForm.locator('[name="title"]').fill('Verify rollout');
  await taskForm.getByRole('button',{name:'Create task',exact:true}).click();
- await page.getByRole('button',{name:'Campus rollout',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Campus rollout',exact:true})).toBeVisible();
  await expect(page.locator('.milestone-tasks .task-item')).toHaveCount(1);
  await expect(page.locator('.milestone-signals')).toContainText('1 without a due date');
  await page.locator('.milestone-tasks').getByRole('button',{name:'Edit Verify rollout'}).click();
