@@ -66,7 +66,7 @@ test('Executive stays concise and timeline respects milestone-group sequence',()
     q.s.deliveryType='schedule';
     const r=q.deliveryData()[0];
     const chart=new JSDOM(q.deliveryTimeline(r)).window.document;
-    const labels=Array.from(chart.querySelectorAll('svg text'),e=>e.textContent);
+    const labels=Array.from(chart.querySelectorAll('svg text')).filter(e=>e.querySelector('title')).map(e=>e.querySelector('title').textContent);
     const first=labels.indexOf('A: Verify'),second=labels.indexOf('B: Reconnect'),milestone=labels.indexOf('Restore service');
     assert(first>=0&&second>first&&milestone>second);
     const later=labels.indexOf('Cutover phones');
