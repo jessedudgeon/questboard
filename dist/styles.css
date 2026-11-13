@@ -140,3 +140,14 @@
 /* Allow task creation actions to fit alongside the initial status selector. */
 .modal-footer:has([name="creation_action"]){flex-wrap:wrap}
 .modal-footer:has([name="creation_action"]) .creation-state{flex-basis:100%}
+
+/* Scheduling, capacity and inherited planning settings. */
+.planning-fields{border:1px solid var(--border);border-radius:12px;padding:18px;margin:10px 25px 20px;min-width:0}
+.planning-fields legend{padding:0 8px;font-weight:800;font-size:13px}
+.planning-fields .form-grid[hidden]{display:none}
+.plan-summary{display:block;color:var(--muted);font-size:12px;padding:8px 0;line-height:1.6}
+.weekly-workload{margin:18px 0 24px}.weekly-workload .calendar-filters{align-items:end;flex-wrap:wrap}.weekly-workload input[type=date]{padding:9px;border:1px solid var(--border);border-radius:8px;color:var(--text);background:var(--surface)}
+.weekly-workload .planner-table{min-width:1080px}.weekly-workload .planner-table th:first-child{min-width:180px}.weekly-workload .planner-table small{display:block;font-size:10px;margin:5px 0}
+.capacity-over{background:#fef2f2!important;color:#9f1239}.text-btn{border:0;background:transparent;color:var(--accent,#4763cb);font:inherit;cursor:pointer;padding:4px 0;text-align:left;text-decoration:underline;text-underline-offset:3px}.weekly-detail{margin-top:24px;border-top:1px solid var(--border);padding-top:18px}.weekly-detail .planner-task{flex-wrap:wrap}.weekly-detail .planner-task>span{font-size:12px;color:var(--muted)}
+@media(max-width:650px){.planning-fields{margin:10px 16px 18px;padding:12px}.planning-fields .form-grid{grid-template-columns:1fr}.weekly-workload .calendar-filters>label{flex:1 1 150px}.weekly-workload .panel-head{flex-wrap:wrap;gap:12px}}
+.vendor-summary{margin:12px 0;padding:14px 16px;background:var(--surface-soft,#f5f7fc);border-left:3px solid var(--primary,#746be8);border-radius:6px;font-size:13px;line-height:1.65;overflow-wrap:anywhere}.vendor-summary p{white-space:pre-wrap;margin:6px 0}.vendor-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:20px}.vendor-contact,.vendor-work{padding:12px 0;border-bottom:1px solid var(--border,#e5e8f0)}.vendor-work>small{display:block;color:var(--muted);margin-top:5px}.milestone-frame{padding:10px;background:var(--surface-soft,#f5f7fc);border-radius:6px;font-size:13px}.milestone-frame:empty{display:none}

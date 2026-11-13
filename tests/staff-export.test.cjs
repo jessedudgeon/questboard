@@ -68,7 +68,7 @@ test('Downloaded HTML escapes project content and CSV guards against formulas',(
     assert(!html.includes('<script>'));
     assert.match(csv,/'=HYPERLINK/);assert.match(csv,/'@SUM/);
     assert(!csv.includes('Other project secret'));
-    for(const row of csvRows(csv))assert.equal(row.length,16);
+    for(const row of csvRows(csv))assert.equal(row.length,19);
   }finally{dom.window.close();}
 });
 test('Staff export dialog is available without project edit permissions and respects selected scope',async()=>{

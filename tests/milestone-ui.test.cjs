@@ -19,7 +19,7 @@ test('Milestone progress and risk use linked visible tasks and exclude closed wo
  const {dom,q}=setup();try{
   const data=q.milestoneData(q.s.milestones[0],'2027-01-05');
   assert.equal(data.tasks.length,5);assert.equal(data.progress,20);assert.equal(data.cancelled.length,1);assert.equal(data.open.length,3);
-  assert.deepEqual(Array.from(data.signals),['1 overdue','1 scheduled past target','1 without a due date','1 blocked or waiting']);
+  assert.deepEqual(Array.from(data.signals),['1 overdue','1 scheduled past target','1 without a due date','1 blocked']);
   q.s.projectMilestone='m1';assert.deepEqual(Array.from(q.projectTaskData('p1').tasks,t=>t.id).sort(),['a','b','c']);
   q.s.projectClosed=true;assert.equal(q.projectTaskData('p1').tasks.length,5);
   q.s.milestones[0].archived=true;assert.doesNotMatch(q.milestoneOptions('p1'),/Delivery/);assert.match(q.milestoneOptions('p1','m1'),/archived/);

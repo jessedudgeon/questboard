@@ -127,10 +127,10 @@ test('Create task with prerequisite saves in one call and retains draft on error
   fixture.rpcRows.qb_assignment_candidates=[{user_id:'u1',display_name:'First account'}];
   const rpc=fixture.api.rpc;window.failCreate=true;
   fixture.api.rpc=(name,a)=>{
-   if(name!=='qb_create_task')return rpc(name,a);
+   if(name!=='qb_create_planned_task')return rpc(name,a);
    fixture.calls.push({rpc:name,args:a});
    if(window.failCreate)return Promise.resolve({error:{message:'Prerequisite is unavailable'}});
-   fixture.tables.qb_tasks.push({id:'created',project_id:a.p_project,title:a.p_title,status:'backlog',priority:a.p_priority});
+   fixture.tables.qb_tasks.push({id:'created',project_id:a.p_project,title:a.p_values.title,status:'backlog',priority:a.p_values.priority});
    fixture.tables.qb_task_dependencies.push({id:'created-link',project_id:a.p_project,task_id:'created',prerequisite_id:a.p_prerequisite});
    return Promise.resolve({data:'created'});
   };
@@ -149,7 +149,7 @@ test('Create task with prerequisite saves in one call and retains draft on error
  await page.locator('.board-task,.task-item').filter({hasText:'New dependent task'}).first().click();
  await expect(page.locator('.dependency-list').first()).toContainText('Alpha secret task');
  await expect(page.locator('.detail-content')).toContainText('Waiting for prerequisites');
- const calls=await page.evaluate(()=>fixture.calls.filter(c=>c.rpc==='qb_create_task'));
+ const calls=await page.evaluate(()=>fixture.calls.filter(c=>c.rpc==='qb_create_planned_task'));
  expect(calls[1].args.p_prerequisite).toBe('ta');
 });
 

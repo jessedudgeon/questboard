@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 function app(){
  const root={innerHTML:'',querySelectorAll:()=>[],appendChild(){}};
- const ctx={window:{},document:{createElement:()=>({remove(){}}),getElementById:()=>root,body:{classList:{toggle(){}}},addEventListener(){}},localStorage:{getItem:()=>null},crypto:require('node:crypto').webcrypto,setTimeout:()=>0,clearTimeout(){},FormData:class {constructor(form){this.fields=form.fields;}get(key){return this.fields[key]??null;}},Date,URLSearchParams,location:{origin:'https://projects.dudgeon.io',pathname:'/',search:'?invite=test'}};
+ const ctx={window:{},document:{createElement:()=>({remove(){}}),getElementById:()=>root,body:{classList:{toggle(){}}},addEventListener(){}},localStorage:{getItem:()=>null},crypto:require('node:crypto').webcrypto,setTimeout:()=>0,clearTimeout(){},FormData:class {constructor(form){this.fields=form.fields;}get(key){return this.fields[key]??null;}has(key){return Object.hasOwn(this.fields,key);}},Date,URLSearchParams,location:{origin:'https://projects.dudgeon.io',pathname:'/',search:'?invite=test'}};
  const source=fs.readFileSync(require('node:path').join(__dirname,'../dist/app.js'),'utf8').replace('  init();','  globalThis.qa={s,loadDemo,myTasks,projectPage,taskActions,modalHTML,canManage,render,handleForm,taskPage};');
  vm.runInNewContext(source,ctx);return {...ctx.qa,root};
 }
