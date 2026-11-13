@@ -15,7 +15,7 @@ function installFakeSupabase(w){
  }};
  class Query{
   constructor(table){this.table=table;this.filters=[];this.operation='select';this.orders=[];this.start=0;this.end=Infinity;}
-  select(){return this;}eq(k,v){this.filters.push([k,[v]]);return this;}in(k,v){this.filters.push([k,v]);return this;}
+  select(columns,options={}){this.countRequested=options.count;return this;}eq(k,v){this.filters.push([k,[v]]);return this;}in(k,v){this.filters.push([k,v]);return this;}
   order(key,options={}){this.orders.push([key,options.ascending!==false]);return this;}limit(n){this.end=n-1;return this;}range(start,end){this.start=start;this.end=end;return this;}upsert(row){this.operation='upsert';this.row=row;return this;}
   insert(row){this.operation='insert';this.row=row;return this;}update(row){this.operation='update';this.row=row;return this;}
   abortSignal(signal){this.signal=signal;return this;}
@@ -26,13 +26,13 @@ function installFakeSupabase(w){
    if(this.operation!=='select')return{data:null};
    let rows=f.tables[this.table]||[];rows=rows.filter(row=>this.filters.every(([k,v])=>v.includes(row[k])));
    rows=[...rows].sort((a,b)=>{for(const [key,asc] of this.orders){if(a[key]===b[key])continue;return (a[key]<b[key]?-1:1)*(asc?1:-1);}return 0;});
-   rows=rows.slice(this.start,Math.min(this.end+1,this.start+f.rowCap));
-   return{data:JSON.parse(JSON.stringify(rows))};
+   const total=rows.length;rows=rows.slice(this.start,Math.min(this.end+1,this.start+f.rowCap));
+   return{data:JSON.parse(JSON.stringify(rows)),...(f.includeCounts&&this.countRequested?{count:total}:{})};
   }
  }
- f.api={from:table=>new Query(table),rpc(name,args){return{signal:null,start:0,end:Infinity,orders:[],order(key,options={}){this.orders.push([key,options.ascending!==false]);return this;},range(start,end){this.start=start;this.end=end;return this;},abortSignal(signal){this.signal=signal;return this;},async then(resolve,reject){try{const call={rpc:name,args,user:f.current?.id,signal:this.signal,start:this.start,end:this.end};f.calls.push(call);if(f.before)await f.before(call);
+ f.api={from:table=>new Query(table),rpc(name,args,options={}){return{signal:null,start:0,end:Infinity,orders:[],order(key,options={}){this.orders.push([key,options.ascending!==false]);return this;},range(start,end){this.start=start;this.end=end;return this;},abortSignal(signal){this.signal=signal;return this;},async then(resolve,reject){try{const call={rpc:name,args,user:f.current?.id,signal:this.signal,start:this.start,end:this.end};f.calls.push(call);if(f.before)await f.before(call);
  if(name==='qb_dependency_readiness')f.rpcRows[name]=a=>f.tables.qb_tasks.filter(t=>a.p_tasks.includes(t.id)).map(t=>({task_id:t.id,waiting:f.tables.qb_task_dependencies.some(d=>d.task_id===t.id&&f.tables.qb_tasks.find(p=>p.id===d.prerequisite_id)?.status!=='complete')}));
- return resolve({data:[...(typeof f.rpcRows[name]==='function'?f.rpcRows[name](args):f.rpcRows[name]||[])].sort((a,b)=>{for(const [key,asc] of this.orders){if(a[key]===b[key])continue;return (a[key]<b[key]?-1:1)*(asc?1:-1);}return 0;}).slice(this.start,Math.min(this.end+1,this.start+f.rowCap))});}catch(e){return reject(e);}}};},auth:{
+ const all=[...(typeof f.rpcRows[name]==='function'?f.rpcRows[name](args):f.rpcRows[name]||[])];return resolve({...(f.includeCounts&&options.count?{count:all.length}:{}),data:all.sort((a,b)=>{for(const [key,asc] of this.orders){if(a[key]===b[key])continue;return (a[key]<b[key]?-1:1)*(asc?1:-1);}return 0;}).slice(this.start,Math.min(this.end+1,this.start+f.rowCap))});}catch(e){return reject(e);}}};},auth:{
   getSession:async()=>({data:{session:f.current?{user:f.current}:null}}),
   onAuthStateChange(cb){f.callback=cb;return{data:{subscription:{unsubscribe(){}}}};},
   async signOut(options){f.calls.push({signOut:options});if(f.signOutError)return{error:{message:'offline'}};f.emit('SIGNED_OUT',null);return{error:null};}

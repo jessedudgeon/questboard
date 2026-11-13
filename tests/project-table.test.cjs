@@ -1,0 +1,12 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require('jsdom');
+function setup(){const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'https://projects.dudgeon.io',runScripts:'outside-only'});dom.window.eval(fs.readFileSync(__dirname+'/../dist/app.js','utf8').replace('  init();','  globalThis.qa={s,loadDemo,render,handleForm};'));const q=dom.window.qa;q.loadDemo();q.s.nav='project';q.s.projectId='p1';q.s.projectView='list';q.s.milestones=[{id:'m',project_id:'p1',title:'Cutover',start_date:'2027-01-04',due_date:'2027-01-15'}];q.s.tasks=[{id:'t',project_id:'p1',milestone_id:'m',title:'Configure equipment',status:'ready',priority:'high',assignee_id:'sam',start_date:'2027-01-05',due_date:'2027-01-08',schedule_mode:'fixed'}];q.render();return{dom,q,d:dom.window.document};}
+test('Project table retains task, assignment and status actions and saves due dates in place',async()=>{
+const {dom,q,d}=setup();try{
+ assert(d.querySelector('table.project-task-table'));assert(d.querySelector('[data-task-assignee]'));assert(d.querySelector('[data-task-status]'));assert(d.querySelector('[data-value="edit-task"]'));assert(d.querySelector('[data-action="task"][data-id="t"]'));
+ let form=d.querySelector('[data-form="task-due"]');assert.equal(form.elements.due_date.value,'2027-01-08');form.elements.due_date.value='2027-01-12';await q.handleForm(form);assert.equal(q.s.tasks[0].due_date,'2027-01-12');assert.equal(q.s.nav,'project');
+ form=d.querySelector('[data-form="task-due"]');await q.handleForm(form,{value:'milestone'});assert.equal(q.s.tasks[0].due_date,'2027-01-15');assert.equal(q.s.tasks[0].schedule_mode,'milestone_deadline');
+ form=d.querySelector('[data-form="task-due"]');form.elements.due_date.value='2027-01-16';await q.handleForm(form);assert.equal(q.s.tasks[0].due_date,'2027-01-15');assert.match(d.querySelector('#toast').textContent,/milestone time frame/);
+ form.elements.due_date.value='2027-01-03';await q.handleForm(form);assert.equal(q.s.tasks[0].due_date,'2027-01-15');assert.match(d.querySelector('#toast').textContent,/before the task start/);
+ form.elements.due_date.value='';await q.handleForm(form);assert.equal(q.s.tasks[0].due_date,null);assert.equal(q.s.tasks[0].schedule_mode,'fixed');
+ q.s.demo=false;q.s.departmentMembers=[];q.s.projectMembers=[];q.render();assert.equal(d.querySelector('[data-form="task-due"]'),null);assert.equal(d.querySelector('[data-task-assignee]'),null);
+}finally{dom.window.close();}});
