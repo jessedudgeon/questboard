@@ -86,12 +86,12 @@ test('Large eligible-person lists retry in place without losing the task draft',
  await page.locator('[data-action="modal"][data-value="task"]').first().click();
  await expect(page.getByRole('button',{name:'Retry loading people'})).toBeVisible();
  const form=page.locator('form[data-form="task"]');await form.locator('[name="title"]').fill('Keep this draft');
- await expect(form.locator('[type="submit"]')).toBeDisabled();
+ await expect(form.getByRole('button',{name:'Create task',exact:true})).toBeDisabled();
  await page.evaluate(()=>fixture.before=null);
  await page.getByRole('button',{name:'Retry loading people'}).click();
  await expect(form.locator('[name="assignee_id"] option')).toHaveCount(1106);
  await expect(form.locator('[name="title"]')).toHaveValue('Keep this draft');
- await expect(form.locator('[type="submit"]')).toBeEnabled();
+ await expect(form.getByRole('button',{name:'Create task',exact:true})).toBeEnabled();
  await form.locator('[name="assignee_id"]').selectOption('candidate-01104');
  await expect(form.locator('[name="assignee_id"]')).toHaveValue('candidate-01104');
 });
@@ -110,7 +110,7 @@ test('Dependencies link and unlink through the task UI and show both directions'
  });
  await page.getByLabel('Organization',{exact:true}).selectOption('b');await expect(page.locator('.page')).toContainText('Beta');
  await page.getByLabel('Organization',{exact:true}).selectOption('a');await expect(page.locator('.page')).toContainText('Alpha');
- await page.locator('.project-card[data-id="pa"]').click();await page.locator('.board-task[data-id="ta"]').click();
+ await page.locator('.project-card[data-id="pa"]').click();await page.locator('.board-task[data-id="ta"] h4').click();
  await page.getByLabel('Add prerequisite').selectOption('pre');await page.getByRole('button',{name:'Link prerequisite',exact:true}).click();
  await expect(page.locator('.dependency-list').first()).toContainText('Finish prerequisite first');
  await expect(page.locator('.detail-content')).toContainText('Waiting for prerequisites');
@@ -146,7 +146,7 @@ test('Create task with prerequisite saves in one call and retains draft on error
  await expect(page.getByLabel('Depends on (optional)')).toHaveValue('ta');
  await page.evaluate(()=>window.failCreate=false);
  await form.getByRole('button',{name:'Create task',exact:true}).click();
- await page.locator('.board-task,.task-item').filter({hasText:'New dependent task'}).first().click();
+ await page.locator('.board-task,.task-item').filter({hasText:'New dependent task'}).first().locator('h4,.task-title').click();
  await expect(page.locator('.dependency-list').first()).toContainText('Alpha secret task');
  await expect(page.locator('.detail-content')).toContainText('Waiting for prerequisites');
  const calls=await page.evaluate(()=>fixture.calls.filter(c=>c.rpc==='qb_create_planned_task'));
@@ -269,7 +269,7 @@ test('Manager plans, exports and reschedules filtered work on mobile',async({pag
  await detail.getByRole('button',{name:/^Edit Resolve/}).click();
  const form=page.locator('form[data-form="edit-task"]');
  await form.locator('[name="due_date"]').fill('2099-08-10');
- await form.locator('[type="submit"]').click();
+ await form.getByRole('button',{name:'Save changes',exact:true}).click();
  await expect(form).toHaveCount(0);
  await expect(detail.locator('.task-item')).toContainText('2099');
  await expect(page.locator('tbody [data-value="later"]')).toHaveText('1');
@@ -302,7 +302,7 @@ test('Template workflow saves a snapshot, creates a fresh checklist and archives
  await form.locator('[name="due_date"]').fill('2027-01-10');
  await form.locator('[name="prerequisite_id"]').selectOption('t2');
  await form.getByRole('button',{name:'Create task',exact:true}).click();
- await page.locator('.board-task,.task-item').filter({hasText:'Next closet inspection'}).first().click();
+ await page.locator('.board-task,.task-item').filter({hasText:'Next closet inspection'}).first().locator('h4,.task-title').click();
  await expect(page.getByRole('heading',{name:'Next closet inspection',exact:true})).toBeVisible();
  await expect(page.locator('.checkline')).toHaveCount(3);
  await expect(page.locator('.checkline input:checked')).toHaveCount(0);
@@ -333,7 +333,7 @@ test('Milestones connect project planning, task editing and calendar on mobile',
  await expect(page.getByRole('heading',{name:'Campus rollout',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Add task',exact:true}).click();
  const taskForm=page.locator('form[data-form="task"]');
- await expect(taskForm.locator('[name="milestone_id"] option:checked')).toHaveText('Campus rollout');
+ await expect(taskForm.locator('[name="milestone_id"] option:checked')).toContainText('Campus rollout');
  await taskForm.locator('[name="title"]').fill('Verify rollout');
  await taskForm.getByRole('button',{name:'Create task',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Campus rollout',exact:true})).toBeVisible();

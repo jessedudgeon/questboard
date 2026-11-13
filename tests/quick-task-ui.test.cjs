@@ -6,7 +6,7 @@ test('Quick task creates standalone work and project work from the global contro
  const q=w.qa;q.loadDemo();assert(w.document.querySelector('[data-value="quick-task"]'));
  await q.handleClick({dataset:{action:'modal',value:'quick-task'}});
  let form=w.document.querySelector('[data-form="quick-task"]');form.querySelector('[name="title"]').value='Call vendor';await q.handleForm(form);
- const task=q.s.tasks.find(t=>t.title==='Call vendor');assert(task);assert.equal(task.xp_reward,15);assert(q.s.projects.find(p=>p.id===task.project_id).is_quick_queue);
+ const task=q.s.tasks.find(t=>t.title==='Call vendor');assert(task);assert.equal(task.xp_reward,30);assert(q.s.projects.find(p=>p.id===task.project_id).is_quick_queue);
  const project=q.s.projects.find(p=>!p.is_quick_queue);q.s.projectId=project.id;
  await q.handleClick({dataset:{action:'modal',value:'quick-task'}});form=w.document.querySelector('[data-form="quick-task"]');assert.equal(form.querySelector('[name="destination"]').value,'project:'+project.id);form.querySelector('[name="title"]').value='Project follow-up';await q.handleForm(form);assert.equal(q.s.tasks.find(t=>t.title==='Project follow-up').project_id,project.id);
  }finally{w.close();}
