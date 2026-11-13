@@ -44,6 +44,14 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    values($1,'organization','member',$2,$3) returning id`,[ids.org,'questboard-viewer-'+ids.viewer+'@example.invalid',ids.admin])).rows[0].id;}
   async function finishWait(wait,code){await blocked(admin,pid);await a.query('commit');const r=await wait;if(code)assert.equal(r.error?.code,code,r.error?.message);else assert.equal(r.error,undefined);await b.query(code?'rollback':'commit');}
 
+  await scenario('Concurrent owners cannot both relinquish the last ownership',async ids=>{
+   await admin.query("update qb_org_members set is_owner=true where org_id=$1 and user_id in ($2,$3)",[ids.org,ids.admin,ids.reserve]);
+   await signed(a,ids.admin);await signed(b,ids.reserve);
+   const sql="select qb_manage_membership('organization',$1,$2,'role','admin','owner','active')";
+   await a.query(sql,[ids.org,ids.admin]);await finishWait(pending(b,sql,[ids.org,ids.reserve]),'23514');
+   assert.equal(Number((await admin.query('select count(*) n from qb_org_members where org_id=$1 and is_owner',[ids.org])).rows[0].n),1);
+  });
+
   await scenario('Concurrent project settings edits reject the stale second editor',async ids=>{
    await signed(a,ids.admin);await signed(b,ids.reserve);
    const sql="select qb_save_project_settings($1,1,$2,'Outcome','paused',null)";

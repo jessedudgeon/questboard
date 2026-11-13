@@ -22,8 +22,8 @@ test('Organization bootstrap verifies identity, atomically grants admin and isol
  await db.exec('reset role');assert.equal((await db.query('select count(*)::int n from public.qb_organizations')).rows[0].n,2);
  assert.equal((await db.query("select count(*)::int n from public.qb_membership_events where scope_type='organization' and after_data->>'role'='admin'")).rows[0].n,2);
  // A replay never resurrects suspended or demoted privileges.
- await db.query("insert into public.qb_org_members(org_id,user_id,role) values($1,$2,'admin')",[org,b]);
- await db.query("update public.qb_org_members set status='suspended' where org_id=$1 and user_id=$2",[org,a]);
+ await db.query("insert into public.qb_org_members(org_id,user_id,role,is_owner) values($1,$2,'admin',true)",[org,b]);
+ await db.query("update public.qb_org_members set is_owner=false,status='suspended' where org_id=$1 and user_id=$2",[org,a]);
  await as(a);await assert.rejects(db.query('select public.qb_create_organization($1,$2)',['Acme',request]),/access changed/);
  }finally{await db.close();}
 });

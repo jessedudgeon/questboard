@@ -82,9 +82,9 @@ test('Session 4 membership lifecycle role matrix',async t=>{
    await deny(db,"select * from public.qb_membership_directory('project',(select project from qa_ids))");
    await actor(db);await deny(db,manage('department','other_dept','viewer','grant','viewer'));
   });
-  await check('Stale expected state, unsupported deletion and direct org writes rejected',async()=>{
+  await check('Stale expected state, unsupported actions and direct org writes rejected',async()=>{
    await actor(db);await deny(db,manage('department','dept','viewer','suspend',null,'contributor','active'),'40001');
-   await deny(db,manage('department','dept','viewer','remove',null,'viewer','active'),'22023');
+   await deny(db,manage('department','dept','viewer','delete',null,'viewer','active'),'22023');
    await deny(db,'delete from public.qb_department_members');await deny(db,"update public.qb_org_members set role='admin'");
    await deny(db,'delete from public.qb_membership_events');await deny(db,"insert into public.qb_membership_events(org_id,scope_type,scope_id,user_id) select org,'organization',org,viewer from qa_ids");
   });
@@ -99,7 +99,7 @@ test('Session 4 membership lifecycle role matrix',async t=>{
 test('Populated Session 3 upgrades to Session 4 without data rewrites or MeetingDesk changes',async()=>{
  const db=await database({migrate:false});const dir=__dirname+'/../supabase/migrations/';
  try{
-  const files=fs.readdirSync(dir).sort();for(const f of files.filter(f=>!f.includes('session04')))await db.exec(fs.readFileSync(dir+f,'utf8'));
+  const files=fs.readdirSync(dir).sort();for(const f of files.filter(f=>f<files.find(f=>f.includes('session04'))))await db.exec(fs.readFileSync(dir+f,'utf8'));
   await db.exec(fixture+'commit;');
   await db.exec(`create table public.meetingdesk_lifecycle_canary(id integer primary key,note text);insert into public.meetingdesk_lifecycle_canary values(1,'unchanged');alter table public.meetingdesk_lifecycle_canary enable row level security;create policy canary on public.meetingdesk_lifecycle_canary for select using(false);`);
   const snapshot=async()=>Promise.all(['qb_org_members','qb_department_members','qb_project_members','qb_tasks','meetingdesk_lifecycle_canary'].map(async table=>(await db.query(`select to_jsonb(t) row from public.${table} t order by to_jsonb(t)::text`)).rows));

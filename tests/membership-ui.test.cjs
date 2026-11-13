@@ -5,9 +5,9 @@ function app(){const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',
  dom.window.eval(fs.readFileSync(__dirname+'/../dist/app.js','utf8').replace('  init();','  globalThis.qa={s,membership,loadDemo,loadMemberships,membershipPanel,handleForm,setApi(x){api=x;}};'));
  const q=dom.window.qa;const originalSetApi=q.setApi;q.setApi=value=>originalSetApi(withPagedRpc(value));q.loadDemo();q.s.demo=false;q.s.nav='admin';q.s.orgMembership={role:'admin',status:'active'};return{dom,q};}
 function api(rpc){return{rpc,from(){return{select(){return this;},eq(){return this;},order(){return this;},limit(){return Promise.resolve({data:[]});}};}};}
-test('Membership controls escape names, include suspended members and offer no removal action',async()=>{
+test('Membership controls escape names, include suspended members and offer confirmed removal',async()=>{
  const {dom,q}=app();try{q.setApi(api(async()=>({data:[{user_id:'sam',display_name:'<img src=x onerror=alert(1)>',role:'viewer',status:'suspended',org_status:'active'}]})));
- await q.loadMemberships('department:it');const html=q.membershipPanel();assert(html.includes('&lt;img'));assert(!html.includes('<img src=x'));assert(html.includes('Reinstate'));assert(!html.includes('value="remove"'));
+ await q.loadMemberships('department:it');const html=q.membershipPanel();assert(html.includes('&lt;img'));assert(!html.includes('<img src=x'));assert(html.includes('Reinstate'));assert(html.includes('value="remove"'));assert(html.includes('confirm_remove'));
  }finally{dom.window.close();}
 });
 test('Old scope response and directory failure cannot expose stale administration controls',async()=>{
@@ -21,5 +21,14 @@ test('Membership submit sends expected state; rejected mutation leaves data unch
  const {dom,q}=app();try{const calls=[];q.setApi(api(async(name,args)=>{calls.push({name,args});return name==='qb_membership_directory'?{data:[{user_id:'sam',display_name:'Sam',role:'viewer',status:'active',org_status:'active'}]}:{error:{message:'Membership changed; reload before saving'}};}));
  await q.loadMemberships('department:it');const form=dom.window.document.querySelector('form[data-form="membership"]');form.querySelector('[name="action"]').value='suspend';await q.handleForm(form);
  assert.equal(calls.at(-1).name,'qb_manage_membership');assert.equal(calls.at(-1).args.p_expected_role,'viewer');assert.equal(calls.at(-1).args.p_expected_status,'active');assert.equal(q.membership.rows[0].status,'active');
+ }finally{dom.window.close();}
+});
+test('Only owners can appoint owners; removal requires explicit confirmation',async()=>{
+ const {dom,q}=app();try{let writes=0;q.setApi(api(async(name)=>{if(name==='qb_manage_membership'){writes++;return{error:{message:'Test prevented write'}};}return{data:[{user_id:'sam',display_name:'Sam',role:'member',status:'active',org_status:'active'}]};}));
+ await q.loadMemberships('organization:demo-org');assert(!q.membershipPanel().includes('value="owner"'));
+ q.s.orgMembership.is_owner=true;await q.loadMemberships('organization:demo-org');assert(q.membershipPanel().includes('value="owner"'));
+ const form=dom.window.document.querySelector('form[data-form="membership"]'),action=form.querySelector('[name="action"]');action.value='remove';action.dispatchEvent(new dom.window.Event('change',{bubbles:true}));assert.equal(form.querySelector('.membership-remove-confirm').hidden,false);
+ await q.handleForm(form);assert.equal(writes,0);assert(dom.window.document.getElementById('toast').textContent.includes('Confirm removal'));
+ form.querySelector('[name="confirm_remove"]').checked=true;await q.handleForm(form);assert.equal(writes,1);
  }finally{dom.window.close();}
 });
