@@ -269,7 +269,7 @@ test('Manager plans, exports and reschedules filtered work on mobile',async({pag
  await detail.getByRole('button',{name:/^Edit Resolve/}).click();
  const form=page.locator('form[data-form="edit-task"]');
  await form.locator('[name="due_date"]').fill('2099-08-10');
- await form.getByRole('button',{name:'Create task',exact:true}).click();
+ await form.getByRole('button',{name:'Save changes',exact:true}).click();
  await expect(form).toHaveCount(0);
  await expect(detail.locator('.task-item')).toContainText('2099');
  await expect(page.locator('tbody [data-value="later"]')).toHaveText('1');
