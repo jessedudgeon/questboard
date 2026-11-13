@@ -57,3 +57,9 @@ test('Remembered org is identity-scoped and validated against active memberships
  dom.window.sessionStorage.setItem('qb-organization:u2','a');await q.switchOrganization('b');f.emit('SIGNED_IN','u2');await until(()=>q.s.org?.id==='b'&&!q.s.loading);
  assert.equal(dom.window.sessionStorage.getItem('qb-organization:u2'),'b');assert.equal(q.s.orgMembership.user_id,'u2');
  }finally{dom.window.close();}});
+test('Owner flag survives projected membership revalidation and clears on organization switch',async()=>{const {dom,f,q}=await app();try{
+ f.tables.qb_org_members.find(m=>m.org_id==='a').is_owner=true;
+ const from=f.api.from;f.api.from=table=>{const query=from(table),select=query.select,run=query.run;query.select=function(columns,options){this.columns=columns;return select.call(this,columns,options);};query.run=async function(){const result=await run.call(this);if(table==='qb_org_members'&&this.columns!=='*'&&result.data)result.data=result.data.map(row=>Object.fromEntries(this.columns.split(',').map(key=>[key,row[key]])));return result;};return query;};
+ await q.loadLive('a');assert.equal(q.s.orgMembership.is_owner,true);assert(dom.window.document.body.textContent.includes('Organization owner'));
+ await q.switchOrganization('b');assert(!q.s.orgMembership.is_owner);assert(!dom.window.document.body.textContent.includes('Organization owner'));
+ }finally{dom.window.close();}});

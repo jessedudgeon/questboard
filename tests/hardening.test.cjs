@@ -178,6 +178,7 @@ test('Additive upgrade preserves populated baseline and unrelated MeetingDesk da
   const policies=(await db.query("select * from pg_policies where tablename='meeting_workspaces'")).rows;
   await applyMigrations(db);
   const after=await snapshot();
+  for(const member of after.qb_org_members){assert.equal(member.is_owner,member.role==='admin'&&member.status==='active');delete member.is_owner;}
   for(const task of after.qb_tasks){for(const [key,value] of Object.entries({coin_reward:0,vendor_dependent:false,vendor_id:null,vendor_contact_id:null,vendor_reference:'',vendor_notes:'',vendor_followup_date:null,vendor_last_contacted:null,start_date:null,estimated_hours:null,remaining_hours:null,schedule_mode:'fixed',schedule_offset:0,duration_days:1,assignee_invitation_id:null,planned_assignee_label:null})){assert.equal(task[key],value);delete task[key];}assert.equal(task.source_template_id,null);delete task.source_template_id;assert.equal(task.milestone_id,null);delete task.milestone_id;}
   for(const project of after.qb_projects){assert.equal(project.revision,1);delete project.revision;assert.equal(project.is_quick_queue,false);delete project.is_quick_queue;}
   assert.equal(await scalar(db,'select count(*) from qb_project_changes'),0);
