@@ -737,12 +737,61 @@
   function questProjectName(p){return p.title.replace('Critical Vulnerability Remediation','The Vulnerability Hydra').replace('Network Infrastructure Modernization','The Great Network Renewal').replace('Campus Facilities Improvements','Restoration of the Halls');}
   const quickStatusAction=t=>taskActions(t).find(([status])=>['ready','in_progress'].includes(status));
   const quickStatusButton=t=>{const action=quickStatusAction(t);return action?`<button class="btn sm task-inline-action" data-action="status" data-value="${action[0]}" data-id="${esc(t.id)}" aria-label="${esc(action[1])}: ${esc(t.title)}">${esc(action[1])}</button>`:'';};
+  const inlineAssignees=new Map();
+  const inlineAssignmentKey=t=>epoch+':'+t.project_id+':'+(t.visibility==='restricted'?t.id:'project');
+  function taskAssigneeControl(t){
+    if(!canManage(t.project_id))return `<span class="task-assignee-readonly">Assigned to: ${esc(assigneeName(t))}</span>`;
+    return `<div class="task-assignee-control"><label>Assigned to<select data-task-assignee="${esc(t.id)}" aria-label="Assign task: ${esc(t.title)}"><option value="${esc(assignmentKey(t)||'')}">${esc(assigneeName(t))}</option></select></label><small data-assignee-message="${esc(t.id)}" role="status"></small></div>`;
+  }
+  async function prepareInlineAssignee(select,retry=false){
+    const t=taskFor(select.dataset.taskAssignee);if(!t||!canManage(t.project_id))return;
+    const generation=epoch,key=inlineAssignmentKey(t);
+    // Discard caches belonging to a previous account/organization.
+    for(const k of inlineAssignees.keys())if(!k.startsWith(epoch+':'))inlineAssignees.delete(k);
+    if(retry&&inlineAssignees.get(key)?.error)inlineAssignees.delete(key);
+    if(!inlineAssignees.has(key)){
+      const entry={};inlineAssignees.set(key,entry);
+      entry.pending=(async()=>{await Promise.resolve();try{
+        const [people,invites]=s.demo?[demoCandidates(t.project_id),s.invitations.filter(i=>i.status!=='revoked'&&(i.scope_type==='organization'||i.scope_type==='project'&&i.scope_id===t.project_id||i.scope_type==='department'&&i.scope_id===projectFor(t.project_id)?.department_id))]:await Promise.all([
+          pagedRows(()=>api.rpc('qb_assignment_candidates',{p_project:t.project_id,p_task:t.visibility==='restricted'?t.id:null}).order('display_name'),['user_id'],()=>generation===epoch),
+          pagedRows(()=>api.rpc('qb_invited_assignment_candidates',{p_project:t.project_id}).order('invited_email'),['id'],()=>generation===epoch)
+        ]);
+        entry.people=people;entry.invites=invites;
+      }catch(e){entry.error=e.message;}finally{entry.pending=null;}})();
+    }
+    const entry=inlineAssignees.get(key),message=()=>Array.from(root.querySelectorAll('[data-assignee-message]')).find(el=>el.dataset.assigneeMessage===t.id);
+    select.disabled=true;if(message())message().textContent='Loading assignees…';
+    if(entry.pending)await entry.pending;
+    if(generation!==epoch||!root.contains(select))return;
+    const current=taskFor(t.id),selected=assignmentKey(current)||'';
+    if(entry.error){select.disabled=false;if(message())message().textContent='Could not load assignees. Focus this menu to retry.';return;}
+    const options=[['','Unassigned'],...entry.people.map(p=>[p.user_id,p.display_name]),...entry.invites.map(i=>['invite:'+i.id,i.invited_email+' · invited / tracking only'])];
+    if(selected&&!options.some(([id])=>id===selected))options.push([selected,assigneeName(current)+' · current assignment']);
+    select.innerHTML=options.map(([id,label])=>`<option value="${esc(id)}" ${id===selected?'selected':''}>${esc(label)}</option>`).join('');select.disabled=false;if(message())message().textContent='';
+  }
+  async function changeInlineAssignee(select){
+    const t=taskFor(select.dataset.taskAssignee),generation=epoch;
+    if(!root.contains(select)||!t||s.nav!=='project'||!canManage(t.project_id))return;
+    const selected=select.value,prior=assignmentKey(t)||'',entry=inlineAssignees.get(inlineAssignmentKey(t));
+    if(selected===prior)return;
+    if(s.busy){select.value=prior;return;}
+    await withBusy(async()=>{
+      if(!entry||entry.pending||entry.error||selected&&!entry.people.some(p=>p.user_id===selected)&&!entry.invites.some(i=>'invite:'+i.id===selected))throw Error('Reload eligible assignees before saving');
+      select.disabled=true;const row=assignmentFields(selected);
+      if(s.demo){const before={assignee_id:t.assignee_id,invited_owner:t.planned_assignee_label};Object.assign(t,row,{planned_assignee_label:row.assignee_invitation_id?entry.invites.find(i=>i.id===row.assignee_invitation_id)?.invited_email:null});demoTaskEvent(t.id,'metadata',before,{assignee_id:t.assignee_id,invited_owner:t.planned_assignee_label});}
+      else await getResult(api.from('qb_tasks').update(row).eq('id',t.id).eq('project_id',t.project_id).select('id').single());
+      if(generation!==epoch)return;await syncTask(t.id);if(generation===epoch)toast('Assignee updated');
+    });
+    if(generation===epoch){select.disabled=false;select.value=assignmentKey(taskFor(t.id))||'';Array.from(root.querySelectorAll('[data-task-assignee]')).find(el=>el.dataset.taskAssignee===t.id)?.focus();}
+  }
+  const milestoneDateNameSort=(a,b)=>String(a.due_date||'9999-99-99').localeCompare(String(b.due_date||'9999-99-99'))||a.title.localeCompare(b.title)||a.id.localeCompare(b.id);
+
   function taskStatusControls(t){
     const actions=taskActions(t);
     if(!actions.length)return '';
     return `<div class="task-status-controls">${quickStatusButton(t)}<label class="task-status-label">Status<select class="task-status-select" data-task-status="${esc(t.id)}" aria-label="Change status: ${esc(t.title)}"><option value="" selected>${esc(fmtStatus(t.status))}</option>${actions.map(([status,label])=>`<option value="${status}">${esc(label)} → ${esc(fmtStatus(status))}</option>`).join('')}</select></label></div>`;
   }
-  function taskRow(t,details=false){const p=projectFor(t.project_id);return `<div class="task-item" data-action="task" data-id="${t.id}"><div class="task-check">${t.status==='complete'?'✓':'◇'}</div><div class="task-grow"><div class="task-title">${esc(t.title)}</div><div class="task-sub">${esc(p?.title||'Project')} · ${esc(assigneeName(t))} · ${esc(niceDate(t.due_date))}</div>${t.estimated_hours!=null?`<small>${esc(hoursText(t.estimated_hours))} estimated${t.start_date?' · Starts '+esc(niceDate(t.start_date)):''}</small>`:''}${details===true&&dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</div><div class="task-right">${details===true?tag(t.priority,priorityNames[t.priority]):''}${tag(t.status,fmtStatus(t.status))}${s.nav==='project'?taskStatusControls(t):quickStatusButton(t)}<span style="color:var(--muted)">›</span></div></div>`;}
+  function taskRow(t,details=false){const p=projectFor(t.project_id);return `<div class="task-item" data-action="task" data-id="${t.id}"><div class="task-check">${t.status==='complete'?'✓':'◇'}</div><div class="task-grow"><div class="task-title">${esc(t.title)}</div><div class="task-sub">${esc(p?.title||'Project')} · ${esc(assigneeName(t))} · ${esc(niceDate(t.due_date))}</div>${t.estimated_hours!=null?`<small>${esc(hoursText(t.estimated_hours))} estimated${t.start_date?' · Starts '+esc(niceDate(t.start_date)):''}</small>`:''}${details===true&&dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</div><div class="task-right">${details===true?tag(t.priority,priorityNames[t.priority]):''}${tag(t.status,fmtStatus(t.status))}${s.nav==='project'?taskAssigneeControl(t)+taskStatusControls(t):quickStatusButton(t)}<span style="color:var(--muted)">›</span></div></div>`;}
   const managedWork=t=>canManage(t.project_id)||isDeptManager(projectFor(t.project_id)?.department_id);
   function dashboardData(view=s.dashboardView,today=new Date()){
     const start=dateKey(today),endDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()+6,12),end=dateKey(endDate);
@@ -930,7 +979,7 @@
     const neighbors=(label,tasks)=>`<div><strong>${label}</strong>${tasks.length?`<ul>${tasks.map(task=>`<li>${taskButton(task)} ${tag(task.status,fmtStatus(task.status))}</li>`).join('')}</ul>`:'<p class="muted">None visible</p>'}</div>`;
     return `<section class="panel project-dependencies" aria-label="Task dependencies">${data.tasks.map(task=>{
       const {before,after}=byId.get(task.id);
-      return `<article><header><h3>${taskButton(task)}</h3>${tag(task.status,fmtStatus(task.status))}${dependencyWaiting(task.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</header><div class="dependency-neighbors">${neighbors('Depends on',before)}${neighbors('Needed by',after)}</div></article>`;
+      return `<article><header><h3>${taskButton(task)}</h3>${tag(task.status,fmtStatus(task.status))}${dependencyWaiting(task.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}</header>${taskAssigneeControl(task)}<div class="dependency-neighbors">${neighbors('Depends on',before)}${neighbors('Needed by',after)}</div></article>`;
     }).join('')}</section>`;
   }
   function projectTaskControls(data){
@@ -938,7 +987,7 @@
     return `<div class="project-task-toolbar"><div class="buttons" role="group" aria-label="Task display">${Object.keys(projectViews).map(view=>`<button class="btn sm ${s.projectView===view?'primary':''}" data-action="project-view" data-value="${view}" aria-pressed="${s.projectView===view}">${projectViews[view]}</button>`).join('')}</div>
       <div class="calendar-filters project-task-filters">
       <label for="project-owner">Assigned to<select id="project-owner">${options([['all','Anyone'],['mine','Assigned to me'],['unassigned','Unassigned'],...data.owners.map(id=>['user:'+id,ownerLabel(id)])],s.projectOwner)}</select></label>
-      <label for="project-milestone">Milestone<select id="project-milestone">${options([['all','All milestones'],...s.milestones.filter(m=>m.project_id===s.projectId).map(m=>[m.id,m.title+(m.archived?' (archived)':'')])],s.projectMilestone)}</select></label><label for="project-priority">Priority<select id="project-priority">${options([['all','Any priority'],...Object.entries(priorityNames)],s.projectPriority)}</select></label>
+      <label for="project-milestone">Milestone<select id="project-milestone">${options([['all','All milestones'],...s.milestones.filter(m=>m.project_id===s.projectId).sort(milestoneDateNameSort).map(m=>[m.id,m.title+(m.archived?' (archived)':'')])],s.projectMilestone)}</select></label><label for="project-priority">Priority<select id="project-priority">${options([['all','Any priority'],...Object.entries(priorityNames)],s.projectPriority)}</select></label>
       <label for="project-readiness">Dependencies<select id="project-readiness">${options([['all','Any dependency state'],['waiting','Waiting for prerequisites'],['clear','No outstanding prerequisites']],s.projectReadiness)}</select></label>
       <label for="project-sort">Sort by<select id="project-sort">${options([['due','Due date'],['priority','Priority, then due date']],s.projectSort)}</select></label>
       <label class="calendar-closed"><input id="project-closed" type="checkbox" ${s.projectClosed?'checked':''}> Include finished work</label>
@@ -986,7 +1035,7 @@
     return {tasks,completed,cancelled,open,progress,signals};
   }
   function milestoneOptions(projectId,selected=''){
-    return '<option value="">No milestone</option>'+s.milestones.filter(m=>m.project_id===projectId&&(!m.archived||m.id===selected)).map(m=>`<option value="${esc(m.id)}" ${m.id===selected?'selected':''}>${esc(m.title)} · ${esc(niceDate(m.due_date))}${m.archived?' (archived)':''}</option>`).join('');
+    return '<option value="">No milestone</option>'+s.milestones.filter(m=>m.project_id===projectId&&(!m.archived||m.id===selected)).sort(milestoneDateNameSort).map(m=>`<option value="${esc(m.id)}" ${m.id===selected?'selected':''}>${esc(m.title)} · ${esc(niceDate(m.due_date))}${m.archived?' (archived)':''}</option>`).join('');
   }
   function projectMilestones(projectId){
     const milestones=s.milestones.filter(m=>m.project_id===projectId).sort((a,b)=>a.due_date.localeCompare(b.due_date)||a.title.localeCompare(b.title));
@@ -1027,7 +1076,7 @@
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${all.length}</div><div class="hint">${all.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${all.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
     ${projectBriefPanel(p.id)}${projectMilestones(p.id)}${manager?templateLibrary(p.id):''}<div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
     ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='dependencies'?projectDependencies(data):s.projectView==='list'?`<section class="panel project-task-list"><div class="panel-body">${ts.map(t=>taskRow(t,true)).join('')}</div></section>`:
-    `<div class="board" style="grid-template-columns:repeat(${statuses.length},minmax(225px,1fr))">${statuses.map(st=>`<div class="board-col"><div class="board-col-head">${esc(fmtStatus(st))} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${esc(t.id)}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(assigneeName(t))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}${t.estimated_hours!=null?`<small>${esc(hoursText(t.estimated_hours))}</small>`:''}<small>✦ ${t.xp_reward||0} XP</small></div>${taskStatusControls(t)}</div>`).join('')||'<small class="board-empty">No matching work</small>'}</div>`).join('')}</div>`}`;
+    `<div class="board" style="grid-template-columns:repeat(${statuses.length},minmax(225px,1fr))">${statuses.map(st=>`<div class="board-col"><div class="board-col-head">${esc(fmtStatus(st))} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${esc(t.id)}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(assigneeName(t))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}${t.estimated_hours!=null?`<small>${esc(hoursText(t.estimated_hours))}</small>`:''}<small>✦ ${t.xp_reward||0} XP</small></div>${taskAssigneeControl(t)}${taskStatusControls(t)}</div>`).join('')||'<small class="board-empty">No matching work</small>'}</div>`).join('')}</div>`}`;
   }
   function taskPage(){const t=taskFor(s.taskId);if(!t)return workPage();const p=projectFor(t.project_id),checks=s.checklist.filter(c=>c.task_id===t.id),updates=s.updates.filter(x=>x.task_id===t.id),events=s.events.filter(x=>x.task_id===t.id).slice(0,8),manager=canManage(t.project_id),actions=taskActions(t),xp=t.xp_reward||0;
     return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span><button data-action="project" data-id="${p?.id}">${esc(p?.title||'Project')}</button><span>›</span>${term('Task','Quest')}</div>
@@ -1475,6 +1524,7 @@
       while(current.nextSibling)current.nextSibling.remove();
       while(next.nextSibling)root.append(next.nextSibling);
     }else root.innerHTML=html;
+    root.querySelectorAll('[data-task-assignee]').forEach(select=>prepareInlineAssignee(select));
     root.querySelectorAll('form[data-form]').forEach(form=>{formEpoch.set(form,epoch);syncPlanControls(form);});
     root.querySelectorAll('.project-card,.task-item,.board-task,[data-action="project"]:not(button)').forEach(el=>{el.setAttribute('role','button');el.tabIndex=0;});
     root.querySelectorAll('.form-field').forEach((field,i)=>{const label=field.querySelector('label'),input=field.querySelector('input,select,textarea');if(label&&input){if(!input.id)input.id='field-'+i;label.htmlFor=input.id;}});}
@@ -1866,9 +1916,11 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
     });
   }
   function updateInviteRoles(scope){const roles=scope==='organization'?[['member','Member']]:scope.startsWith('dept:')?[['department_manager','Department manager'],['department_contributor','Contributor'],['department_viewer','Viewer']]:[['project_lead','Project lead'],['project_contributor','Contributor'],['project_viewer','Viewer']];const sel=document.getElementById('invite-role');if(sel)sel.innerHTML=roles.map(([k,v])=>`<option value="${k}">${v}</option>`).join('');}
-  document.addEventListener('click',e=>{if(e.target.closest('.task-status-controls')&&!e.target.closest('[data-action="status"]'))return;const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
+  document.addEventListener('click',e=>{if(e.target.closest('.task-assignee-control'))return;if(e.target.closest('.task-status-controls')&&!e.target.closest('[data-action="status"]'))return;const a=e.target.closest('[data-action]');if(a){if(a.classList.contains('modal-cover')&&e.target!==a)return;e.preventDefault();handleClick(a).catch(x=>toast(x.message,true));}});
   document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(f){e.preventDefault();handleForm(f,e.submitter);}});
+  document.addEventListener('focusin',e=>{if(e.target.matches('[data-task-assignee]'))prepareInlineAssignee(e.target,true);});
   document.addEventListener('change',e=>{
+    if(e.target.matches('[data-task-assignee]')){changeInlineAssignee(e.target).catch(error=>toast(error.message,true));return;}
     if(e.target.name==='vendor_id'){const form=e.target.closest('form');form.elements.namedItem('vendor_contact_id').innerHTML=vendorContactOptions(e.target.value,null);if(e.target.value)form.elements.namedItem('vendor_dependent').checked=true;return;}
     if(e.target.name==='milestone_id'){syncPlanControls(e.target.closest('form'));return;}
     if(e.target.matches('[data-plan-mode]')){syncPlanControls(e.target.closest('form'));return;}
