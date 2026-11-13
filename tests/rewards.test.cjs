@@ -1,0 +1,47 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');const{database}=require('./database-helper.cjs');
+const fixture=fs.readFileSync(__dirname+'/permissions.sql','utf8').split('create function pg_temp.must_deny')[0];
+async function actor(db,who='admin'){await db.exec(`reset role;set local role authenticated;select set_config('request.jwt.claim.sub',(select ${who}::text from qa_ids),true)`);}
+async function scalar(db,q){return Object.values((await db.query(q)).rows[0])[0];}
+async function deny(db,q){await db.exec('savepoint denied');try{await assert.rejects(()=>db.exec(q));}finally{await db.exec('rollback to savepoint denied;release savepoint denied');}}
+test('Reward accounting, atomic redemption, caps, approval, refunds and organization isolation',async()=>{const db=await database();try{
+ await db.exec(fixture);await actor(db);await db.exec(`select qb_rewards_summary(org) from qa_ids;select qb_save_reward_settings(org,'{"coins_enabled":true,"level_bonus":5}',1) from qa_ids;`);
+ await db.exec(`select qb_recognize(org,viewer,'10000000-0000-0000-0000-000000000001',70,100,'Incident support') from qa_ids;select qb_recognize(org,viewer,'10000000-0000-0000-0000-000000000001',70,100,'Incident support') from qa_ids`);
+ assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),0);
+ await actor(db,'viewer');assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),105);assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'xp_total')::int from qa_ids")),70);
+ await deny(db,"select qb_recognize(org,viewer,gen_random_uuid(),10,10,'Unauthorized') from qa_ids");await deny(db,"select qb_rewards_summary(other_org) from qa_ids");await deny(db,"insert into qb_reward_ledger(org_id,user_id,kind,coins,reason,idempotency_key) select org,viewer,'recognition',100,'Forge','forged' from qa_ids");await deny(db,"select qb_private.reward_post(org,viewer,'recognition',100,0,null,null,'Forge','forged') from qa_ids");
+ await actor(db);const item='20000000-0000-0000-0000-000000000001';await db.exec(`select qb_save_reward_item(org,'${item}','{"name":"Lunch","price":60,"stock":1,"approval_required":true}') from qa_ids`);
+ await actor(db,'viewer');const req='30000000-0000-0000-0000-000000000001';await db.exec(`select qb_redeem_reward(org,'${item}','${req}') from qa_ids;select qb_redeem_reward(org,'${item}','${req}') from qa_ids`);assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),45);
+ await deny(db,`select qb_redeem_reward(org,'${item}',gen_random_uuid()) from qa_ids`);await deny(db,`select qb_manage_redemption(org,'${req}','approve') from qa_ids`);
+ await actor(db);await db.exec(`select qb_manage_redemption(org,'${req}','reject','Not available') from qa_ids`);await actor(db,'viewer');assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),105);
+ const second='30000000-0000-0000-0000-000000000002';await db.exec(`select qb_redeem_reward(org,'${item}','${second}') from qa_ids`);await actor(db);await db.exec(`select qb_manage_redemption(org,'${second}','approve') from qa_ids;select qb_manage_redemption(org,'${second}','fulfill','Handed over') from qa_ids;select qb_manage_redemption(org,'${second}','fulfill','Retry') from qa_ids`);assert.equal(Number(await scalar(db,`select count(*) from qb_reward_ledger where kind='settlement' and source_id='${second}'`)),1);await db.exec(`select qb_manage_redemption(org,'${second}','refund','Returned unused voucher') from qa_ids`);
+ await deny(db,"select qb_save_reward_settings(org,'{\"monthly_coin_budget\":1}',1) from qa_ids");await db.exec("select qb_save_reward_settings(org,'{\"monthly_coin_budget\":105}',2) from qa_ids");await deny(db,"select qb_recognize(org,viewer,gen_random_uuid(),0,1,'Over budget') from qa_ids");
+ await actor(db,'viewer');assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),105);assert.equal(Number(await scalar(db,"select count(*) from qb_reward_ledger where user_id=(select admin from qa_ids)")),0);
+ await db.exec('rollback');
+}finally{await db.close();}});
+test('Completion grants XP/coins once, milestone splits, digital ownership and expiration',async()=>{const db=await database();try{
+ await db.exec(fixture);await actor(db);await db.exec(`select qb_rewards_summary(org) from qa_ids;select qb_save_reward_settings(org,'{"coins_enabled":true}',1) from qa_ids;update qb_tasks set assignee_id=(select admin from qa_ids) where id=(select task from qa_ids);select qb_set_work_rewards('task',array[task],30,20) from qa_ids;select qb_toggle_checklist(item,true) from qa_ids;select qb_transition_task(task,'ready') from qa_ids;select qb_transition_task(task,'in_progress') from qa_ids;select qb_transition_task(task,'in_review') from qa_ids;select qb_transition_task(task,'complete') from qa_ids;`);
+ assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),20);assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'xp_total')::int from qa_ids")),30);
+ await db.exec("select qb_transition_task(task,'in_progress') from qa_ids;select qb_transition_task(task,'in_review') from qa_ids;select qb_transition_task(task,'complete') from qa_ids");assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),20);
+ await deny(db,"select qb_set_work_rewards('task',array[task],100,100) from qa_ids");
+ const milestone=await scalar(db,"select qb_save_planned_milestone(gen_random_uuid(),project,'{\"title\":\"Bonus\",\"due_date\":\"2027-12-01\",\"xp_reward\":10,\"coin_reward\":5}') from qa_ids");await db.exec(`update qb_tasks set milestone_id='${milestone}' where id=(select task from qa_ids);select qb_claim_milestone_rewards('${milestone}');select qb_claim_milestone_rewards('${milestone}');`);assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),25);
+ const digital='20000000-0000-0000-0000-000000000003',r='30000000-0000-0000-0000-000000000003';await db.exec(`select qb_save_reward_item(org,'${digital}','{"name":"Gold","category":"digital","digital_code":"border_gold","price":5,"approval_required":false}') from qa_ids;select qb_redeem_reward(org,'${digital}','${r}') from qa_ids;select qb_equip_reward(org,'border_gold',true) from qa_ids`);assert.equal(await scalar(db,"select equipped from qb_reward_unlocks"),true);await deny(db,`select qb_redeem_reward(org,'${digital}',gen_random_uuid()) from qa_ids`);
+ const physical='20000000-0000-0000-0000-000000000004',pr='30000000-0000-0000-0000-000000000004';await db.exec(`select qb_save_reward_item(org,'${physical}','{"name":"Ticket","price":5,"stock":1}') from qa_ids;select qb_redeem_reward(org,'${physical}','${pr}') from qa_ids;reset role;update qb_reward_redemptions set expires_at=now()-interval '1 day' where id='${pr}'`);await actor(db);await db.exec('select qb_rewards_summary(org) from qa_ids');assert.equal(await scalar(db,`select status from qb_reward_redemptions where id='${pr}'`),'expired');assert.equal(Number(await scalar(db,`select stock from qb_reward_catalog where id='${physical}'`)),1);
+ await db.exec('rollback');
+}finally{await db.close();}});
+test('XP-only, coins-only and no-reward tasks, review policy, limits and independent instances',async()=>{const db=await database();try{
+ await db.exec(fixture);await actor(db);await db.exec(`select qb_rewards_summary(org) from qa_ids;select qb_save_reward_settings(org,'{"coins_enabled":true,"require_review":false}',1) from qa_ids;`);
+ for(const [xp,coins]of [[15,0],[0,10],[0,0]]){
+ const task=await scalar(db,`select qb_create_planned_task(gen_random_uuid(),project,jsonb_build_object('title','Reward mode','assignee_id',admin,'xp_reward',${xp},'coin_reward',${coins})) from qa_ids`);
+ await db.exec(`select qb_transition_task('${task}','ready');select qb_transition_task('${task}','in_progress');select qb_transition_task('${task}','complete');`);
+ assert.equal(Number(await scalar(db,`select coalesce(sum(amount),0) from qb_xp_events where task_id='${task}'`)),xp);assert.equal(Number(await scalar(db,`select coalesce(sum(coins),0) from qb_reward_ledger where kind='task' and source_id='${task}'`)),coins);
+ }
+ assert.equal(Number(await scalar(db,"select (qb_rewards_summary(org)->>'balance')::int from qa_ids")),10);
+ await deny(db,"select qb_set_work_rewards('task',array[task],501,0) from qa_ids");
+ await deny(db,"select qb_recognize(org,viewer,gen_random_uuid(),0,1001,'Too large') from qa_ids");
+ const t=await scalar(db,`select qb_create_planned_task(gen_random_uuid(),project,jsonb_build_object('title','Template source','xp_reward',30,'coin_reward',20)) from qa_ids`);
+ const template=await scalar(db,`select qb_save_task_template('${t}','Reward template',null,gen_random_uuid())`);
+ assert.equal(Number(await scalar(db,`select coin_reward from qb_task_templates where id='${template}'`)),20);
+ const copy=await scalar(db,`select qb_create_planned_task(gen_random_uuid(),project,'{"title":"New instance","xp_reward":30}','${template}') from qa_ids`);assert.equal(Number(await scalar(db,`select coin_reward from qb_tasks where id='${copy}'`)),20);
+ await actor(db,'viewer');await deny(db,`select qb_set_work_rewards('task',array['${copy}'::uuid],0,100)`);
+ await db.exec('rollback');
+}finally{await db.close();}});

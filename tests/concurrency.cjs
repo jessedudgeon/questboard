@@ -210,5 +210,26 @@ test('Real PostgreSQL transaction races preserve workflow and suspension',async 
    await a.query("select public.qb_transition_task($1,'in_progress')",[first==='reopen'?pre:ids.task]);
    await finishWait(pending(b,"select public.qb_transition_task($1,'in_progress')",[first==='reopen'?ids.task:pre]),'55000');
   });
+
+  await scenario('Two redemptions cannot oversell the last reward',async ids=>{
+   await signed(admin,ids.admin);await admin.query("select qb_rewards_summary($1)",[ids.org]);await admin.query("select qb_save_reward_settings($1,'{\"coins_enabled\":true}',1)",[ids.org]);
+   for(const user of [ids.admin,ids.viewer])await admin.query("select qb_recognize($1,$2,gen_random_uuid(),0,100,'Race fixture')",[ids.org,user]);
+   const item=(await admin.query("select qb_save_reward_item($1,gen_random_uuid(),'{\"name\":\"Last item\",\"price\":60,\"stock\":1}') id",[ids.org])).rows[0].id;await admin.query('commit');
+   await signed(a,ids.admin);await signed(b,ids.viewer);await a.query('select qb_redeem_reward($1,$2,gen_random_uuid())',[ids.org,item]);
+   await finishWait(pending(b,'select qb_redeem_reward($1,$2,gen_random_uuid())',[ids.org,item]),'P0001');
+   assert.equal((await admin.query('select stock from qb_reward_catalog where id=$1',[item])).rows[0].stock,0);
+   assert.equal(Number((await admin.query("select count(*) n from qb_reward_redemptions where item_id=$1",[item])).rows[0].n),1);
+  });
+  await scenario('Concurrent purchases cannot spend a wallet twice',async ids=>{
+   await signed(admin,ids.admin);await admin.query('select qb_rewards_summary($1)',[ids.org]);await admin.query("select qb_save_reward_settings($1,'{\"coins_enabled\":true}',1)",[ids.org]);await admin.query("select qb_recognize($1,$2,gen_random_uuid(),0,100,'Race fixture')",[ids.org,ids.admin]);
+   const item=(await admin.query("select qb_save_reward_item($1,gen_random_uuid(),'{\"name\":\"Voucher\",\"price\":60}') id",[ids.org])).rows[0].id;await admin.query('commit');
+   await signed(a,ids.admin);await signed(b,ids.admin);await a.query('select qb_redeem_reward($1,$2,gen_random_uuid())',[ids.org,item]);await finishWait(pending(b,'select qb_redeem_reward($1,$2,gen_random_uuid())',[ids.org,item]),'23514');
+   assert.equal(Number((await admin.query('select sum(coins) balance from qb_reward_ledger where org_id=$1 and user_id=$2',[ids.org,ids.admin])).rows[0].balance),40);
+  });
+  await scenario('Concurrent recognition honors the organization issuance budget',async ids=>{
+   await signed(admin,ids.admin);await admin.query('select qb_rewards_summary($1)',[ids.org]);await admin.query("select qb_save_reward_settings($1,'{\"coins_enabled\":true,\"monthly_coin_budget\":100}',1)",[ids.org]);await admin.query('commit');
+   await signed(a,ids.admin);await signed(b,ids.admin);await a.query("select qb_recognize($1,$2,gen_random_uuid(),0,60,'Race A')",[ids.org,ids.viewer]);await finishWait(pending(b,"select qb_recognize($1,$2,gen_random_uuid(),0,60,'Race B')",[ids.org,ids.reserve]),'P0001');
+   assert.equal(Number((await admin.query('select sum(coins) total from qb_reward_ledger where org_id=$1',[ids.org])).rows[0].total),60);
+  });
  }finally{await Promise.all([admin.end(),a.end(),b.end()]);}
 });
