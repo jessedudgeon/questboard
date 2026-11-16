@@ -4,6 +4,10 @@ QuestBoard is a lightweight university project and task tracker with professiona
 
 The frontend is plain HTML, CSS, and JavaScript in [`dist/`](dist/). It connects to Supabase for Microsoft/Google OAuth, row-level access control, project/task data, journals, review transitions, and approved-work XP. No Node build is required.
 
+## Current development plan
+
+See **[the active development roadmap](docs/ROADMAP.md)** (reviewed November 16, 2026) for implemented features, remaining v1.1 gaps, production release gates, MeetingDesk integration, and commercial SaaS/billing readiness. The historical [Session 1 audit](docs/SESSION_01_AUDIT.md) is preserved as an October 27 baseline rather than the current backlog.
+
 ## First-release features
 
 - Department workspaces and separate project visibility rules.
@@ -11,7 +15,7 @@ The frontend is plain HTML, CSS, and JavaScript in [`dist/`](dist/). It connects
 - Organization-admin invitations, departmental roles, and scoped project access.
 - Task assignment, objectives, updates, blocker reporting, review, approval, and XP.
 - Professional/RPG presentation toggle.
-- Link to the separate Minutes app; automatic action sync is not built yet.
+- Link to MeetingDesk and explicit action-to-QuestBoard task creation; automatic status synchronization is not built yet.
 
 ## Project leadership reporting
 
@@ -79,8 +83,8 @@ For a fresh project:
 
 - Identity providers and production redirects still require end-to-end verification.
 - Invitations are created in the database and can be copied as links; automatic email delivery is not implemented.
-- Minutes integration currently links to the meeting app; it does not synchronize actions automatically.
-- Advanced talent trees, mastery tracks, and reward unlocks are planned beyond the first release.
+- MeetingDesk can explicitly create QuestBoard tasks; automatic or bidirectional status synchronization is not implemented.
+- Core XP/levels, coins, reward catalog, approvals and cosmetic unlocks are implemented. Advanced talent and mastery tracks remain planned.
 
 ## Security expectations
 
@@ -96,7 +100,7 @@ The consolidated SQL in `schema/003_questboard_qa_hardening.sql` is already appl
 
 QA on 2026-10-26 confirmed Google is enabled but Microsoft/Azure is disabled in Supabase Auth. Microsoft SSO requires an Entra app registration: client ID, client secret, and tenant URL are currently empty. Google authorization begins successfully; the production redirect allowlist was verified in the Supabase dashboard. A real Google account callback still needs end-to-end verification. Keep `https://minutes.dudgeon.io/` configured and add the exact `https://projects.dudgeon.io/` redirect URL. QuestBoard returns all sign-ins, including invitation links, to its stable app URL and fetches email-matched pending invitations after sign-in.
 
-## QuestBoard 2.0 baseline
+## Historical QuestBoard 2.0 baseline
 
 See [Session 1 audit](docs/SESSION_01_AUDIT.md) for verified implementation status,
 known authorization gaps, the prioritized backlog, and the Session 2 prompt.
