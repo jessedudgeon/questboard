@@ -253,3 +253,20 @@ Department and search filters apply; completed/archived projects are excluded.
 Signals use only authorized QuestBoard records, not Teams Planner data. A milestone
 with no visible tasks is unverified, and old check-in notes remain dated until a new
 check-in supersedes them. No database migration is required for this report.
+
+## Navigation and in-app guides
+
+The sidebar groups existing destinations into Work, Team & reporting, Recognition,
+and Resources & settings. It scrolls independently on short screens; mobile navigation
+has an explicit close button, backdrop dismissal, Escape support, and keyboard focus
+return. Current sections are announced with `aria-current`, including project details.
+
+**How to** contains nine searchable, expandable guides with links to the relevant
+screens. Page-heading help opens the relevant guide directly. Guide search is separate
+from workspace search and does not change work filters. Content lives in `helpGuides`
+in `dist/app.js`; update it when the corresponding workflows change.
+
+This UX pass retains the existing visual system, task tables, status/assignment controls,
+filters, Work/Quest presentation switch, and authorization behavior. It addresses menu
+reachability and discoverability without changing working task workflows or introducing
+new backend requirements.
