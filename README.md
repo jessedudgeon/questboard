@@ -274,3 +274,23 @@ This UX pass retains the existing visual system, task tables, status/assignment 
 filters, Work/Quest presentation switch, and authorization behavior. It addresses menu
 reachability and discoverability without changing working task workflows or introducing
 new backend requirements.
+
+## Project template library
+
+Open **Template library** in Resources & settings, or from Projects. Six curated
+IT starter plans cover equipment installation, security updates, network upgrades,
+phone migrations, software rollouts, and incident follow-up. Search and preview
+milestones, tasks, and checklists before choosing **Use template**.
+
+Department managers choose a project name, department, visibility, and planning
+start date. Suggested dates use calendar days and require review, especially for
+vendor commitments. The new project is planned, tasks are unassigned/backlog,
+checklists are unchecked, and effort/rewards are not inferred. Task dates follow
+their milestone. Existing project editing and bulk rewards remain available.
+
+Apply `20261116164108_questboard_project_template_library.sql` before releasing
+the frontend. The invoker-security RPC uses existing department/RLS checks and
+creates the whole plan atomically, with request IDs protecting against duplicate
+submissions. No existing project is modified. Organization-authored templates,
+saving a whole project as a template, and applying a plan to an existing project
+are not included in this first library release.

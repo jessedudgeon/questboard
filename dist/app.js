@@ -15,6 +15,599 @@
     {id:'meetings',icon:'▤',pro:'Meetings',rpg:'Council'},
     {id:'admin',icon:'⚙',pro:'Administration',rpg:'Administration'}
   ];
+  const projectTemplateLibrary = [
+  {
+    "id": "equipment",
+    "name": "New equipment installation",
+    "category": "Infrastructure",
+    "summary": "Install, validate, and hand over new equipment with a documented support plan.",
+    "milestones": [
+      {
+        "title": "Requirements and scope approved",
+        "offset": 2,
+        "description": "The location, requirements, funding, and acceptance criteria are agreed.",
+        "tasks": [
+          {
+            "title": "Confirm requirements and site readiness",
+            "description": "Record capacity, power, cabling, rack space, and intended users.",
+            "checklist": [
+              "Document the equipment and location",
+              "Confirm power and network requirements"
+            ]
+          },
+          {
+            "title": "Approve scope and purchasing",
+            "description": "Confirm budget, ordering responsibility, and delivery expectations.",
+            "checklist": [
+              "Record approval",
+              "Confirm vendor delivery estimate"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Equipment received and prepared",
+        "offset": 7,
+        "description": "Equipment is inventoried, configured, and ready for deployment.",
+        "tasks": [
+          {
+            "title": "Receive and inventory equipment",
+            "description": "Record serial numbers, warranty, licenses, and asset ownership.",
+            "checklist": [
+              "Verify shipment",
+              "Update asset inventory"
+            ]
+          },
+          {
+            "title": "Stage configuration and recovery plan",
+            "description": "Prepare configuration and document how service will be restored if installation fails.",
+            "checklist": [
+              "Back up relevant configuration",
+              "Review rollback steps"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Installation completed",
+        "offset": 10,
+        "description": "Equipment is installed and service is available.",
+        "tasks": [
+          {
+            "title": "Schedule and communicate installation",
+            "description": "Agree a maintenance window with affected users.",
+            "checklist": [
+              "Confirm access and staffing",
+              "Send impact and schedule notice"
+            ]
+          },
+          {
+            "title": "Install and configure equipment",
+            "description": "Follow the approved implementation and recovery plan.",
+            "checklist": [
+              "Check connections and labeling",
+              "Record final configuration"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Validation and handoff accepted",
+        "offset": 12,
+        "description": "The service owner accepts the installation and support documentation.",
+        "tasks": [
+          {
+            "title": "Validate service with users",
+            "description": "Test the agreed acceptance criteria and record evidence.",
+            "checklist": [
+              "Run functional checks",
+              "Confirm monitoring and alerts"
+            ]
+          },
+          {
+            "title": "Complete support handoff",
+            "description": "Document support ownership and obtain acceptance.",
+            "checklist": [
+              "Update diagrams and runbook",
+              "Record acceptance and outstanding issues"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "security",
+    "name": "Security update or patch rollout",
+    "category": "Security",
+    "summary": "Assess, pilot, deploy, and verify a security update with recovery steps.",
+    "milestones": [
+      {
+        "title": "Impact and rollout plan approved",
+        "offset": 1,
+        "description": "Affected systems and rollout criteria are known.",
+        "tasks": [
+          {
+            "title": "Identify affected assets and dependencies",
+            "description": "Review vendor guidance, affected versions, and service dependencies.",
+            "checklist": [
+              "List affected systems",
+              "Record severity and business impact"
+            ]
+          },
+          {
+            "title": "Prepare recovery and change plan",
+            "description": "Confirm recoverability and define the rollout window.",
+            "checklist": [
+              "Verify backup or recovery method",
+              "Define rollback triggers"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Pilot validated",
+        "offset": 3,
+        "description": "A representative pilot passes service and recovery checks.",
+        "tasks": [
+          {
+            "title": "Apply update to pilot systems",
+            "description": "Use representative systems and document the procedure.",
+            "checklist": [
+              "Record versions before and after",
+              "Record installation results"
+            ]
+          },
+          {
+            "title": "Validate pilot and approve rollout",
+            "description": "Check services and application compatibility.",
+            "checklist": [
+              "Test critical workflows",
+              "Record go/no-go decision"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Production rollout completed",
+        "offset": 5,
+        "description": "Approved systems have been updated or exceptions recorded.",
+        "tasks": [
+          {
+            "title": "Communicate and deploy update",
+            "description": "Notify affected users and deploy in controlled batches.",
+            "checklist": [
+              "Confirm maintenance window",
+              "Track successes and failures"
+            ]
+          },
+          {
+            "title": "Resolve deployment exceptions",
+            "description": "Record failed systems, owners, and follow-up dates.",
+            "checklist": [
+              "Investigate failures",
+              "Document approved deferrals"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Remediation verified",
+        "offset": 7,
+        "description": "Evidence confirms remediation and operational stability.",
+        "tasks": [
+          {
+            "title": "Verify remediation and service health",
+            "description": "Re-scan or verify versions and monitor service behavior.",
+            "checklist": [
+              "Collect validation evidence",
+              "Check for regressions"
+            ]
+          },
+          {
+            "title": "Close change and document results",
+            "description": "Summarize coverage, remaining exposure, and lessons learned.",
+            "checklist": [
+              "Update inventory",
+              "Obtain owner acceptance"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "network",
+    "name": "Network switch or wireless upgrade",
+    "category": "Infrastructure",
+    "summary": "Replace network equipment with a staged configuration, controlled cutover, and tested service.",
+    "milestones": [
+      {
+        "title": "Design and dependencies confirmed",
+        "offset": 3,
+        "description": "The intended network design and affected services are documented.",
+        "tasks": [
+          {
+            "title": "Inventory ports, VLANs, and connected services",
+            "description": "Map uplinks, endpoints, PoE, voice, and security dependencies.",
+            "checklist": [
+              "Capture current configuration",
+              "Verify VLAN and uplink requirements"
+            ]
+          },
+          {
+            "title": "Approve design and cutover plan",
+            "description": "Agree scope, maintenance window, and recovery steps.",
+            "checklist": [
+              "Confirm compatible optics and power",
+              "Record rollback triggers"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Replacement configuration validated",
+        "offset": 7,
+        "description": "Replacement equipment is ready for installation.",
+        "tasks": [
+          {
+            "title": "Stage and test configuration",
+            "description": "Validate management, routing, authentication, and monitoring.",
+            "checklist": [
+              "Verify management access",
+              "Test representative endpoint connectivity"
+            ]
+          },
+          {
+            "title": "Confirm site and team readiness",
+            "description": "Check delivery, access, cabling, and assigned roles.",
+            "checklist": [
+              "Confirm equipment availability",
+              "Notify affected departments"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Cutover completed",
+        "offset": 10,
+        "description": "Traffic is operating on the replacement equipment.",
+        "tasks": [
+          {
+            "title": "Perform controlled cutover",
+            "description": "Follow the approved port mapping and cutover sequence.",
+            "checklist": [
+              "Label and verify connections",
+              "Record deviations"
+            ]
+          },
+          {
+            "title": "Validate critical services",
+            "description": "Test the services affected by the change.",
+            "checklist": [
+              "Test data, voice, wireless, and printers as applicable",
+              "Confirm uplinks and monitoring"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Stability and handoff accepted",
+        "offset": 14,
+        "description": "Service is stable and documentation reflects the installed equipment.",
+        "tasks": [
+          {
+            "title": "Monitor stability and resolve issues",
+            "description": "Review errors, coverage, performance, and user feedback.",
+            "checklist": [
+              "Review alerts and logs",
+              "Resolve or assign remaining issues"
+            ]
+          },
+          {
+            "title": "Update documentation and retire old assets",
+            "description": "Preserve recovery assets until the change is accepted.",
+            "checklist": [
+              "Update diagrams and inventory",
+              "Record support handoff"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "phones",
+    "name": "Phone service migration",
+    "category": "Communications",
+    "summary": "Restore baseline service, verify number ownership, coordinate the vendor, and validate the migration.",
+    "milestones": [
+      {
+        "title": "Existing phone service stabilized",
+        "offset": 2,
+        "description": "Current calling works while migration is planned.",
+        "tasks": [
+          {
+            "title": "Restore and validate current service",
+            "description": "Confirm phone connectivity and essential calling paths.",
+            "checklist": [
+              "Test inbound and outbound calls",
+              "Document unresolved service issues"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Number inventory and routing approved",
+        "offset": 5,
+        "description": "Every number has an agreed owner and destination.",
+        "tasks": [
+          {
+            "title": "Map numbers, users, and call flows",
+            "description": "Inventory direct numbers, shared phones, auto attendants, and special lines.",
+            "checklist": [
+              "Identify number owner and destination",
+              "Review routing with departments"
+            ]
+          },
+          {
+            "title": "Confirm migration scope",
+            "description": "Agree what will be ported, retained, or retired.",
+            "checklist": [
+              "Confirm emergency-calling requirements with provider",
+              "Obtain stakeholder approval"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Vendor submission accepted",
+        "offset": 8,
+        "description": "The provider has accepted complete migration paperwork.",
+        "tasks": [
+          {
+            "title": "Prepare and submit vendor forms",
+            "description": "Collect the account information and authorizations required by the provider.",
+            "checklist": [
+              "Validate number list",
+              "Record submission and vendor acknowledgment"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Cutover date and readiness confirmed",
+        "offset": 15,
+        "description": "The vendor has confirmed the schedule and readiness checks pass.",
+        "tasks": [
+          {
+            "title": "Obtain confirmed port schedule",
+            "description": "Record the vendor confirmation, responsibilities, and escalation contact.",
+            "checklist": [
+              "Distinguish estimate from confirmed date",
+              "Set follow-up for pending confirmation"
+            ]
+          },
+          {
+            "title": "Prepare users and destination service",
+            "description": "Configure accounts, devices, routing, and communications.",
+            "checklist": [
+              "Test destination configuration",
+              "Communicate cutover and fallback plan"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Migration validated and accepted",
+        "offset": 18,
+        "description": "Calling and routing pass acceptance checks after cutover.",
+        "tasks": [
+          {
+            "title": "Coordinate cutover and verify number ports",
+            "description": "Track each number and escalate incomplete ports.",
+            "checklist": [
+              "Confirm provider completion",
+              "Record exceptions"
+            ]
+          },
+          {
+            "title": "Validate calling and hand off support",
+            "description": "Test inbound, outbound, voicemail, and call routing; coordinate emergency-calling validation with provider.",
+            "checklist": [
+              "Obtain department acceptance",
+              "Document support ownership and next steps"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "software",
+    "name": "Software or service rollout",
+    "category": "Applications",
+    "summary": "Confirm requirements, configure a pilot, prepare users, and launch a supported service.",
+    "milestones": [
+      {
+        "title": "Requirements and ownership agreed",
+        "offset": 3,
+        "description": "Business needs, access, and service ownership are clear.",
+        "tasks": [
+          {
+            "title": "Confirm requirements and success criteria",
+            "description": "Identify users, workflows, integrations, and data needs.",
+            "checklist": [
+              "Record acceptance criteria",
+              "Assign service owner"
+            ]
+          },
+          {
+            "title": "Review access and procurement",
+            "description": "Confirm licensing, access roles, and support arrangements.",
+            "checklist": [
+              "Approve costs",
+              "Document access requirements"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Pilot accepted",
+        "offset": 10,
+        "description": "Representative users validate the configured service.",
+        "tasks": [
+          {
+            "title": "Configure and test pilot",
+            "description": "Set up the service and validate representative workflows.",
+            "checklist": [
+              "Test access roles",
+              "Test integrations and data"
+            ]
+          },
+          {
+            "title": "Collect feedback and approve launch",
+            "description": "Resolve pilot issues and record launch approval.",
+            "checklist": [
+              "Record user feedback",
+              "Agree go/no-go decision"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Production launch completed",
+        "offset": 15,
+        "description": "Users can access the service and know how to use it.",
+        "tasks": [
+          {
+            "title": "Prepare training and support",
+            "description": "Publish instructions and escalation contacts.",
+            "checklist": [
+              "Prepare user guide",
+              "Brief support team"
+            ]
+          },
+          {
+            "title": "Launch the service",
+            "description": "Coordinate access and communicate availability.",
+            "checklist": [
+              "Verify production access",
+              "Monitor initial usage and errors"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Operational handoff accepted",
+        "offset": 21,
+        "description": "The service has an owner and documented support processes.",
+        "tasks": [
+          {
+            "title": "Review adoption and resolve issues",
+            "description": "Compare results against acceptance criteria.",
+            "checklist": [
+              "Review outstanding issues",
+              "Obtain owner acceptance"
+            ]
+          },
+          {
+            "title": "Complete operational documentation",
+            "description": "Record renewal, backup, support, and ownership details.",
+            "checklist": [
+              "Document support runbook",
+              "Record renewal and vendor contacts"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "incident",
+    "name": "Service restoration and root-cause follow-up",
+    "category": "Operations",
+    "summary": "Restore service, validate recovery, and track corrective actions after an outage.",
+    "milestones": [
+      {
+        "title": "Impact and response established",
+        "offset": 0,
+        "description": "Affected services, priorities, and response ownership are known.",
+        "tasks": [
+          {
+            "title": "Assess impact and coordinate response",
+            "description": "Record affected users and services and assign response ownership.",
+            "checklist": [
+              "Capture symptoms and timeline",
+              "Communicate impact and next update"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Service restored",
+        "offset": 1,
+        "description": "The affected service is available again.",
+        "tasks": [
+          {
+            "title": "Diagnose and restore service",
+            "description": "Record diagnostic evidence and restoration steps.",
+            "checklist": [
+              "Capture findings before changes",
+              "Validate recovery or workaround"
+            ]
+          },
+          {
+            "title": "Verify recovery with stakeholders",
+            "description": "Check critical workflows and monitor for recurrence.",
+            "checklist": [
+              "Confirm user service",
+              "Communicate restoration"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Cause and corrective actions agreed",
+        "offset": 4,
+        "description": "Findings and preventive work have assigned owners.",
+        "tasks": [
+          {
+            "title": "Review the incident timeline",
+            "description": "Identify contributing factors and distinguish evidence from assumptions.",
+            "checklist": [
+              "Document cause or remaining uncertainty",
+              "Record lessons learned"
+            ]
+          },
+          {
+            "title": "Plan corrective actions",
+            "description": "Create follow-up work and assign owners and dates.",
+            "checklist": [
+              "Prioritize preventive actions",
+              "Confirm ownership"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Follow-up accepted",
+        "offset": 7,
+        "description": "Corrective actions have been reviewed and support documentation updated.",
+        "tasks": [
+          {
+            "title": "Verify corrective work and close review",
+            "description": "Confirm agreed changes or explicitly track outstanding follow-up.",
+            "checklist": [
+              "Record verification evidence",
+              "Update runbooks and monitoring"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
   let api = null;
   let epoch=0, requestController=null, authRevision=0, signedOutLocally=false, signingOut=false, signOutFailed=false;
   let signupMode=false;
@@ -741,7 +1334,7 @@
       <div class="sidebar-label">Work</div>${defs.slice(0,3).map(navItem).join('')}${navItem({id:'alltasks',icon:'☷',pro:'All tasks',rpg:'Quest explorer'})}${navItem(defs[3])}${navItem({id:'inbox',icon:'✉',pro:'Inbox',rpg:'Inbox'})}
       <div class="sidebar-label">Team &amp; reporting</div>${navItem(defs[4])}${hasManagerDashboard()?navItem({id:'workload',icon:'▥',pro:'Staff workload',rpg:'Party workload'}):''}${navItem(defs[5])}${navItem(defs[6])}${navItem({id:'activity',icon:'↻',pro:'Activity',rpg:'Guild activity'})}
       <div class="sidebar-label">Recognition</div>${navItem({id:'progress',icon:'✦',pro:'My progress',rpg:'My progression'})}${navItem({id:'rewards',icon:'◇',pro:'Rewards Store',rpg:'Rewards Store'})}
-      <div class="sidebar-label">Resources &amp; settings</div>${navItem({id:'help',icon:'?',pro:'How to',rpg:'How to'})}${navItem({id:'settings',icon:'⚙',pro:'Control panel',rpg:'Control panel'})}${membershipScopes().length?navItem(defs[7]):''}</nav>
+      <div class="sidebar-label">Resources &amp; settings</div>${navItem({id:'templates',icon:'▤',pro:'Template library',rpg:'Campaign library'})}${navItem({id:'help',icon:'?',pro:'How to',rpg:'How to'})}${navItem({id:'settings',icon:'⚙',pro:'Control panel',rpg:'Control panel'})}${membershipScopes().length?navItem(defs[7]):''}</nav>
       <div class="side-bottom"><div class="account"><span class="avatar">${esc(initials(name))}</span><div><strong>${esc(name)}</strong><small>${s.demo?'Demo administrator':isOwner()?'Organization owner':isAdmin()?'Organization administrator':'Team member'}</small></div></div></div></aside>
       <button class="menu-backdrop" data-action="close-menu" aria-label="Close navigation" tabindex="-1"></button>
       <main class="main" id="main-content" tabindex="-1">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
@@ -770,7 +1363,7 @@
     ],note:'Available transitions depend on your role and the task state. Starting or submitting a task is not the same as approval.'},
     {id:'projects',category:'Planning',title:'Plan projects with milestones and dependencies',destination:'projects',link:'Open Projects',steps:[
       'Open Projects and create a project if your role allows it. Give it a clear outcome, department, lead, and target date.',
-      'Add milestones for meaningful delivery stages. Group the supporting tasks under those milestones and assign responsibility.',
+      'Use Template library for a complete starter plan, or add milestones manually. Preview a template, choose a department and start date, then create an editable project. Suggested dates use calendar days; verify vendor dates and assign the tasks before starting.',
       'Set task estimates and dates using the available planning controls. Add prerequisite tasks to describe the order work must happen.',
       'Review the project task table or board to update progress. Use project check-ins to record accomplishments, next steps, risks, and decisions needed.'
     ],note:'A target date is a planning forecast. When the forecast changes, update the plan and explain the reason in a check-in or work update.'},
@@ -804,13 +1397,13 @@
       'Use Control panel for planning defaults and Vendors & contacts. Blank planning overrides inherit from the parent scope.'
     ],note:'Only authorized roles can manage ownership and memberships. Giving someone a task or a reporting title does not grant administrative permissions.'}
   ];
-  function helpTopic(){return ({home:'start',mywork:'review',alltasks:'tasks',task:'review',projects:'projects',project:'projects',milestone:'projects','project-history':'projects',calendar:'calendar',workload:'calendar',reports:'reports',meetings:'reports',team:'admin',admin:'admin',settings:'admin',vendors:'admin',activity:'notifications',inbox:'notifications',progress:'recognition',rewards:'recognition','reward-admin':'recognition'})[s.nav]||'start';}
+  function helpTopic(){return ({home:'start',mywork:'review',alltasks:'tasks',task:'review',templates:'projects',projects:'projects',project:'projects',milestone:'projects','project-history':'projects',calendar:'calendar',workload:'calendar',reports:'reports',meetings:'reports',team:'admin',admin:'admin',settings:'admin',vendors:'admin',activity:'notifications',inbox:'notifications',progress:'recognition',rewards:'recognition','reward-admin':'recognition'})[s.nav]||'start';}
   function helpPage(){return pageTitle('How to','Practical guides for planning work, supporting your team, and tracking progress.')+`
     <section class="help-intro panel"><div><span class="eyebrow">Start here</span><h2>A clear path from assignment to approval</h2><p class="lead">Choose your workspace, find your work, and keep the next step visible. These guides use Work-mode labels; the same features are available in Quest mode.</p></div><button class="btn primary" data-action="help" data-value="start">Read the getting-started guide</button></section>
     <div class="help-search"><label for="guide-search">Find a guide</label><input id="guide-search" type="search" placeholder="Try milestones, review, rewards, or roles…" aria-describedby="guide-count"><span id="guide-count" role="status">${helpGuides.length} guides found</span></div>
     <div class="help-guides">${helpGuides.map(g=>`<details class="help-guide panel" id="guide-${g.id}"><summary><span><small>${esc(g.category)}</small><strong>${esc(g.title)}</strong></span></summary><div class="help-guide-body"><ol>${g.steps.map(step=>`<li>${esc(step)}</li>`).join('')}</ol><p class="help-note">${esc(g.note)}</p><button class="btn soft" data-action="nav" data-value="${g.destination}">${esc(g.link)} →</button></div></details>`).join('')}</div>
     <p id="guide-empty" class="help-empty" hidden>No guides match. Try a broader term or clear the search.</p>`;}
-  function pageContent(){switch(s.nav){case'help':return helpPage();case'home':return dashboard();case'rewards':return rewardStore();case'reward-admin':return rewardAdmin();case'workload':return hasManagerDashboard()?pageTitle('Staff workload','Compare planned effort against available project time.')+workloadOverview()+weeklyWorkloadPanel():workPage();case'progress':return pageTitle('My progress','Your experience, level journey, and approved contributions.')+progressionReport();case'inbox':return inboxPage();case'mywork':return workPage();case'alltasks':return allTasksPage();case'activity':return activityPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();case'settings':return controlPanel();case'vendors':return vendorPage();default:return dashboard();}}
+  function pageContent(){switch(s.nav){case'templates':return templateLibraryPage();case'help':return helpPage();case'home':return dashboard();case'rewards':return rewardStore();case'reward-admin':return rewardAdmin();case'workload':return hasManagerDashboard()?pageTitle('Staff workload','Compare planned effort against available project time.')+workloadOverview()+weeklyWorkloadPanel():workPage();case'progress':return pageTitle('My progress','Your experience, level journey, and approved contributions.')+progressionReport();case'inbox':return inboxPage();case'mywork':return workPage();case'alltasks':return allTasksPage();case'activity':return activityPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();case'settings':return controlPanel();case'vendors':return vendorPage();default:return dashboard();}}
   const pageTitle=(title,desc,actions='')=>`<div class="page-heading"><div><div class="eyebrow">${esc(s.org?.name||'QuestBoard')}</div><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p></div><div class="buttons">${actions}${s.nav!=='help'?`<button class="btn sm" data-action="help" data-value="${helpTopic()}" aria-label="How to use this page">? How to</button>`:''}</div></div>`;
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
@@ -980,7 +1573,14 @@
   }
   function workPage(){let ts=myTasks();if(s.filter!=='all')ts=ts.filter(t=>t.status===s.filter);return pageTitle(term('My Work','Quest Journal'),term('Your assignments and work awaiting your review.','Your personal adventures, obstacles, and victories.'))+
     `<div class="filter-row">${[['all','All work'],['backlog','Backlog'],['ready','Ready'],['in_progress','In progress'],['blocked','Blocked'],['in_review','In review'],['complete','Completed']].map(([v,l])=>`<button class="filter-pill ${s.filter===v?'active':''}" data-action="filter" data-value="${v}">${esc(rpg()?((rpgStatusNames[v]||l)):l)}</button>`).join('')}</div><div class="panel"><div class="panel-head"><h3>${ts.length} ${term('tasks','quests')}</h3><small>Sorted by due date and status</small></div><div class="panel-body">${ts.length?ts.slice().sort((a,b)=>(a.due_date||'9999').localeCompare(b.due_date||'9999')).map(taskRow).join(''):empty('◇','Nothing here yet','Assigned work will appear as soon as your team adds it.')}</div></div>`;}
-  function projectsPage(){const ps=visibleProjects(),canCreate=managedDepartments().length>0;return pageTitle(term('Projects','Campaigns'),term('Track the initiatives moving your departments forward.','See every active campaign and the quests required to complete it.'),canCreate?`<button class="btn primary" data-action="modal" data-value="project">＋ ${term('New Project','New Campaign')}</button>`:'')+`<div class="project-grid">${ps.map(projectCard).join('')}</div>${ps.length?'':empty('◈','A fresh start',canCreate?'Create a project to organize milestones, owners, and tasks.':'You can see projects once your department manager grants access.',canCreate?`<button class="btn primary" data-action="modal" data-value="project">Create project</button>`:'')}`;}
+  function templateLibraryPage(){
+    return pageTitle('Template library','Start with an outcome, then adapt the plan to your team.')+`<section class="panel template-intro"><strong>Reusable IT project plans</strong><p>Each plan contains outcome-based milestones, actionable tasks, and acceptance checklists. Dates are suggested calendar-day targets, not vendor commitments. New work starts unassigned and incomplete.</p><label for="template-search">Find a template</label><input id="template-search" type="search" placeholder="Search equipment, security, phones…"></section><div class="project-grid template-library">${projectTemplateLibrary.map(t=>`<article class="panel template-card" data-template-search="${esc([t.name,t.category,t.summary,...t.milestones.map(m=>m.title)].join(' ').toLowerCase())}"><small>${esc(t.category)}</small><h2>${esc(t.name)}</h2><p>${esc(t.summary)}</p><p class="muted">${t.milestones.length} milestones · ${t.milestones.reduce((n,m)=>n+m.tasks.length,0)} tasks · ${t.milestones.at(-1).offset+1} suggested calendar days</p><details><summary>Preview milestones and tasks</summary><ol>${t.milestones.map(m=>`<li><strong>${esc(m.title)}</strong><small>Day ${m.offset+1}</small><p>${esc(m.description)}</p><ul>${m.tasks.map(task=>`<li>${esc(task.title)}<ul>${task.checklist.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></li>`).join('')}</ul></li>`).join('')}</ol></details>${managedDepartments().length?`<button class="btn primary" data-action="start-project-template" data-id="${t.id}">Use template</button>`:'<p class="muted">A department manager can create a project from this plan.</p>'}</article>`).join('')}</div><p id="template-empty" class="panel" hidden>No templates match. Try a different search.</p>`;
+  }
+  function projectTemplateModal(){
+    const t=projectTemplateLibrary.find(t=>t.id===s.projectTemplateId);if(!t)return '';
+    return `<form data-form="project-template" data-template="${t.id}" data-request="${esc(s.projectTemplateRequest)}"><div class="modal-body"><p>${esc(t.name)} · ${t.milestones.length} milestones · ${t.milestones.reduce((n,m)=>n+m.tasks.length,0)} tasks</p><div class="form-field"><label>Project name</label><input name="title" value="${esc(t.name)}" maxlength="140" required></div><div class="form-field"><label>Goal / description</label><textarea name="summary" maxlength="1200">${esc(t.summary)}</textarea></div><div class="form-grid"><div class="form-field"><label>Department</label><select name="department_id" required>${managedDepartments().map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="form-field"><label>Planning start date</label><input type="date" name="start_date" required value="${dateKey(new Date())}"></div></div><div class="form-field"><label>Visibility</label><select name="visibility"><option value="department">Department private</option><option value="invited">Invited project members</option><option value="restricted">Restricted project</option></select></div><p class="template-notice">Dates are starting estimates using calendar days. Review milestones, confirm vendor dates, and assign owners after creation. Task dates follow their milestone. No effort estimates or rewards are assumed.</p></div>${modalFooter('Create project from template')}</form>`;
+  }
+  function projectsPage(){const ps=visibleProjects(),canCreate=managedDepartments().length>0;return pageTitle(term('Projects','Campaigns'),term('Track the initiatives moving your departments forward.','See every active campaign and the quests required to complete it.'),canCreate?`<button class="btn" data-action="nav" data-value="templates">Template library</button><button class="btn primary" data-action="modal" data-value="project">＋ ${term('New Project','New Campaign')}</button>`:'')+`<div class="project-grid">${ps.map(projectCard).join('')}</div>${ps.length?'':empty('◈','A fresh start',canCreate?'Create a project to organize milestones, owners, and tasks.':'You can see projects once your department manager grants access.',canCreate?`<button class="btn primary" data-action="modal" data-value="project">Create project</button>`:'')}`;}
 
   // Calendar dates are date-only values. Never parse them as UTC instants.
   const dateKey = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -1641,6 +2241,7 @@
     if(s.modal==='organization'){title='Create organization';content=`<div class="modal-body">${organizationForm()}</div>`;}
     if(s.modal==='milestone'){title=s.editMilestoneId?'Edit milestone':'Add milestone';content=milestoneForm();}
     if(s.modal==='save-template'){const task=taskFor(s.taskId);title='Save task template';content=`<form data-form="save-template" data-request="${esc(s.taskRequest)}"><div class="modal-body"><p>Reuse this task’s instructions, priority, XP, and checklist in this project. Choose an owner when creating each task.</p><div class="form-field"><label for="template-name">Template name</label><input id="template-name" name="name" required maxlength="120" value="${esc(task.title.slice(0,120))}"></div><div class="form-field"><label for="template-days">Due after how many days?</label><input id="template-days" type="number" name="due_days" min="0" max="3650" step="1"><small>Leave blank to choose a due date each time. Enter 0 for the creation day.</small></div></div>${modalFooter('Save template')}</form>`;}
+    if(s.modal==='project-template'){title='Use project template';content=projectTemplateModal();}
     if(s.modal==='project'){title=term('Create a project','Begin a campaign');content=`<form data-form="project"><div class="modal-body"><div class="form-field"><label>Project name</label><input name="title" required maxlength="140" placeholder="e.g. Network Infrastructure Modernization"></div><div class="form-field"><label>Goal / description</label><textarea name="summary" maxlength="1200" placeholder="What outcome are we trying to achieve?"></textarea></div><div class="form-grid"><div class="form-field"><label>Department</label><select name="department_id" required>${managedDepartments().map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></div><div class="form-field"><label>Target date</label><input type="date" name="target_date"></div></div><div class="form-field"><label>Visibility</label><select name="visibility"><option value="department">Department private</option><option value="invited">Invited project members</option><option value="restricted">Restricted project</option></select><small class="field-hint">Cross-department access requires explicit project membership.</small></div></div>${modalFooter('Create project')}</form>`;}
     if(s.modal==='quick-task'){title='Quick task';content=`<form data-form="quick-task" data-request="${esc(s.taskRequest)}"><div class="modal-body"><div class="form-field"><label for="quick-title">Task title</label><input id="quick-title" name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label for="quick-destination">Project (optional)</label><select id="quick-destination" name="destination" required>${managedDepartments().map(d=>`<option value="department:${d.id}">No project · ${esc(d.name)}</option>`).join('')}${managedProjects().filter(p=>!p.is_quick_queue).map(p=>`<option value="project:${p.id}" ${p.id===s.projectId?'selected':''}>${esc(p.title)}</option>`).join('')}</select><small>Choose “No project” for standalone work such as calls, fixes, and follow-ups. These tasks are shared with that department and appear in All tasks.</small></div><div class="form-field"><label for="quick-due">Due date (optional)</label><input id="quick-due" name="due_date" type="date"></div><p class="field-hint">Starts unassigned. You’ll stay on this page after saving; open the task later to assign an owner or add details.</p></div>${modalFooter('Create task')}</form>`;}
     if(s.modal==='task'){const selectedProject=s.candidateProject||s.projectId||managedProjects()[0]?.id;title=term('Add a task','Post a quest');content=`<form data-form="task" data-request="${esc(s.taskRequest)}" data-template="${esc(s.creationTemplate||'')}"><div class="modal-body">${creationTemplate()?`<p class="template-notice">Using ${esc(creationTemplate().name)} · ${creationTemplate().checklist.length} checklist items will be added.</p>`:''}<div class="form-field"><label>Task title</label><input name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label>Expected outcome</label><textarea name="description" maxlength="2500" placeholder="What does success look like?"></textarea></div><div class="form-field"><label>Project</label><select name="project_id" id="task-project-select" required>${managedProjects().filter(p=>!creationTemplate()||p.id===creationTemplate().project_id).map(p=>`<option value="${p.id}" ${p.id===selectedProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label for="creation-milestone">Milestone</label><select id="creation-milestone" name="milestone_id">${milestoneOptions(selectedProject,s.creationMilestone||'')}</select></div><div class="form-field"><label for="creation-prerequisite">Depends on (optional)</label><select id="creation-prerequisite" name="prerequisite_id">${creationDependencyOptions(selectedProject)}</select><small class="field-hint">Choose a task that must finish first. You can add more prerequisites after creation.</small></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date"></div><div class="form-field"><label>Assign to</label><select name="assignee_id"><option value="">Unassigned</option>${assigneeOptions(selectedProject)}</select></div></div></div>${candidateNotice()}${modalFooter('Create task')}</form>`;}
@@ -1777,6 +2378,7 @@
   }
   async function withBusy(work){if(s.busy)return;const generation=epoch;s.busy=true;try{await work();}catch(e){if(generation===epoch&&!e.stale)toast(e.message||'Something went wrong',true);}finally{if(generation===epoch)s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
+    if(action==='start-project-template'){if(!managedDepartments().length||!projectTemplateLibrary.some(t=>t.id===id))return;s.projectTemplateId=id;s.projectTemplateRequest=uid();s.modal='project-template';render();return;}
     if(action==='vendor-edit'||action==='vendor-contact-edit'){
       if(!canManageVendors())return;s.editVendor=action==='vendor-edit'?id:a.dataset.vendor;s.editVendorContact=action==='vendor-contact-edit'?id:null;s.vendorRequest=uid();s.modal=action==='vendor-edit'?'vendor':'vendor-contact';render();return;
     }
@@ -2033,7 +2635,20 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         }
         render();toast('Project check-in saved for leadership reporting');return;
       }
-      if(type==='project'){
+      if(type==='project-template'){
+        const template=projectTemplateLibrary.find(t=>t.id===form.dataset.template);
+        if(!template||!managedDepartments().some(d=>d.id===get('department_id')))throw Error('Template or department unavailable');
+        const row={id:form.dataset.request,org_id:s.org.id,department_id:get('department_id'),title:get('title'),summary:get('summary'),visibility:get('visibility'),lead_id:s.user.id,created_by:s.user.id,status:'planned',target_date:shiftDate(get('start_date'),template.milestones.at(-1).offset)};
+        if(s.demo){
+          if(!s.projects.some(p=>p.id===row.id)){
+            s.projects.unshift(row);s.projectMembers.push({project_id:row.id,user_id:s.user.id,role:'lead',status:'active'});
+            for(const stage of template.milestones){const milestone={id:uid(),project_id:row.id,title:stage.title,description:stage.description,due_date:shiftDate(get('start_date'),stage.offset),archived:false,revision:1,created_by:s.user.id};s.milestones.push(milestone);
+              for(const task of stage.tasks){const item={id:uid(),project_id:row.id,milestone_id:milestone.id,title:task.title,description:task.description,status:'backlog',priority:'normal',assignee_id:null,reviewer_id:s.user.id,created_by:s.user.id,due_date:milestone.due_date,schedule_mode:'milestone_deadline',xp_reward:0,coin_reward:0,created_at:new Date().toISOString()};s.tasks.push(item);s.checklist.push(...task.checklist.map((title,position)=>({id:uid(),task_id:item.id,title,position,done:false})));}
+            }
+          }
+        }else await getResult(api.rpc('qb_create_project_from_template',{p_request:row.id,p_department:row.department_id,p_title:row.title,p_summary:row.summary,p_visibility:row.visibility,p_start:get('start_date'),p_plan:template.milestones}));
+        s.projectId=row.id;s.nav='project';toast('Project created. Review dates and assign the tasks.');
+      }else if(type==='project'){
         if(!get('title'))throw Error('Project name is required');
         const row={org_id:s.org.id,department_id:get('department_id'),title:get('title'),summary:get('summary'),target_date:get('target_date')||null,visibility:get('visibility'),lead_id:s.user.id,created_by:s.user.id};
         if(s.demo){row.id=uid();row.status='active';s.projects.unshift(row);s.projectMembers.push({project_id:row.id,user_id:s.user.id,role:'lead',status:'active'});s.projectId=row.id;}
@@ -2161,7 +2776,7 @@ if(['planner-signal','planner-group'].includes(e.target?.id)){
     }
     if(['report-health','report-closed','report-period'].includes(e.target?.id)){const id=e.target.id;if(id==='report-health')s.reportHealth=e.target.value;else if(id==='report-closed')s.reportClosed=e.target.checked;else if(['7','30','90','365'].includes(e.target.value))s.reportPeriod=e.target.value;s.reportProject=null;render();document.getElementById(id)?.focus();return;}
     const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;taskExplorer.page=1;activity.page=1;render();if(s.nav==='inbox')loadInbox();}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;syncPlanControls(e.target.closest('form'));const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
-  document.addEventListener('input',e=>{if(e.target?.id==='guide-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('.help-guide').forEach(guide=>{guide.hidden=!guide.textContent.toLowerCase().includes(query);if(!guide.hidden)count++;});document.getElementById('guide-count').textContent=count+' guides found';document.getElementById('guide-empty').hidden=count>0;return;}if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='activity')activity.page=1;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
+  document.addEventListener('input',e=>{if(e.target?.id==='template-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('[data-template-search]').forEach(card=>{card.hidden=!card.dataset.templateSearch.includes(query);if(!card.hidden)count++;});document.getElementById('template-empty').hidden=count>0;return;}if(e.target?.id==='guide-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('.help-guide').forEach(guide=>{guide.hidden=!guide.textContent.toLowerCase().includes(query);if(!guide.hidden)count++;});document.getElementById('guide-count').textContent=count+' guides found';document.getElementById('guide-empty').hidden=count>0;return;}if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='activity')activity.page=1;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if(s.menuOpen&&e.key==='Escape'&&!s.modal){s.menuOpen=false;render();root.querySelector('.mobile-menu')?.focus();return;}if(s.menuOpen&&e.key==='Tab'&&window.matchMedia?.('(max-width: 900px)').matches){const items=[...root.querySelectorAll('.sidebar button:not(:disabled)')];const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     readAuthReturn();
