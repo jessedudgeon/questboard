@@ -126,3 +126,11 @@ Integration reconciliation follows these unless a business dependency pulls it f
 ## Updating this roadmap
 
 After each merged feature, mark its requirement status and link its PR; after any deployment, record independent acceptance evidence. Do not mark a feature **fully validated** merely because a migration exists or tests pass. Preserve completed designs unless concrete defects or measured user friction justify change.
+
+## November 16 addition — project template library
+
+Implemented six curated IT project templates with search, full previews, and
+atomic creation of a planned project, milestones, tasks, and checklists. Suggested
+calendar dates are seeded from the chosen start date; tasks follow milestone
+deadlines. Permissions and retry/rollback behavior are covered by isolated tests.
+Custom organization templates and save-project-as-template remain future scope.
