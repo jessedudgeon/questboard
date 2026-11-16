@@ -1,6 +1,8 @@
 # Organization ownership and membership removal
 
-Open **Administration → Membership controls**, choose the organization/department/project, and load its members.
+Open **Team → Roles, ownership & department access** (also available in Administration). Members load automatically when you enter either page. Choose the organization, department, or project to manage. Department ownership is the **Department owner / manager** role.
+
+The Team roster includes organization members even without a department, plus pending invitations. Expired invitations remain visible with a replacement-invite action. Add team member creates an invitation and returns to the roster; copy its link to share it manually. Pending people have no access until acceptance and cannot be appointed organization owners until they join. The signed-in email and authority appear beside the controls to distinguish accounts with the same display name.
 
 - An organization **owner** can promote an active member to Owner or change another owner's role. Multiple owners are supported. To transfer control, promote the replacement first, then change your own role to Administrator or Member.
 - An **administrator** manages ordinary organization members and scoped leadership, but cannot appoint, demote, suspend or remove owners.
