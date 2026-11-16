@@ -84,9 +84,9 @@ Additional work completed since the audit: project-change history, vendor tracki
 
 **Done when:** integration paths are consented/audited and manager reports are reliable for real meetings.
 
-### P2 — Commercial SaaS launch track (must finish before paid availability)
+### P1 (commercial-release gate) — SaaS launch track
 
-This is **new scope**, beyond the old 30-session implementation audit; it should not block using QuestBoard internally.
+This is **new scope**, beyond the old 30-session implementation audit. It is high priority for a paid launch but should not block using QuestBoard internally; design can proceed in parallel with pilot workflow work.
 
 1. Define plan tiers, limits, trial, entitlements, organization owner/billing administrator, billing contacts, grace periods, suspension/read-only behavior, cancellations and data export. Keep organization reward coins **separate from real money**.
 2. Implement a payment-provider-backed subscription lifecycle with verified webhooks, idempotency, entitlement refresh, invoices, payment failures, upgrades/downgrades and support tools. Never let untrusted browser fields grant a paid entitlement.
