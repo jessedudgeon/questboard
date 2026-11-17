@@ -134,3 +134,28 @@ atomic creation of a planned project, milestones, tasks, and checklists. Suggest
 calendar dates are seeded from the chosen start date; tasks follow milestone
 deadlines. Permissions and retry/rollback behavior are covered by isolated tests.
 Custom organization templates and save-project-as-template remain future scope.
+
+
+## November 17 — broader template library (prepared in PR #38)
+
+Expanded the six IT plans to 26 curated plans, organized as Home & family,
+Personal goals, Business & teams, Education, Community & events, and IT &
+technology. Audience filters combine with search across tasks and checklists;
+previews and forms retain the selection. The existing atomic creation and
+permission model applies to every plan. No additional migration is required.
+
+Future scope: organization-authored plans, save-project-as-template, recurring
+household routines, and audience-specific onboarding terminology. The expanded
+library does not change workspace roles or market the product as certified for
+industry-specific compliance.
+
+## November 17 — holidays and PTO (prepared in PR #38)
+
+Added organization holidays and full-day PTO ranges for active members, with
+admin-managed calendar forms and member-visible availability. Weekly/six-week
+capacity accounts for non-working holidays and PTO without double-counting.
+Project/calendar warnings connect absences to scheduled assignee work and
+reviewer due dates; task status and dates remain under the user's control.
+Requires `20261117134740_questboard_calendar_availability.sql` before frontend
+publication. Future options: half-days, recurring holidays, department-specific
+closures, and approved-leave integrations.

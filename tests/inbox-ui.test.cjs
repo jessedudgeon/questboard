@@ -8,3 +8,19 @@ test('Inbox failures are retryable and titles render as text',async()=>{const {d
 test('Inbox page read sends only displayed unread identifiers',async()=>{const {dom,f,q}=await app();try{await q.loadInbox();await q.handleClick({dataset:{action:'inbox-read-page'}});const c=f.calls.find(c=>c.rpc==='qb_read_notifications');assert.deepEqual(Array.from(c.args.p_ids),['n1']);assert.equal(c.args.p_read,true);}finally{dom.window.close();}});
 
 test('Inbox refresh preserves search focus and caret',async()=>{const {dom,q}=await app();try{await q.loadInbox();const search=dom.window.document.getElementById('search');q.s.query='Private';search.value='Private';search.focus();search.setSelectionRange(3,3);await q.loadInbox();assert.equal(dom.window.document.activeElement.id,'search');assert.equal(dom.window.document.activeElement.selectionStart,3);}finally{dom.window.close();}});
+test('Inbox refresh discovers email invitations across organizations without a link and counts them in its badge',async()=>{
+ const {dom,f,q}=await app();try{
+  const id='10000000-0000-0000-0000-000000000001';
+  f.rpcRows.qb_my_invitations=[{id,org_name:'Other <Home>',invite_role:'member',expires_at:'2026-12-01T12:00:00Z'}];
+  await q.loadInbox();
+  const section=dom.window.document.querySelector('[aria-label="Pending invitations"]');
+  assert(section.textContent.includes('Other <Home>'));assert.equal(section.querySelector('Home'),null);
+  assert.equal(section.querySelector('[data-action="accept-invite"]').dataset.id,id);
+  assert.match(section.textContent,/u1@example.invalid/);
+  assert.equal(dom.window.document.querySelector('[data-value="inbox"] .pill-count').textContent,'2');
+  await q.handleClick({dataset:{action:'inbox-read-page'}});
+  assert.deepEqual(Array.from(f.calls.find(c=>c.rpc==='qb_read_notifications').args.p_ids),['n1']);
+  f.rpcRows.qb_my_invitations=[];await q.loadInbox();
+  assert.equal(dom.window.document.querySelector('[aria-label="Pending invitations"]'),null);
+ }finally{dom.window.close();}
+});

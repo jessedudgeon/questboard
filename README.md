@@ -277,10 +277,23 @@ new backend requirements.
 
 ## Project template library
 
-Open **Template library** in Resources & settings, or from Projects. Six curated
-IT starter plans cover equipment installation, security updates, network upgrades,
-phone migrations, software rollouts, and incident follow-up. Search and preview
-milestones, tasks, and checklists before choosing **Use template**.
+Open **Template library** in Resources & settings, or from Projects. The library
+has 26 curated plans in six audience groups:
+
+| Group | Plans | Examples |
+| --- | ---: | --- |
+| Home & family | 5 | Moving, seasonal maintenance, decluttering, vacations, shared routines |
+| Personal goals | 4 | Learning a skill, creative projects, career portfolios, reading |
+| Business & teams | 5 | Client onboarding, launches, workshops, process improvement, employee onboarding |
+| Education | 3 | Course preparation, student research, club projects |
+| Community & events | 3 | Gatherings, volunteering, fundraising |
+| IT & technology | 6 | Equipment, security, networks, phones, software, incident follow-up |
+
+Filter by audience and search together. Search covers plan names, categories,
+milestones, tasks, and checklist text. Filters survive previews and creation
+forms; Clear filters restores all groups. Preview the full plan before choosing
+**Use template**. These are editable starting points, not automatic recurring
+schedules or industry compliance procedures.
 
 Department managers choose a project name, department, visibility, and planning
 start date. Suggested dates use calendar days and require review, especially for
@@ -294,3 +307,27 @@ creates the whole plan atomically, with request IDs protecting against duplicate
 submissions. No existing project is modified. Organization-authored templates,
 saving a whole project as a template, and applying a plan to an existing project
 are not included in this first library release.
+
+## Holidays and staff PTO
+
+Organization administrators manage full-day holidays and PTO from **Calendar →
+Holidays & PTO this month**. Choose inclusive start/end dates, a holiday name or
+an active staff member, and whether a holiday is non-working. Edit entries in the
+monthly list; removal requires explicit confirmation. Members can view their
+organization's availability. PTO records contain no reason or medical details.
+
+Weekly and six-week workload forecasts reduce baseline capacity proportionally
+for unavailable days in the configured workweek. Overlapping PTO/holidays count
+once. Scheduled effort stays on its original dates so conflicts remain visible.
+Calendar, project pages, and exported delivery reports identify affected scheduled tasks, including reviewer
+PTO on a task's due date, and note visible downstream dependencies. These are
+planning warnings; they do not automatically block a whole project, shift dates,
+or change task status. Undated tasks cannot be evaluated for date conflicts.
+
+Apply `20261117134740_questboard_calendar_availability.sql` before deploying this
+feature. It enables RLS with active-organization-member reads and administrator
+writes, validates staff membership, and prevents scope changes. Revision filters
+protect edit/remove operations from stale submissions. If availability fails to
+load, the UI warns that capacity and conflict calculations may be incomplete.
+Half-day leave, annual recurrence, leave approval, and external-calendar sync are
+not included. Each entry spans at most 366 inclusive calendar dates.

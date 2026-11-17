@@ -608,6 +608,1602 @@
     ]
   }
 ];
+  const templateGroups = [
+  {
+    "id": "home",
+    "name": "Home & family",
+    "description": "Household projects, shared responsibilities, and life events."
+  },
+  {
+    "id": "personal",
+    "name": "Personal goals",
+    "description": "Learning, creative work, and plans you own."
+  },
+  {
+    "id": "business",
+    "name": "Business & teams",
+    "description": "Launches, client work, operations, and team growth."
+  },
+  {
+    "id": "education",
+    "name": "Education",
+    "description": "Courses, research, and learning programs."
+  },
+  {
+    "id": "community",
+    "name": "Community & events",
+    "description": "Volunteer projects, gatherings, and local initiatives."
+  },
+  {
+    "id": "technology",
+    "name": "IT & technology",
+    "description": "Equipment, security, systems, and service delivery."
+  }
+];
+  for(const template of projectTemplateLibrary)template.group="technology";
+  projectTemplateLibrary.push(...[
+  {
+    "id": "home-move",
+    "name": "Move to a new home",
+    "group": "home",
+    "category": "Moving",
+    "summary": "Coordinate packing, services, moving day, and settling in.",
+    "milestones": [
+      {
+        "title": "Move plan ready",
+        "offset": 6,
+        "description": "The schedule, help, and inventory are agreed.",
+        "tasks": [
+          {
+            "title": "Plan moving day",
+            "description": "Confirm access and move dates; Choose transport and helpers.",
+            "checklist": [
+              "Confirm access and move dates",
+              "Choose transport and helpers"
+            ]
+          },
+          {
+            "title": "Sort belongings",
+            "description": "List items to pack, donate, or sell; Label rooms and priority boxes.",
+            "checklist": [
+              "List items to pack, donate, or sell",
+              "Label rooms and priority boxes"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Home and boxes ready",
+        "offset": 20,
+        "description": "Essentials are packed and services are arranged.",
+        "tasks": [
+          {
+            "title": "Pack and protect belongings",
+            "description": "Label fragile boxes; Keep daily essentials accessible.",
+            "checklist": [
+              "Label fragile boxes",
+              "Keep daily essentials accessible"
+            ]
+          },
+          {
+            "title": "Arrange household services",
+            "description": "Schedule utility transfers; Update delivery addresses.",
+            "checklist": [
+              "Schedule utility transfers",
+              "Update delivery addresses"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Household settled",
+        "offset": 27,
+        "description": "Belongings are checked and essential rooms are usable.",
+        "tasks": [
+          {
+            "title": "Complete the move",
+            "description": "Check rooms before leaving; Record missing or damaged items.",
+            "checklist": [
+              "Check rooms before leaving",
+              "Record missing or damaged items"
+            ]
+          },
+          {
+            "title": "Unpack essential spaces",
+            "description": "Set up sleeping and cooking areas; Assign remaining unpacking tasks.",
+            "checklist": [
+              "Set up sleeping and cooking areas",
+              "Assign remaining unpacking tasks"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "home-maintenance",
+    "name": "Seasonal home maintenance",
+    "group": "home",
+    "category": "Maintenance",
+    "summary": "Organize a seasonal inspection and a manageable repair list.",
+    "milestones": [
+      {
+        "title": "Maintenance list prioritized",
+        "offset": 3,
+        "description": "Rooms and outdoor areas have a prioritized checklist.",
+        "tasks": [
+          {
+            "title": "Walk through the property",
+            "description": "Record visible maintenance issues; Note specialist work to arrange.",
+            "checklist": [
+              "Record visible maintenance issues",
+              "Note specialist work to arrange"
+            ]
+          },
+          {
+            "title": "Set scope and spending limit",
+            "description": "Rank urgent and routine items; Choose work for this season.",
+            "checklist": [
+              "Rank urgent and routine items",
+              "Choose work for this season"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Selected maintenance completed",
+        "offset": 17,
+        "description": "Agreed work is finished or has a confirmed appointment.",
+        "tasks": [
+          {
+            "title": "Gather supplies and book help",
+            "description": "Check existing supplies; Confirm contractor scope and access.",
+            "checklist": [
+              "Check existing supplies",
+              "Confirm contractor scope and access"
+            ]
+          },
+          {
+            "title": "Complete scheduled upkeep",
+            "description": "Record completed items; Photograph work needing follow-up.",
+            "checklist": [
+              "Record completed items",
+              "Photograph work needing follow-up"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Next season prepared",
+        "offset": 20,
+        "description": "Records and future maintenance needs are organized.",
+        "tasks": [
+          {
+            "title": "Inspect completed work",
+            "description": "Check each agreed outcome; List unresolved issues.",
+            "checklist": [
+              "Check each agreed outcome",
+              "List unresolved issues"
+            ]
+          },
+          {
+            "title": "Organize maintenance records",
+            "description": "Save receipts and warranties; Record next inspection dates.",
+            "checklist": [
+              "Save receipts and warranties",
+              "Record next inspection dates"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "home-declutter",
+    "name": "Declutter and organize a room",
+    "group": "home",
+    "category": "Organization",
+    "summary": "Make one space easier to use without taking on the whole house.",
+    "milestones": [
+      {
+        "title": "Room goal agreed",
+        "offset": 1,
+        "description": "The room has a clear purpose and sorting plan.",
+        "tasks": [
+          {
+            "title": "Choose the room and outcome",
+            "description": "List what the room needs to support; Take a starting photo.",
+            "checklist": [
+              "List what the room needs to support",
+              "Take a starting photo"
+            ]
+          },
+          {
+            "title": "Prepare sorting zones",
+            "description": "Set up keep, donate, and discard areas; Arrange donation or disposal options.",
+            "checklist": [
+              "Set up keep, donate, and discard areas",
+              "Arrange donation or disposal options"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Belongings sorted",
+        "offset": 6,
+        "description": "Items have a destination and usable space is cleared.",
+        "tasks": [
+          {
+            "title": "Sort one area at a time",
+            "description": "Group similar belongings; Separate items needing another person’s decision.",
+            "checklist": [
+              "Group similar belongings",
+              "Separate items needing another person’s decision"
+            ]
+          },
+          {
+            "title": "Remove outgoing items",
+            "description": "Deliver donations; Clear agreed disposal items.",
+            "checklist": [
+              "Deliver donations",
+              "Clear agreed disposal items"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Storage system in use",
+        "offset": 13,
+        "description": "Remaining items have homes that work in daily life.",
+        "tasks": [
+          {
+            "title": "Arrange everyday storage",
+            "description": "Place frequent-use items within reach; Label shared storage.",
+            "checklist": [
+              "Place frequent-use items within reach",
+              "Label shared storage"
+            ]
+          },
+          {
+            "title": "Review after a week",
+            "description": "Identify what became cluttered again; Adjust locations and reset routine.",
+            "checklist": [
+              "Identify what became cluttered again",
+              "Adjust locations and reset routine"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "family-vacation",
+    "name": "Family vacation planning",
+    "group": "home",
+    "category": "Travel",
+    "summary": "Coordinate a shared trip from preferences through the return home.",
+    "milestones": [
+      {
+        "title": "Trip outline agreed",
+        "offset": 6,
+        "description": "Dates, preferences, and a spending limit are agreed.",
+        "tasks": [
+          {
+            "title": "Gather travel preferences",
+            "description": "Confirm available dates; Record accessibility and activity needs.",
+            "checklist": [
+              "Confirm available dates",
+              "Record accessibility and activity needs"
+            ]
+          },
+          {
+            "title": "Compare trip options",
+            "description": "Estimate transport and lodging costs; Choose a destination and budget.",
+            "checklist": [
+              "Estimate transport and lodging costs",
+              "Choose a destination and budget"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reservations and itinerary ready",
+        "offset": 20,
+        "description": "Bookings and essential logistics are recorded.",
+        "tasks": [
+          {
+            "title": "Confirm travel arrangements",
+            "description": "Save booking confirmations; Record cancellation deadlines.",
+            "checklist": [
+              "Save booking confirmations",
+              "Record cancellation deadlines"
+            ]
+          },
+          {
+            "title": "Build a flexible itinerary",
+            "description": "Choose priority activities; Leave room for rest and travel time.",
+            "checklist": [
+              "Choose priority activities",
+              "Leave room for rest and travel time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Travel preparation complete",
+        "offset": 27,
+        "description": "Everyone has the information and supplies they need.",
+        "tasks": [
+          {
+            "title": "Prepare documents and packing",
+            "description": "Check required travel documents; Share packing responsibilities.",
+            "checklist": [
+              "Check required travel documents",
+              "Share packing responsibilities"
+            ]
+          },
+          {
+            "title": "Arrange care at home",
+            "description": "Confirm pet or property care; Share itinerary and emergency contacts privately.",
+            "checklist": [
+              "Confirm pet or property care",
+              "Share itinerary and emergency contacts privately"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "household-routines",
+    "name": "Shared household routines",
+    "group": "home",
+    "category": "Family routines",
+    "summary": "Agree a fair division of recurring household responsibilities.",
+    "milestones": [
+      {
+        "title": "Responsibilities mapped",
+        "offset": 2,
+        "description": "The household has a shared picture of the work.",
+        "tasks": [
+          {
+            "title": "List recurring responsibilities",
+            "description": "Include planning and supply shopping; Note timing and frequency.",
+            "checklist": [
+              "Include planning and supply shopping",
+              "Note timing and frequency"
+            ]
+          },
+          {
+            "title": "Discuss availability",
+            "description": "Record each person’s constraints; Agree what a completed chore means.",
+            "checklist": [
+              "Record each person’s constraints",
+              "Agree what a completed chore means"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Trial routine running",
+        "offset": 9,
+        "description": "Responsibilities and a first-week schedule are agreed.",
+        "tasks": [
+          {
+            "title": "Assign a manageable trial",
+            "description": "Agree owners together; Add reminders where useful.",
+            "checklist": [
+              "Agree owners together",
+              "Add reminders where useful"
+            ]
+          },
+          {
+            "title": "Prepare shared supplies",
+            "description": "Choose accessible storage locations; List supplies to replenish.",
+            "checklist": [
+              "Choose accessible storage locations",
+              "List supplies to replenish"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Routine adjusted",
+        "offset": 16,
+        "description": "The household has reviewed the trial and made changes.",
+        "tasks": [
+          {
+            "title": "Review the first week",
+            "description": "Identify overloaded people; Discuss missed or unclear tasks.",
+            "checklist": [
+              "Identify overloaded people",
+              "Discuss missed or unclear tasks"
+            ]
+          },
+          {
+            "title": "Agree the next routine",
+            "description": "Adjust owners or frequency; Set the next household check-in.",
+            "checklist": [
+              "Adjust owners or frequency",
+              "Set the next household check-in"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "learn-skill",
+    "name": "Learn a new skill",
+    "group": "personal",
+    "category": "Learning",
+    "summary": "Turn a learning goal into practice sessions and a finished demonstration.",
+    "milestones": [
+      {
+        "title": "Learning path chosen",
+        "offset": 3,
+        "description": "The goal and starting resources are clear.",
+        "tasks": [
+          {
+            "title": "Define a demonstration goal",
+            "description": "Describe what you want to do independently; Record your starting ability.",
+            "checklist": [
+              "Describe what you want to do independently",
+              "Record your starting ability"
+            ]
+          },
+          {
+            "title": "Choose learning resources",
+            "description": "Pick a course, book, or mentor; Reserve realistic practice time.",
+            "checklist": [
+              "Pick a course, book, or mentor",
+              "Reserve realistic practice time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Practice project completed",
+        "offset": 20,
+        "description": "Practice has produced a small example of the skill.",
+        "tasks": [
+          {
+            "title": "Work through the foundations",
+            "description": "Complete introductory exercises; Keep notes on difficult topics.",
+            "checklist": [
+              "Complete introductory exercises",
+              "Keep notes on difficult topics"
+            ]
+          },
+          {
+            "title": "Build a small practice project",
+            "description": "Apply the core techniques; Record questions for feedback.",
+            "checklist": [
+              "Apply the core techniques",
+              "Record questions for feedback"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Progress demonstrated",
+        "offset": 27,
+        "description": "A finished example and a next learning step are recorded.",
+        "tasks": [
+          {
+            "title": "Get feedback on the result",
+            "description": "Compare the result with the original goal; Choose one improvement to make.",
+            "checklist": [
+              "Compare the result with the original goal",
+              "Choose one improvement to make"
+            ]
+          },
+          {
+            "title": "Reflect and choose next steps",
+            "description": "Save the finished example; Decide what to practice next.",
+            "checklist": [
+              "Save the finished example",
+              "Decide what to practice next"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "personal-creative",
+    "name": "Finish a creative project",
+    "group": "personal",
+    "category": "Creative work",
+    "summary": "Take a story, art piece, or other creative idea through a complete first release.",
+    "milestones": [
+      {
+        "title": "Creative brief ready",
+        "offset": 3,
+        "description": "The audience, scope, and format are chosen.",
+        "tasks": [
+          {
+            "title": "Define the finished piece",
+            "description": "Choose a format and audience; Write a short creative brief.",
+            "checklist": [
+              "Choose a format and audience",
+              "Write a short creative brief"
+            ]
+          },
+          {
+            "title": "Plan the work sessions",
+            "description": "Gather references and materials; Reserve focused work time.",
+            "checklist": [
+              "Gather references and materials",
+              "Reserve focused work time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "First version finished",
+        "offset": 20,
+        "description": "A complete draft exists for review.",
+        "tasks": [
+          {
+            "title": "Create a rough version",
+            "description": "Finish the full outline or sketch; Mark gaps without stopping progress.",
+            "checklist": [
+              "Finish the full outline or sketch",
+              "Mark gaps without stopping progress"
+            ]
+          },
+          {
+            "title": "Develop the first complete draft",
+            "description": "Fill the identified gaps; Save a reviewable version.",
+            "checklist": [
+              "Fill the identified gaps",
+              "Save a reviewable version"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Final version shared or saved",
+        "offset": 27,
+        "description": "Feedback has been addressed and the work is finished.",
+        "tasks": [
+          {
+            "title": "Review and revise",
+            "description": "Request focused feedback; Make the chosen revisions.",
+            "checklist": [
+              "Request focused feedback",
+              "Make the chosen revisions"
+            ]
+          },
+          {
+            "title": "Prepare the final copy",
+            "description": "Export or package the work; Choose where to share or store it.",
+            "checklist": [
+              "Export or package the work",
+              "Choose where to share or store it"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "career-portfolio",
+    "name": "Update a career portfolio",
+    "group": "personal",
+    "category": "Career",
+    "summary": "Prepare a clear resume and selected examples of your work.",
+    "milestones": [
+      {
+        "title": "Career story outlined",
+        "offset": 3,
+        "description": "Relevant experience and a target role are identified.",
+        "tasks": [
+          {
+            "title": "Choose a target role",
+            "description": "List the skills it calls for; Select relevant accomplishments.",
+            "checklist": [
+              "List the skills it calls for",
+              "Select relevant accomplishments"
+            ]
+          },
+          {
+            "title": "Collect evidence",
+            "description": "Gather work samples you may share; Remove confidential information.",
+            "checklist": [
+              "Gather work samples you may share",
+              "Remove confidential information"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Application materials drafted",
+        "offset": 10,
+        "description": "A resume and portfolio draft are ready to review.",
+        "tasks": [
+          {
+            "title": "Update the resume",
+            "description": "Describe outcomes of your work; Check dates and contact details.",
+            "checklist": [
+              "Describe outcomes of your work",
+              "Check dates and contact details"
+            ]
+          },
+          {
+            "title": "Build portfolio examples",
+            "description": "Explain your contribution to each sample; Add context and results.",
+            "checklist": [
+              "Explain your contribution to each sample",
+              "Add context and results"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Materials ready to use",
+        "offset": 13,
+        "description": "Final materials have been checked and organized.",
+        "tasks": [
+          {
+            "title": "Review with a trusted reader",
+            "description": "Check clarity and spelling; Verify that links work.",
+            "checklist": [
+              "Check clarity and spelling",
+              "Verify that links work"
+            ]
+          },
+          {
+            "title": "Save application-ready copies",
+            "description": "Export the resume to PDF; Keep editable source versions.",
+            "checklist": [
+              "Export the resume to PDF",
+              "Keep editable source versions"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "personal-reading",
+    "name": "Reading and discussion plan",
+    "group": "personal",
+    "category": "Reading",
+    "summary": "Finish a book with a manageable schedule and useful reflections.",
+    "milestones": [
+      {
+        "title": "Book and pace chosen",
+        "offset": 2,
+        "description": "The book and reading schedule fit available time.",
+        "tasks": [
+          {
+            "title": "Choose the book",
+            "description": "Agree on a title or topic; Get access to a copy.",
+            "checklist": [
+              "Agree on a title or topic",
+              "Get access to a copy"
+            ]
+          },
+          {
+            "title": "Set a reading pace",
+            "description": "Divide the book into sections; Reserve reading or listening time.",
+            "checklist": [
+              "Divide the book into sections",
+              "Reserve reading or listening time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reading completed",
+        "offset": 23,
+        "description": "The planned sections are read and reflections recorded.",
+        "tasks": [
+          {
+            "title": "Read the first half",
+            "description": "Capture interesting ideas; Adjust the pace if needed.",
+            "checklist": [
+              "Capture interesting ideas",
+              "Adjust the pace if needed"
+            ]
+          },
+          {
+            "title": "Finish the remaining sections",
+            "description": "Record questions or quotations; Mark ideas to revisit.",
+            "checklist": [
+              "Record questions or quotations",
+              "Mark ideas to revisit"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reflection completed",
+        "offset": 27,
+        "description": "The main takeaways are discussed or summarized.",
+        "tasks": [
+          {
+            "title": "Write a short reflection",
+            "description": "Summarize the main takeaways; Record where you disagree or remain curious.",
+            "checklist": [
+              "Summarize the main takeaways",
+              "Record where you disagree or remain curious"
+            ]
+          },
+          {
+            "title": "Share or apply an idea",
+            "description": "Discuss with a friend or group; Choose one idea to explore further.",
+            "checklist": [
+              "Discuss with a friend or group",
+              "Choose one idea to explore further"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-client",
+    "name": "Client onboarding",
+    "group": "business",
+    "category": "Client services",
+    "summary": "Move a new client from agreement to a clear delivery plan.",
+    "milestones": [
+      {
+        "title": "Engagement aligned",
+        "offset": 3,
+        "description": "The scope, stakeholders, and measures of success are agreed.",
+        "tasks": [
+          {
+            "title": "Confirm the engagement scope",
+            "description": "Record deliverables and exclusions; Identify the client decision maker.",
+            "checklist": [
+              "Record deliverables and exclusions",
+              "Identify the client decision maker"
+            ]
+          },
+          {
+            "title": "Hold the kickoff",
+            "description": "Agree communication channels; Confirm approval and meeting cadence.",
+            "checklist": [
+              "Agree communication channels",
+              "Confirm approval and meeting cadence"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Delivery setup ready",
+        "offset": 9,
+        "description": "The team has the inputs and access needed to begin.",
+        "tasks": [
+          {
+            "title": "Gather client inputs",
+            "description": "Request required files and context; Track missing inputs with owners.",
+            "checklist": [
+              "Request required files and context",
+              "Track missing inputs with owners"
+            ]
+          },
+          {
+            "title": "Prepare delivery workspace",
+            "description": "Confirm authorized access; Assign initial work and milestones.",
+            "checklist": [
+              "Confirm authorized access",
+              "Assign initial work and milestones"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Client ready for delivery",
+        "offset": 13,
+        "description": "The client and team have reviewed the first delivery plan.",
+        "tasks": [
+          {
+            "title": "Review the delivery plan",
+            "description": "Confirm target dates and dependencies; Document client feedback.",
+            "checklist": [
+              "Confirm target dates and dependencies",
+              "Document client feedback"
+            ]
+          },
+          {
+            "title": "Close onboarding",
+            "description": "Resolve outstanding setup questions; Send the agreed next-step summary.",
+            "checklist": [
+              "Resolve outstanding setup questions",
+              "Send the agreed next-step summary"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-launch",
+    "name": "Product or service launch",
+    "group": "business",
+    "category": "Launches",
+    "summary": "Coordinate an offering, launch materials, readiness checks, and follow-up.",
+    "milestones": [
+      {
+        "title": "Launch scope approved",
+        "offset": 6,
+        "description": "The audience, offer, and launch criteria are agreed.",
+        "tasks": [
+          {
+            "title": "Define the offer",
+            "description": "Identify the intended customer; List what is included at launch.",
+            "checklist": [
+              "Identify the intended customer",
+              "List what is included at launch"
+            ]
+          },
+          {
+            "title": "Agree launch success criteria",
+            "description": "Choose measurable launch outcomes; Assign decision and delivery owners.",
+            "checklist": [
+              "Choose measurable launch outcomes",
+              "Assign decision and delivery owners"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Launch ready",
+        "offset": 20,
+        "description": "The offering and customer-facing materials have been checked.",
+        "tasks": [
+          {
+            "title": "Prepare launch materials",
+            "description": "Review messaging and pricing details; Check support and contact routes.",
+            "checklist": [
+              "Review messaging and pricing details",
+              "Check support and contact routes"
+            ]
+          },
+          {
+            "title": "Run readiness checks",
+            "description": "Test the customer journey; Resolve launch-blocking issues.",
+            "checklist": [
+              "Test the customer journey",
+              "Resolve launch-blocking issues"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Launch reviewed",
+        "offset": 27,
+        "description": "The offering is available and initial feedback has been reviewed.",
+        "tasks": [
+          {
+            "title": "Release the offering",
+            "description": "Publish approved materials; Monitor questions and reported issues.",
+            "checklist": [
+              "Publish approved materials",
+              "Monitor questions and reported issues"
+            ]
+          },
+          {
+            "title": "Review launch results",
+            "description": "Compare results with success criteria; Prioritize follow-up improvements.",
+            "checklist": [
+              "Compare results with success criteria",
+              "Prioritize follow-up improvements"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-event",
+    "name": "Business workshop or training",
+    "group": "business",
+    "category": "Training",
+    "summary": "Plan and deliver a useful session with clear learning outcomes.",
+    "milestones": [
+      {
+        "title": "Session plan agreed",
+        "offset": 4,
+        "description": "The audience, outcomes, and delivery format are confirmed.",
+        "tasks": [
+          {
+            "title": "Identify participant needs",
+            "description": "Gather questions and skill gaps; Define session outcomes.",
+            "checklist": [
+              "Gather questions and skill gaps",
+              "Define session outcomes"
+            ]
+          },
+          {
+            "title": "Arrange the session",
+            "description": "Choose date and delivery format; Confirm facilitator and participant list.",
+            "checklist": [
+              "Choose date and delivery format",
+              "Confirm facilitator and participant list"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Materials tested",
+        "offset": 13,
+        "description": "Activities and practical arrangements are ready.",
+        "tasks": [
+          {
+            "title": "Prepare teaching materials",
+            "description": "Create examples and exercises; Prepare accessible participant copies.",
+            "checklist": [
+              "Create examples and exercises",
+              "Prepare accessible participant copies"
+            ]
+          },
+          {
+            "title": "Rehearse delivery",
+            "description": "Check timing and equipment; Prepare a backup for technical issues.",
+            "checklist": [
+              "Check timing and equipment",
+              "Prepare a backup for technical issues"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Session completed and evaluated",
+        "offset": 20,
+        "description": "Participants have resources and feedback has been reviewed.",
+        "tasks": [
+          {
+            "title": "Deliver the workshop",
+            "description": "Record attendance as appropriate; Capture unanswered questions.",
+            "checklist": [
+              "Record attendance as appropriate",
+              "Capture unanswered questions"
+            ]
+          },
+          {
+            "title": "Follow up with participants",
+            "description": "Share materials and answers; Review feedback for the next session.",
+            "checklist": [
+              "Share materials and answers",
+              "Review feedback for the next session"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-process",
+    "name": "Improve a business process",
+    "group": "business",
+    "category": "Operations",
+    "summary": "Find a recurring pain point, test a change, and document a better process.",
+    "milestones": [
+      {
+        "title": "Problem and baseline agreed",
+        "offset": 6,
+        "description": "The process and its measurable problem are understood.",
+        "tasks": [
+          {
+            "title": "Map the current process",
+            "description": "List handoffs and decisions; Ask the people doing the work about delays.",
+            "checklist": [
+              "List handoffs and decisions",
+              "Ask the people doing the work about delays"
+            ]
+          },
+          {
+            "title": "Define the improvement goal",
+            "description": "Record a baseline measure; Agree scope and a process owner.",
+            "checklist": [
+              "Record a baseline measure",
+              "Agree scope and a process owner"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Improvement trial completed",
+        "offset": 20,
+        "description": "A limited trial has produced evidence of the change.",
+        "tasks": [
+          {
+            "title": "Design a small change",
+            "description": "Identify affected people; Plan how to reverse an unsuccessful change.",
+            "checklist": [
+              "Identify affected people",
+              "Plan how to reverse an unsuccessful change"
+            ]
+          },
+          {
+            "title": "Run the trial",
+            "description": "Record results using the baseline measure; Collect participant feedback.",
+            "checklist": [
+              "Record results using the baseline measure",
+              "Collect participant feedback"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "New process adopted",
+        "offset": 27,
+        "description": "The team has a documented decision and operating guidance.",
+        "tasks": [
+          {
+            "title": "Evaluate the trial",
+            "description": "Compare results and side effects; Agree whether to adopt or revise.",
+            "checklist": [
+              "Compare results and side effects",
+              "Agree whether to adopt or revise"
+            ]
+          },
+          {
+            "title": "Document and hand over",
+            "description": "Update the operating procedure; Set a follow-up review date.",
+            "checklist": [
+              "Update the operating procedure",
+              "Set a follow-up review date"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-hire",
+    "name": "New team member onboarding",
+    "group": "business",
+    "category": "People & teams",
+    "summary": "Prepare access, introductions, and a supported first month.",
+    "milestones": [
+      {
+        "title": "First day prepared",
+        "offset": 6,
+        "description": "The manager has arranged the essentials for the new starter.",
+        "tasks": [
+          {
+            "title": "Plan the first week",
+            "description": "Confirm start date and work arrangements; Choose an onboarding buddy.",
+            "checklist": [
+              "Confirm start date and work arrangements",
+              "Choose an onboarding buddy"
+            ]
+          },
+          {
+            "title": "Arrange equipment and access",
+            "description": "Request role-appropriate accounts; Confirm workspace and equipment readiness.",
+            "checklist": [
+              "Request role-appropriate accounts",
+              "Confirm workspace and equipment readiness"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "First week completed",
+        "offset": 13,
+        "description": "The new team member knows their contacts and initial responsibilities.",
+        "tasks": [
+          {
+            "title": "Introduce the team and work",
+            "description": "Explain responsibilities and priorities; Share key contacts and team routines.",
+            "checklist": [
+              "Explain responsibilities and priorities",
+              "Share key contacts and team routines"
+            ]
+          },
+          {
+            "title": "Complete essential orientation",
+            "description": "Review relevant policies and training; Confirm access works for assigned tasks.",
+            "checklist": [
+              "Review relevant policies and training",
+              "Confirm access works for assigned tasks"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "First month reviewed",
+        "offset": 34,
+        "description": "The starter and manager have agreed the next goals.",
+        "tasks": [
+          {
+            "title": "Support an initial assignment",
+            "description": "Provide a clear outcome and owner; Schedule feedback during the work.",
+            "checklist": [
+              "Provide a clear outcome and owner",
+              "Schedule feedback during the work"
+            ]
+          },
+          {
+            "title": "Hold the first-month review",
+            "description": "Discuss what support is still needed; Agree the next set of goals.",
+            "checklist": [
+              "Discuss what support is still needed",
+              "Agree the next set of goals"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "education-course",
+    "name": "Prepare a course or class",
+    "group": "education",
+    "category": "Teaching",
+    "summary": "Build a course outline, materials, assessments, and launch checklist.",
+    "milestones": [
+      {
+        "title": "Learning outcomes defined",
+        "offset": 6,
+        "description": "The course goals and sequence are clear.",
+        "tasks": [
+          {
+            "title": "Define the audience and outcomes",
+            "description": "Record prerequisites; Write observable learning outcomes.",
+            "checklist": [
+              "Record prerequisites",
+              "Write observable learning outcomes"
+            ]
+          },
+          {
+            "title": "Outline the course",
+            "description": "Sequence topics and activities; Estimate time per section.",
+            "checklist": [
+              "Sequence topics and activities",
+              "Estimate time per section"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Materials and assessments ready",
+        "offset": 20,
+        "description": "Learners have a coherent set of resources and activities.",
+        "tasks": [
+          {
+            "title": "Prepare learning materials",
+            "description": "Create readings and examples; Check accessibility and permissions.",
+            "checklist": [
+              "Create readings and examples",
+              "Check accessibility and permissions"
+            ]
+          },
+          {
+            "title": "Design assessments",
+            "description": "Match assessments to outcomes; Write clear instructions and criteria.",
+            "checklist": [
+              "Match assessments to outcomes",
+              "Write clear instructions and criteria"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Course ready to teach",
+        "offset": 27,
+        "description": "The learning environment and opening session are checked.",
+        "tasks": [
+          {
+            "title": "Set up the course space",
+            "description": "Publish the schedule and resources; Test learner access.",
+            "checklist": [
+              "Publish the schedule and resources",
+              "Test learner access"
+            ]
+          },
+          {
+            "title": "Review the first session",
+            "description": "Rehearse activities and timing; Explain how learners can get help.",
+            "checklist": [
+              "Rehearse activities and timing",
+              "Explain how learners can get help"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "education-research",
+    "name": "Student research project",
+    "group": "education",
+    "category": "Research",
+    "summary": "Organize a research question, evidence, draft, and final presentation.",
+    "milestones": [
+      {
+        "title": "Research question approved",
+        "offset": 6,
+        "description": "The question and approach fit the assignment.",
+        "tasks": [
+          {
+            "title": "Narrow the research question",
+            "description": "Review assignment requirements; Confirm scope with the instructor.",
+            "checklist": [
+              "Review assignment requirements",
+              "Confirm scope with the instructor"
+            ]
+          },
+          {
+            "title": "Plan evidence collection",
+            "description": "Identify credible starting sources; Record any required permissions.",
+            "checklist": [
+              "Identify credible starting sources",
+              "Record any required permissions"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Evidence and draft assembled",
+        "offset": 20,
+        "description": "Sources and findings support a complete draft.",
+        "tasks": [
+          {
+            "title": "Collect and evaluate sources",
+            "description": "Keep citation details; Distinguish evidence from interpretation.",
+            "checklist": [
+              "Keep citation details",
+              "Distinguish evidence from interpretation"
+            ]
+          },
+          {
+            "title": "Draft the argument",
+            "description": "Organize findings around the question; Identify gaps needing more research.",
+            "checklist": [
+              "Organize findings around the question",
+              "Identify gaps needing more research"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Final submission ready",
+        "offset": 27,
+        "description": "The final work follows the assignment and citation requirements.",
+        "tasks": [
+          {
+            "title": "Revise the draft",
+            "description": "Address instructor or peer feedback; Check citations and quotations.",
+            "checklist": [
+              "Address instructor or peer feedback",
+              "Check citations and quotations"
+            ]
+          },
+          {
+            "title": "Prepare the submission",
+            "description": "Check formatting and required files; Rehearse the presentation if required.",
+            "checklist": [
+              "Check formatting and required files",
+              "Rehearse the presentation if required"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "education-club",
+    "name": "School club project",
+    "group": "education",
+    "category": "Student activities",
+    "summary": "Help a club choose an achievable project and deliver it together.",
+    "milestones": [
+      {
+        "title": "Club project agreed",
+        "offset": 4,
+        "description": "Members and the adviser agree on a purpose and scope.",
+        "tasks": [
+          {
+            "title": "Choose the club project",
+            "description": "Collect member suggestions; Agree the intended benefit.",
+            "checklist": [
+              "Collect member suggestions",
+              "Agree the intended benefit"
+            ]
+          },
+          {
+            "title": "Confirm practical requirements",
+            "description": "Check school permissions; Set a spending limit and roles.",
+            "checklist": [
+              "Check school permissions",
+              "Set a spending limit and roles"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Project prepared",
+        "offset": 13,
+        "description": "Materials, communications, and assignments are ready.",
+        "tasks": [
+          {
+            "title": "Prepare materials and logistics",
+            "description": "Book approved spaces; Gather required supplies.",
+            "checklist": [
+              "Book approved spaces",
+              "Gather required supplies"
+            ]
+          },
+          {
+            "title": "Coordinate club members",
+            "description": "Assign clear tasks; Share the schedule and contact person.",
+            "checklist": [
+              "Assign clear tasks",
+              "Share the schedule and contact person"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Project delivered and reviewed",
+        "offset": 20,
+        "description": "The activity is complete and the club has reflected on it.",
+        "tasks": [
+          {
+            "title": "Deliver the activity",
+            "description": "Check setup and attendance arrangements; Record issues needing follow-up.",
+            "checklist": [
+              "Check setup and attendance arrangements",
+              "Record issues needing follow-up"
+            ]
+          },
+          {
+            "title": "Wrap up with members",
+            "description": "Return borrowed equipment; Discuss lessons for the next project.",
+            "checklist": [
+              "Return borrowed equipment",
+              "Discuss lessons for the next project"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "community-event",
+    "name": "Community gathering",
+    "group": "community",
+    "category": "Events",
+    "summary": "Organize a local gathering with shared roles and practical logistics.",
+    "milestones": [
+      {
+        "title": "Gathering plan agreed",
+        "offset": 6,
+        "description": "The purpose, venue, and responsibilities are confirmed.",
+        "tasks": [
+          {
+            "title": "Define the gathering",
+            "description": "Choose the audience and activities; Set a practical attendance estimate.",
+            "checklist": [
+              "Choose the audience and activities",
+              "Set a practical attendance estimate"
+            ]
+          },
+          {
+            "title": "Confirm venue and permissions",
+            "description": "Check venue requirements; Agree budget and organizing roles.",
+            "checklist": [
+              "Check venue requirements",
+              "Agree budget and organizing roles"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "People and logistics ready",
+        "offset": 20,
+        "description": "Volunteers, supplies, and attendee information are prepared.",
+        "tasks": [
+          {
+            "title": "Arrange event logistics",
+            "description": "Confirm equipment and supplies; Plan accessibility and weather alternatives.",
+            "checklist": [
+              "Confirm equipment and supplies",
+              "Plan accessibility and weather alternatives"
+            ]
+          },
+          {
+            "title": "Invite and brief participants",
+            "description": "Share time and location; Brief volunteers on their responsibilities.",
+            "checklist": [
+              "Share time and location",
+              "Brief volunteers on their responsibilities"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Gathering completed",
+        "offset": 27,
+        "description": "The event is delivered and the venue is handed back.",
+        "tasks": [
+          {
+            "title": "Run the gathering",
+            "description": "Check setup and welcome arrangements; Assign an on-site coordination contact.",
+            "checklist": [
+              "Check setup and welcome arrangements",
+              "Assign an on-site coordination contact"
+            ]
+          },
+          {
+            "title": "Close and review",
+            "description": "Clean and return the venue; Review feedback and expenses.",
+            "checklist": [
+              "Clean and return the venue",
+              "Review feedback and expenses"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "community-volunteer",
+    "name": "Volunteer service project",
+    "group": "community",
+    "category": "Volunteering",
+    "summary": "Coordinate volunteers around a defined community need.",
+    "milestones": [
+      {
+        "title": "Service scope confirmed",
+        "offset": 6,
+        "description": "The partner and volunteers agree on useful, achievable work.",
+        "tasks": [
+          {
+            "title": "Confirm the community need",
+            "description": "Speak with the receiving organization; Agree the work and limits.",
+            "checklist": [
+              "Speak with the receiving organization",
+              "Agree the work and limits"
+            ]
+          },
+          {
+            "title": "Plan volunteer roles",
+            "description": "Identify required skills; Confirm supervision and site requirements.",
+            "checklist": [
+              "Identify required skills",
+              "Confirm supervision and site requirements"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Volunteer team prepared",
+        "offset": 13,
+        "description": "People have the supplies and instructions to participate.",
+        "tasks": [
+          {
+            "title": "Recruit and confirm volunteers",
+            "description": "Match volunteers to agreed roles; Share schedule and access instructions.",
+            "checklist": [
+              "Match volunteers to agreed roles",
+              "Share schedule and access instructions"
+            ]
+          },
+          {
+            "title": "Prepare supplies and briefing",
+            "description": "Confirm who provides materials; Explain site rules and escalation contacts.",
+            "checklist": [
+              "Confirm who provides materials",
+              "Explain site rules and escalation contacts"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Service completed and handed over",
+        "offset": 20,
+        "description": "The partner has reviewed the work and remaining needs.",
+        "tasks": [
+          {
+            "title": "Complete the agreed work",
+            "description": "Check progress with the partner; Record unresolved items.",
+            "checklist": [
+              "Check progress with the partner",
+              "Record unresolved items"
+            ]
+          },
+          {
+            "title": "Close with volunteers and partner",
+            "description": "Return equipment and clear the site; Thank participants and capture feedback.",
+            "checklist": [
+              "Return equipment and clear the site",
+              "Thank participants and capture feedback"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "community-fundraiser",
+    "name": "Community fundraising campaign",
+    "group": "community",
+    "category": "Fundraising",
+    "summary": "Plan a campaign with clear goals, approved messaging, and transparent follow-up.",
+    "milestones": [
+      {
+        "title": "Campaign plan approved",
+        "offset": 6,
+        "description": "The beneficiary, target, and approval responsibilities are clear.",
+        "tasks": [
+          {
+            "title": "Confirm purpose and target",
+            "description": "Agree the beneficiary and intended use; Set a realistic campaign goal.",
+            "checklist": [
+              "Agree the beneficiary and intended use",
+              "Set a realistic campaign goal"
+            ]
+          },
+          {
+            "title": "Confirm collection arrangements",
+            "description": "Use the organization’s approved donation route; Assign recordkeeping and approval owners.",
+            "checklist": [
+              "Use the organization’s approved donation route",
+              "Assign recordkeeping and approval owners"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Campaign launched",
+        "offset": 20,
+        "description": "Approved materials and outreach are in use.",
+        "tasks": [
+          {
+            "title": "Prepare campaign materials",
+            "description": "Explain the purpose and donation route; Obtain approval for public claims.",
+            "checklist": [
+              "Explain the purpose and donation route",
+              "Obtain approval for public claims"
+            ]
+          },
+          {
+            "title": "Coordinate outreach",
+            "description": "Schedule agreed announcements; Track responses without exposing donor details.",
+            "checklist": [
+              "Schedule agreed announcements",
+              "Track responses without exposing donor details"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Campaign reconciled and reported",
+        "offset": 34,
+        "description": "Collections and spending are reconciled and results communicated.",
+        "tasks": [
+          {
+            "title": "Close and reconcile the campaign",
+            "description": "Confirm totals with the recordkeeping owner; Resolve missing or unmatched records.",
+            "checklist": [
+              "Confirm totals with the recordkeeping owner",
+              "Resolve missing or unmatched records"
+            ]
+          },
+          {
+            "title": "Report results and thank supporters",
+            "description": "Share approved results and use of funds; Send appropriate acknowledgments.",
+            "checklist": [
+              "Share approved results and use of funds",
+              "Send appropriate acknowledgments"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]);
+  const templateFilters={group:"all",query:""};
   let api = null;
   let epoch=0, requestController=null, authRevision=0, signedOutLocally=false, signingOut=false, signOutFailed=false;
   let signupMode=false;
@@ -635,9 +2231,12 @@
   function invitationNotice(){
     if(!inviteIntent||s.demo)return '';
     const available=s.pendingInvitations.some(i=>i.id===inviteIntent);
-    const message=!s.user?'Sign in with the email address that received this invitation.':available?'Your invitation is listed below. Review it and choose Accept invitation.':'This invitation is not available to this account. It may have expired, been revoked or already accepted. Check that you signed in with the invited email address.';
-    return `<div class="invite-box" role="status"><strong>Organization invitation</strong><p>${esc(message)}</p><button class="btn sm" data-action="dismiss-invite">Dismiss notice</button></div>`;
+    const message=!s.user?'Sign in with the email address that received this invitation.':available?'Your invitation is listed below. Review it and choose Accept invitation.':s.pendingInvitations.length?'This link is no longer available, but you have pending invitations below. Review the organization and accept the current invitation.':'This invitation is not available to this account. It may have expired, been revoked or already accepted. Check that you signed in with the invited email address.';
+    return `<div class="invite-box" role="status"><strong>Organization invitation</strong><p>${esc(message)}</p>${s.user?`<p>Signed in as ${esc(s.user.email)}.</p><button class="btn sm" data-action="logout">Sign out to use another account</button> `:''}<button class="btn sm" data-action="dismiss-invite">Dismiss notice</button></div>`;
   }
+  const inboxBadgeCount=()=>Number(inbox.unread||0)+s.pendingInvitations.length;
+  function invitationNotifications(){return s.pendingInvitations.length?`<section class="panel inbox-list" aria-label="Pending invitations"><div class="panel-head"><h3>Invitations for ${esc(s.user?.email)}</h3></div>${s.pendingInvitations.map(i=>`<article class="inbox-item is-unread"><div class="inbox-open"><span>Invitation · awaiting your response</span><strong>${esc(i.org_name)}</strong><span>${esc(i.invite_role.replace(/_/g,' '))} · expires ${niceDate(i.expires_at)}</span></div><button class="btn primary sm" data-action="accept-invite" data-id="${esc(i.id)}">Accept invitation</button></article>`).join('')}</section>`:'';}
+  function pendingInvitationCards(){return s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${esc(i.id)}">Accept invitation</button></div>`).join('');}
   function clearInviteIntent(){inviteIntent=null;try{sessionStorage.removeItem(inviteKey);const url=new URL(location.href);url.searchParams.delete('invite');history.replaceState(history.state,'',url.pathname+url.search+url.hash);}catch{}}
   async function startSignIn(provider){
     if(authPending||s.user)return;
@@ -662,9 +2261,9 @@
   }
   function inboxPage(){
     const controls=`<button class="btn sm" data-action="inbox-refresh" ${inbox.loading?'disabled':''}>Refresh inbox</button><button class="btn sm" data-action="inbox-read-page" ${inbox.loading||!inbox.rows.some(n=>!n.read_at)?'disabled':''}>Mark this page read</button>`;
-    return pageTitle('Inbox','Assignments, reviews, and updates for this organization.',controls)+
+    return pageTitle('Inbox','Invitations sent to your email, plus assignments, reviews, and updates for this organization.',controls)+
       `<div class="filter-row" role="group" aria-label="Notification filter">${[['all','All'],['unread','Unread']].map(([value,label])=>`<button class="filter-pill ${inbox.onlyUnread===(value==='unread')?'active':''}" data-action="inbox-filter" data-value="${value}" aria-pressed="${inbox.onlyUnread===(value==='unread')}">${label}</button>`).join('')}<span role="status">${inbox.unread===null?'Unread count unavailable':inbox.unread+' unread in this organization'}</span></div>
-      ${inbox.error?`<div class="auth-error" role="alert">Unable to load notifications. Use Refresh inbox to retry.</div>`:''}
+      ${invitationNotifications()}${inbox.error?`<div class="auth-error" role="alert">Unable to load notifications. Use Refresh inbox to retry.</div>`:''}
       <section class="panel inbox-list" aria-busy="${inbox.loading}" aria-label="Notifications">${inbox.loading?'<div class="panel-body" role="status">Loading notifications…</div>':inbox.rows.length?inbox.rows.map(n=>`<article class="inbox-item ${n.read_at?'':'is-unread'}"><button class="inbox-open" data-action="inbox-open" data-id="${esc(n.id)}"><span>${esc(notificationLabels[n.kind]||'Task update')} · ${n.read_at?'Read':'Unread'}</span><strong>${esc(n.task_title)}</strong><span>${esc(n.project_title)} · ${esc(new Date(n.created_at).toLocaleString())}</span></button><button class="btn sm" data-action="inbox-read" data-id="${esc(n.id)}" data-value="${n.read_at?'false':'true'}">Mark ${n.read_at?'unread':'read'}</button></article>`).join(''):empty('✓','No notifications here','Try All or adjust your workspace and search filters. New notifications appear after assignments, reviews, or task updates.')}</section>
       <div class="inbox-pagination"><button class="btn sm" data-action="inbox-newer" ${inbox.loading||inbox.cursors.length===1?'disabled':''}>Newer</button><span>Page ${inbox.cursors.length}</span><button class="btn sm" data-action="inbox-older" ${inbox.loading||!inbox.more?'disabled':''}>Older</button></div>`;
   }
@@ -684,17 +2283,19 @@
     const generation=epoch,request=++inboxRequest,cursor=inbox.cursors.at(-1);
     inbox.loading=true;inbox.error=null;inbox.rows=[];inbox.more=false;renderInbox();
     try{
-      let rows,summary;
+      let rows,summary,invitations;
       if(s.demo){
         const query=s.query.trim().toLowerCase();
         const all=inbox.demoRows.filter(n=>taskFor(n.task_id)).map(n=>({...n,task_title:taskFor(n.task_id).title,project_title:projectFor(taskFor(n.task_id).project_id).title,project_id:taskFor(n.task_id).project_id}));
         summary=[{unread_count:all.filter(n=>!n.read_at).length}];
         rows=all.filter(n=>(!inbox.onlyUnread||!n.read_at)&&deptVisible(projectFor(n.project_id).department_id)&&(!query||(n.task_title+' '+n.project_title).toLowerCase().includes(query))&&(!cursor||n.created_at<cursor.created_at||n.created_at===cursor.created_at&&n.id<cursor.id)).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id)).slice(0,51);
-      }else [rows,summary]=await Promise.all([
+      }else [rows,summary,invitations]=await Promise.all([
         getResult(api.rpc('qb_notification_page',{p_org:s.org.id,p_unread:inbox.onlyUnread,p_department:s.workspace==='all'?null:s.workspace,p_query:s.query.trim(),p_before:cursor?.created_at||null,p_before_id:cursor?.id||null})),
-        getResult(api.rpc('qb_notification_summary',{p_org:s.org.id}))
+        getResult(api.rpc('qb_notification_summary',{p_org:s.org.id})),
+        pagedRows(()=>api.rpc('qb_my_invitations',{}, {count:'exact'}))
       ]);
       if(generation!==epoch||request!==inboxRequest||s.nav!=='inbox')return;
+      if(invitations)s.pendingInvitations=invitations;
       if(!Array.isArray(rows))throw Error('Invalid notification response');
       inbox.rows=rows.slice(0,50);inbox.more=rows.length>50;inbox.unread=Number(summary?.[0]?.unread_count||0);
     }catch(error){if(generation===epoch&&request===inboxRequest&&!error.stale)inbox.error=true;}
@@ -783,7 +2384,7 @@
     const {query,...filters}=view.filters;Object.assign(taskExplorer,filters,{page:1,selected:id});s.query=query;
   }
   function allTasksData(today=new Date()){
-    const projects=s.projects.filter(p=>deptVisible(p.department_id)),projectMap=new Map(projects.map(p=>[p.id,p]));
+    const projects=s.projects.filter(p=>!pastProject(p)&&deptVisible(p.department_id)),projectMap=new Map(projects.map(p=>[p.id,p]));
     const available=s.tasks.filter(t=>projectMap.has(t.project_id));
     const owners=[...new Set(available.map(t=>assignmentKey(t)).filter(Boolean))].sort((a,b)=>ownerLabel(a).localeCompare(ownerLabel(b))||a.localeCompare(b));
     const day=dateKey(today),end=dateKey(new Date(today.getFullYear(),today.getMonth(),today.getDate()+6,12)),query=s.query.trim().toLowerCase();
@@ -1014,6 +2615,42 @@
     return pageTitle('Control panel','Organization defaults → department overrides → project overrides. Blank fields inherit their parent.','<button class="btn" data-action="nav" data-value="vendors">Vendors &amp; contacts</button>')+`<section class="panel"><div class="panel-body"><div class="form-field"><label for="settings-scope">Settings for</label><select id="settings-scope">${scopes.map(x=>`<option value="${x.type}:${esc(x.id)}" ${x===selected?'selected':''}>${esc(x.type[0].toUpperCase()+x.type.slice(1)+' · '+x.label)}</option>`).join('')}</select></div><form data-form="planning-settings" data-scope="${type}:${esc(id)}" data-revision="${row?.revision||0}"><h3>Planning defaults</h3><div class="form-grid">${field('weekly_capacity_hours','Weekly capacity per person (hours)',168,'0.25')}${field('default_estimated_hours','Default new-task estimate (hours)',100000,'0.25')}${field('default_duration_days','Default relative duration (calendar days)',3650,'1')}<div class="form-field"><label>Working days</label><select name="workdays" ${manage?'':'disabled'}><option value="" ${!values.workdays?'selected':''}>Inherit</option><option value="1,2,3,4,5" ${values.workdays?.join(',')==='1,2,3,4,5'?'selected':''}>Monday–Friday</option><option value="1,2,3,4,5,6" ${values.workdays?.join(',')==='1,2,3,4,5,6'?'selected':''}>Monday–Saturday</option><option value="0,1,2,3,4,5,6" ${values.workdays?.join(',')==='0,1,2,3,4,5,6'?'selected':''}>Every day</option>${values.workdays&&!['1,2,3,4,5','1,2,3,4,5,6','0,1,2,3,4,5,6'].includes(values.workdays.join(','))?`<option selected value="${values.workdays.join(',')}">Custom saved workweek</option>`:''}</select><small>Effective: ${effective.workdays.map(d=>['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')} · ${effective.sources.workdays}</small></div></div><p class="field-hint">Capacity is time available for planned work; reserve room for support, meetings, and interruptions. Project capacity applies when viewing that project’s allocation. New-task defaults do not rewrite existing estimates. Workweek changes redistribute the workload forecast.</p>${manage?'<button class="btn primary" type="submit">Save settings</button>':'<p class="muted">You can view these defaults. A manager for this scope can change them.</p>'}</form></div></section>`;
   }
   function mondayFor(value){const date=calendarDate(value)||new Date();date.setDate(date.getDate()-((date.getDay()+6)%7));return dateKey(date);}
+  const availabilityRows=()=>s.availability||[];
+  const availabilityLabel=a=>a.kind==='pto'?nameFor(a.user_id)+' · PTO':a.title;
+  const absencesOn=(user,day)=>availabilityRows().filter(a=>a.non_working&&a.start_date<=day&&a.end_date>=day&&(a.kind==='holiday'||a.user_id===user));
+  function availabilityStaff(){
+    if(s.demo)return [{user_id:'demo-user'},{user_id:'sam'},{user_id:'eve'}];
+    return s.orgMembers.filter(m=>m.status==='active');
+  }
+  function availabilityWarning(){return s.availabilityError?'<p class="auth-error" role="alert">Holidays and PTO could not be loaded. Capacity and absence warnings may be incomplete. Refresh the workspace to retry.</p>':'';}
+  function taskAbsences(task){
+    if(['complete','cancelled'].includes(task.status)||pastProject(projectFor(task.project_id)))return [];
+    const end=task.due_date,start=task.start_date||end;
+    if(!calendarDate(start)||!calendarDate(end)||start>end)return [];
+    const workdays=effectivePlanning(task.project_id).workdays;
+    return availabilityRows().filter(a=>{
+      if(!a.non_working||a.end_date<start||a.start_date>end||a.kind==='pto'&&a.user_id!==task.assignee_id&&!(a.user_id===task.reviewer_id&&a.start_date<=end&&a.end_date>=end))return false;
+      const first=a.start_date>start?a.start_date:start,last=a.end_date<end?a.end_date:end;
+      for(let day=first;day<=last;day=shiftDate(day,1))if(workdays.includes(calendarDate(day).getDay()))return true;
+      return false;
+    });
+  }
+  function availabilityImpact(projectId=null){
+    const tasks=visibleTasks().filter(t=>(!projectId||t.project_id===projectId)&&(s.nav!=='calendar'||s.calendarScope!=='mine'||t.assignee_id===s.user?.id));
+    const affected=tasks.map(task=>({task,absences:taskAbsences(task)})).filter(r=>r.absences.length);
+    if(!affected.length)return availabilityWarning();
+    return availabilityWarning()+`<section class="panel availability-impact"><div class="panel-head"><div><h3>Availability conflicts · ${affected.length} tasks</h3><p>Assigned work overlaps a non-working holiday, staff PTO, or reviewer PTO on its due date. Arrange coverage or revise the plan.</p></div></div><div class="panel-body">${affected.map(({task,absences})=>`<article><button class="text-link" data-action="task" data-id="${esc(task.id)}">${esc(task.title)}</button><small>${esc(projectFor(task.project_id)?.title)}</small><p>${absences.map(a=>`${esc(availabilityLabel(a))}: ${niceDate(a.start_date)}–${niceDate(a.end_date)}`).join('; ')}</p>${s.dependencies.some(d=>d.prerequisite_id===task.id)?'<small>Other visible tasks depend on this work; review their dates too.</small>':''}</article>`).join('')}<p class="field-hint">Dates and task status stay unchanged. A conflict indicates a delivery risk, not that every task in the project must stop. Undated work needs a schedule before conflicts can be checked.</p></div></section>`;
+  }
+  function availabilityPanel(){
+    const prefix=(s.calendarMonth||dateKey(new Date())).slice(0,7),first=prefix+'-01',last=shiftDate(dateKey(new Date(Number(prefix.slice(0,4)),Number(prefix.slice(5,7)),1,12)),-1);
+    const rows=availabilityRows().filter(a=>a.start_date<=last&&a.end_date>=first&&(s.calendarScope!=='mine'||a.kind==='holiday'||a.user_id===s.user?.id)).sort((a,b)=>a.start_date.localeCompare(b.start_date));
+    return `<section class="panel availability-list"><div class="panel-head"><div><h3>Holidays &amp; PTO this month</h3><p>Organization-wide holidays and full-day staff absences. Dates include the start and end day.</p></div>${isAdmin()&&!s.availabilityError?'<div class="buttons"><button class="btn sm" data-action="availability-new" data-value="holiday">Add holiday</button><button class="btn sm" data-action="availability-new" data-value="pto">Add PTO</button></div>':''}</div><div class="panel-body">${availabilityWarning()}${rows.map(a=>`<article><strong>${esc(availabilityLabel(a))}</strong><span>${niceDate(a.start_date)}–${niceDate(a.end_date)}${a.non_working?' · Non-working':' · Observance only'}</span>${isAdmin()?`<button class="btn sm" data-action="availability-edit" data-id="${esc(a.id)}">Edit</button>`:''}</article>`).join('')||'<p>No holidays or PTO recorded for this month.</p>'}</div></section>`;
+  }
+  function availabilityForm(){
+    const row=availabilityRows().find(a=>a.id===s.availabilityEdit),kind=row?.kind||s.availabilityKind||'holiday';
+    const today=dateKey(new Date());
+    return `<form data-form="availability" data-id="${esc(row?.id||s.availabilityRequest)}" data-kind="${kind}" data-revision="${row?.revision||0}"><div class="modal-body">${kind==='holiday'?`<div class="form-field"><label>Holiday name</label><input name="title" maxlength="120" required value="${esc(row?.title||'')}"></div>`:`<div class="form-field"><label>Staff member</label><select name="user_id" required><option value="">Choose a staff member</option>${availabilityStaff().map(m=>`<option value="${esc(m.user_id)}" ${row?.user_id===m.user_id?'selected':''}>${esc(nameFor(m.user_id))}</option>`).join('')}</select></div>`}<div class="form-grid"><div class="form-field"><label>First day</label><input type="date" name="start_date" min="1900-01-01" max="2200-12-31" required value="${esc(row?.start_date||today)}"></div><div class="form-field"><label>Last day (included)</label><input type="date" name="end_date" min="1900-01-01" max="2200-12-31" required value="${esc(row?.end_date||today)}"></div></div>${kind==='holiday'?`<label><input type="checkbox" name="non_working" ${!row||row.non_working?'checked':''}> Non-working holiday — reduce available capacity</label>`:'<p>For a week of PTO, select the first and last day off. PTO removes capacity on configured working days. Leave reasons are not collected.</p>'}<p class="field-hint">Visible to members of this organization. This records availability; it is not a leave request or approval process. Each range can cover up to one year.</p>${row?`<label><input type="checkbox" name="confirm_remove"> Confirm removal of this entry</label><button type="button" class="btn danger" data-action="availability-remove" data-id="${esc(row.id)}" data-value="${row.revision}">Remove entry</button>`:''}</div>${modalFooter('Save calendar entry')}</form>`;
+  }
   function weeklyWorkload(today=dateKey(new Date()),requestedWeek=s.workloadWeek){
     const week=mondayFor(requestedWeek||today),days=Array.from({length:7},(_,i)=>shiftDate(week,i));
     const scopeProject=s.workloadProject==='all'?null:s.workloadProject;
@@ -1025,6 +2662,7 @@
     // Include visible staff with zero recorded work, not just people already assigned tasks.
     const people=new Set(s.departmentMembers.filter(m=>m.status==='active'&&deptVisible(m.department_id)&&isDeptManager(m.department_id)&&(!scopeProject||projectFor(scopeProject)?.department_id===m.department_id)).map(m=>m.user_id));
     s.projectMembers.filter(m=>m.status==='active'&&canManage(m.project_id)&&(!scopeProject||m.project_id===scopeProject)&&deptVisible(projectFor(m.project_id)?.department_id)).forEach(m=>people.add(m.user_id));
+    if(isAdmin()&&s.workspace==='all'&&!scopeProject)s.orgMembers.filter(m=>m.status==='active').forEach(m=>people.add(m.user_id));
     people.forEach(id=>ensure(id,nameFor(id)));
     for(const t of tasks){
       const key=assignmentKey(t)||'_unassigned',g=ensure(key,assigneeName(t)),effort=taskEffort(t),end=t.due_date;
@@ -1044,34 +2682,42 @@
       allocation.forEach((h,i)=>{g.days[i]+=h;g.hours+=h;});
       g.tasks.push({task:t,hours:allocation.reduce((a,b)=>a+b,0),unplaced:!dates.length,unknown:effort==null,overdue:!!end&&end<today});
     }
+    for(const group of groups.values()){
+      group.baseCapacity=group.capacity;
+      group.absences=days.map(day=>group.key==='_unassigned'?[]:absencesOn(group.key,day));
+      group.dayCapacity=days.map((day,i)=>defaults.workdays.includes(calendarDate(day).getDay())&&!group.absences[i].length?group.baseCapacity/defaults.workdays.length:0);
+      group.capacity=group.dayCapacity.reduce((a,b)=>a+b,0);
+      group.unavailableDays=days.filter((day,i)=>defaults.workdays.includes(calendarDate(day).getDay())&&group.absences[i].length);
+    }
     const rows=[...groups.values()].sort((a,b)=>b.hours-a.hours||a.label.localeCompare(b.label));
     return {week,days,rows,defaults,total:rows.reduce((a,g)=>a+g.hours,0),tasks};
   }
   function workloadOverview(){
     const now=dateKey(new Date()),base=mondayFor(s.workloadWeek||now),weeks=Array.from({length:6},(_,i)=>weeklyWorkload(now,shiftDate(base,7*i)));
     const people=weeks[0].rows.filter(r=>r.key!=='_unassigned'),over=people.filter(r=>r.hours>r.capacity),gaps=weeks[0].rows.reduce((n,r)=>n+r.unknown+r.unscheduled,0);
-    return `<div class="kpi-grid"><div class="kpi"><div class="label">Assigned this week</div><div class="value">${hoursText(people.reduce((n,r)=>n+r.hours,0))}</div><div class="hint">Scheduled effort across visible managed work</div></div><div class="kpi amber"><div class="label">Staff over capacity</div><div class="value">${over.length}</div><div class="hint">${hoursText(over.reduce((n,r)=>n+r.hours-r.capacity,0))} above available hours</div></div><div class="kpi"><div class="label">Planning gaps</div><div class="value">${gaps}</div><div class="hint">Missing estimates + missing schedules; may overlap</div></div><div class="kpi"><div class="label">Unassigned effort</div><div class="value">${hoursText(weeks[0].rows.find(r=>r.key==='_unassigned')?.hours||0)}</div><div class="hint">Schedule an owner before judging capacity</div></div></div><section class="panel workload-outlook"><div class="panel-head"><div><h3>Six-week capacity outlook</h3><p>Click a week to inspect daily allocations. Click a person below for the tasks behind their hours.</p></div></div><div class="planner-scroll" role="region" aria-label="Six-week workload forecast" tabindex="0"><table class="planner-table"><thead><tr><th>Staff member</th>${weeks.map(w=>`<th><button class="text-btn" data-action="workload-date" data-value="${w.week}">${esc(niceDate(w.week))}</button></th>`).join('')}</tr></thead><tbody>${people.map(p=>`<tr><th>${esc(p.label)}</th>${weeks.map(w=>{const r=w.rows.find(x=>x.key===p.key),h=r?.hours||0,c=r?.capacity||0;return `<td class="${h>c?'capacity-over':''}"><strong>${hoursText(h)} / ${hoursText(c)}</strong><small>${h>c?hoursText(h-c)+' over':c?Math.round(h/c*100)+'% booked':h?'No capacity':'No available capacity'}</small></td>`;}).join('')}</tr>`).join('')||'<tr><td colspan="7">No visible staff assignments in this scope.</td></tr>'}</tbody></table></div><p class="workload-scope">This is a forecast of work you can see, not a complete timesheet. Set each person’s capacity to hours available after meetings, support, and leave. Search and workspace filters apply. Missing estimates, overdue tasks, and unscheduled hours require review even when utilization is low.</p></section>`;
+    return `<div class="kpi-grid"><div class="kpi"><div class="label">Assigned this week</div><div class="value">${hoursText(people.reduce((n,r)=>n+r.hours,0))}</div><div class="hint">Scheduled effort across visible managed work</div></div><div class="kpi amber"><div class="label">Staff over capacity</div><div class="value">${over.length}</div><div class="hint">${hoursText(over.reduce((n,r)=>n+r.hours-r.capacity,0))} above available hours</div></div><div class="kpi"><div class="label">Planning gaps</div><div class="value">${gaps}</div><div class="hint">Missing estimates + missing schedules; may overlap</div></div><div class="kpi"><div class="label">Unassigned effort</div><div class="value">${hoursText(weeks[0].rows.find(r=>r.key==='_unassigned')?.hours||0)}</div><div class="hint">Schedule an owner before judging capacity</div></div></div><section class="panel workload-outlook"><div class="panel-head"><div><h3>Six-week capacity outlook</h3><p>Click a week to inspect daily allocations. Click a person below for the tasks behind their hours.</p></div></div><div class="planner-scroll" role="region" aria-label="Six-week workload forecast" tabindex="0"><table class="planner-table"><thead><tr><th>Staff member</th>${weeks.map(w=>`<th><button class="text-btn" data-action="workload-date" data-value="${w.week}">${esc(niceDate(w.week))}</button></th>`).join('')}</tr></thead><tbody>${people.map(p=>`<tr><th>${esc(p.label)}</th>${weeks.map(w=>{const r=w.rows.find(x=>x.key===p.key),h=r?.hours||0,c=r?.capacity||0;return `<td class="${h>c?'capacity-over':''}"><strong>${hoursText(h)} / ${hoursText(c)}</strong><small>${h>c?hoursText(h-c)+' over':c?Math.round(h/c*100)+'% booked':h?'No capacity':'No available capacity'}</small>${r?.unavailableDays.length?`<small>${r.unavailableDays.length} working days unavailable · PTO / holiday</small>`:''}</td>`;}).join('')}</tr>`).join('')||'<tr><td colspan="7">No visible staff assignments in this scope.</td></tr>'}</tbody></table></div><p class="workload-scope">This is a forecast of work you can see, not a complete timesheet. Set baseline capacity after meetings and support. Recorded PTO and non-working holidays reduce it automatically using the configured workweek. Search and workspace filters apply. Missing estimates, overdue tasks, and unscheduled hours require review even when utilization is low.</p></section>`;
   }
   function weeklyWorkloadPanel(){
     const report=weeklyWorkload(),selected=report.rows.some(r=>r.key===s.workloadOwner)?s.workloadOwner:'all',rows=report.rows.filter(r=>selected==='all'||r.key===selected);
     const total=rows.reduce((sum,g)=>sum+g.hours,0);
-    return `<section class="panel weekly-workload"><div class="panel-head"><div><h3>Weekly effort &amp; capacity</h3><p>${hoursText(total)} scheduled in the selected view</p></div><button class="btn sm" data-action="workload-export">Export week CSV</button></div><div class="panel-body"><div class="calendar-filters"><button class="btn sm" data-action="workload-week" data-value="-7">Previous week</button><label>Week of<input id="workload-week" type="date" value="${report.week}"></label><button class="btn sm" data-action="workload-week" data-value="7">Next week</button><label>Project<select id="workload-project"><option value="all">All managed projects</option>${managedProjects().map(p=>`<option value="${esc(p.id)}" ${s.workloadProject===p.id?'selected':''}>${esc(p.title)}</option>`).join('')}</select></label><label>Staff member<select id="workload-owner"><option value="all">Everyone</option>${report.rows.map(r=>`<option value="${esc(r.key)}" ${selected===r.key?'selected':''}>${esc(r.label)}</option>`).join('')}</select></label></div><p class="field-hint">Forecast of visible open tasks, not timesheets. Hours are spread evenly across each task’s working days. A finish-only task is placed on its finish date. Remaining hours, when entered, are spread from today through finish. Milestone budgets are excluded. Missing dates/estimates and past-due work need review; they are not spare capacity.</p><div class="planner-scroll" role="region" aria-label="Weekly workload" tabindex="0"><table class="planner-table"><thead><tr><th>Staff member</th>${report.days.map(d=>`<th>${esc(calendarDate(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}))}</th>`).join('')}<th>Week / capacity</th><th>Planning gaps</th></tr></thead><tbody>${rows.map(g=>`<tr><th><button class="text-btn" data-action="workload-person" data-id="${esc(g.key)}">${esc(g.label)}</button></th>${g.days.map((h,i)=>{const capacity=report.defaults.workdays.includes(calendarDate(report.days[i]).getDay())?g.capacity/report.defaults.workdays.length:0;return `<td class="${g.key!=='_unassigned'&&h>capacity?'capacity-over':''}">${h?hoursText(h):'—'}${g.key!=='_unassigned'&&h>capacity?'<small>Over daily capacity</small>':''}</td>`;}).join('')}<td class="${g.key!=='_unassigned'&&g.hours>g.capacity?'capacity-over':''}"><strong>${hoursText(g.hours)}${g.key==='_unassigned'?'':' / '+hoursText(g.capacity)}</strong>${g.key!=='_unassigned'?`<div class="workload-meter"><span style="width:${g.capacity?Math.min(100,100*g.hours/g.capacity):g.hours?100:0}%"></span></div><small>${g.capacity?Math.round(100*g.hours/g.capacity)+'% booked · ':''}${g.hours>g.capacity?hoursText(g.hours-g.capacity)+' over capacity':hoursText(Math.max(0,g.capacity-g.hours))+' unallocated'}${g.hasOverride?' · Individual override':''}</small>${isAdmin()?`<button class="text-btn" data-action="capacity" data-id="${esc(g.key)}">Set capacity</button>`:''}`:''}</td><td><strong>${hoursText(g.tasks.reduce((n,r)=>n+Number(taskEffort(r.task)||0),0))} total open effort</strong><br>${g.unknown} not estimated<br>${g.unscheduled} unscheduled (${hoursText(g.unplaced)})<br>${g.overdue} past due</td></tr>`).join('')||'<tr><td colspan="10">No staff or matching tasks in this scope.</td></tr>'}</tbody></table></div>${selected!=='all'?`<div class="weekly-detail"><h3>${esc(rows[0]?.label||'Staff member')} · task allocation</h3>${(rows[0]?.tasks||[]).map(r=>`<div class="planner-task">${taskRow(r.task,true)}<span>${hoursText(r.hours)} this week${r.unknown?' · Estimate needed':''}${r.unplaced?' · Schedule needed':''}${r.overdue?' · Past due':''}</span>${canManage(r.task.project_id)?`<button class="btn sm" data-action="modal" data-value="edit-task" data-id="${esc(r.task.id)}">Edit</button>`:''}</div>`).join('')||'<p>No matching open work.</p>'}</div>`:''}</div></section>`;
+    return availabilityWarning()+`<section class="panel weekly-workload"><div class="panel-head"><div><h3>Weekly effort &amp; capacity</h3><p>${hoursText(total)} scheduled in the selected view</p></div><button class="btn sm" data-action="workload-export">Export week CSV</button></div><div class="panel-body"><div class="calendar-filters"><button class="btn sm" data-action="workload-week" data-value="-7">Previous week</button><label>Week of<input id="workload-week" type="date" value="${report.week}"></label><button class="btn sm" data-action="workload-week" data-value="7">Next week</button><label>Project<select id="workload-project"><option value="all">All managed projects</option>${managedProjects().map(p=>`<option value="${esc(p.id)}" ${s.workloadProject===p.id?'selected':''}>${esc(p.title)}</option>`).join('')}</select></label><label>Staff member<select id="workload-owner"><option value="all">Everyone</option>${report.rows.map(r=>`<option value="${esc(r.key)}" ${selected===r.key?'selected':''}>${esc(r.label)}</option>`).join('')}</select></label></div><p class="field-hint">Forecast of visible open tasks, not timesheets. Hours are spread evenly across each task’s working days. A finish-only task is placed on its finish date. Remaining hours, when entered, are spread from today through finish. PTO and non-working holidays reduce capacity, but do not move scheduled hours or deadlines. Milestone budgets are excluded. Missing dates/estimates and past-due work need review; they are not spare capacity.</p><div class="planner-scroll" role="region" aria-label="Weekly workload" tabindex="0"><table class="planner-table"><thead><tr><th>Staff member</th>${report.days.map(d=>`<th>${esc(calendarDate(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}))}</th>`).join('')}<th>Week / capacity</th><th>Planning gaps</th></tr></thead><tbody>${rows.map(g=>`<tr><th><button class="text-btn" data-action="workload-person" data-id="${esc(g.key)}">${esc(g.label)}</button></th>${g.days.map((h,i)=>{const capacity=g.dayCapacity[i];return `<td class="${g.key!=='_unassigned'&&h>capacity?'capacity-over':''}">${h?hoursText(h):'—'}${g.absences[i].length?`<small class="availability-day-note">${g.absences[i].map(a=>esc(a.kind==='pto'?'PTO':a.title)).join(' · ')}</small>`:''}${g.key!=='_unassigned'&&h>capacity?'<small>Over daily capacity</small>':''}</td>`;}).join('')}<td class="${g.key!=='_unassigned'&&g.hours>g.capacity?'capacity-over':''}"><strong>${hoursText(g.hours)}${g.key==='_unassigned'?'':' / '+hoursText(g.capacity)}</strong>${g.key!=='_unassigned'?`<div class="workload-meter"><span style="width:${g.capacity?Math.min(100,100*g.hours/g.capacity):g.hours?100:0}%"></span></div><small>${g.capacity?Math.round(100*g.hours/g.capacity)+'% booked · ':''}${g.hours>g.capacity?hoursText(g.hours-g.capacity)+' over capacity':hoursText(Math.max(0,g.capacity-g.hours))+' unallocated'}${g.hasOverride?' · Individual override':''}${g.unavailableDays.length?' · '+g.unavailableDays.length+' working days unavailable':''}</small>${isAdmin()?`<button class="text-btn" data-action="capacity" data-id="${esc(g.key)}">Set capacity</button>`:''}`:''}</td><td><strong>${hoursText(g.tasks.reduce((n,r)=>n+Number(taskEffort(r.task)||0),0))} total open effort</strong><br>${g.unknown} not estimated<br>${g.unscheduled} unscheduled (${hoursText(g.unplaced)})<br>${g.overdue} past due</td></tr>`).join('')||'<tr><td colspan="10">No staff or matching tasks in this scope.</td></tr>'}</tbody></table></div>${selected!=='all'?`<div class="weekly-detail"><h3>${esc(rows[0]?.label||'Staff member')} · task allocation</h3>${(rows[0]?.tasks||[]).map(r=>`<div class="planner-task">${taskRow(r.task,true)}<span>${hoursText(r.hours)} this week${r.unknown?' · Estimate needed':''}${r.unplaced?' · Schedule needed':''}${r.overdue?' · Past due':''}</span>${canManage(r.task.project_id)?`<button class="btn sm" data-action="modal" data-value="edit-task" data-id="${esc(r.task.id)}">Edit</button>`:''}</div>`).join('')||'<p>No matching open work.</p>'}</div>`:''}</div></section>`;
   }
   function workloadCSV(){
     const report=weeklyWorkload(),rows=report.rows.filter(r=>!s.workloadOwner||s.workloadOwner==='all'||r.key===s.workloadOwner);
-    const cells=[['Week of','Staff member',...report.days,'Week hours','Capacity hours','Tasks without estimates','Unscheduled tasks','Unscheduled hours','Past due tasks'],...rows.map(r=>[report.week,r.label,...r.days.map(n=>n.toFixed(2)),r.hours.toFixed(2),r.key==='_unassigned'?'':r.capacity,r.unknown,r.unscheduled,r.unplaced,r.overdue])];
+    const cells=[['Week of','Staff member',...report.days,'Week hours','Capacity hours','Unavailable working days','Tasks without estimates','Unscheduled tasks','Unscheduled hours','Past due tasks'],...rows.map(r=>[report.week,r.label,...r.days.map(n=>n.toFixed(2)),r.hours.toFixed(2),r.key==='_unassigned'?'':r.capacity,r.unavailableDays.join('; '),r.unknown,r.unscheduled,r.unplaced,r.overdue])];
     return cells.map(row=>row.map(v=>{let text=String(v??'');if(/^[\s]*[=+@-]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';}).join(',')).join('\r\n');
   }
 
   const formEpoch=new WeakMap();
-  const workspaceArrays=['vendors','vendorContacts','planningSettings','staffCapacity','invitedCandidates','projectChanges','departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates','milestones','briefs'];
+  const workspaceArrays=['availability','vendors','vendorContacts','planningSettings','staffCapacity','invitedCandidates','projectChanges','departments','departmentMembers','orgMembers','projects','projectMembers','tasks','checklist','updates','events','xp','invitations','profiles','pendingInvitations','dependencies','dependencyReadiness','templates','milestones','briefs'];
   function invalidateWorkspace(resetNavigation=true){
     resetInbox(resetNavigation);resetProjectHistory();resetRewards();if(resetNavigation){resetTaskExplorer();resetActivity();}
     epoch++;requestController?.abort();requestController=typeof AbortController==='undefined'?null:new AbortController();
     candidateRequest++;membershipRequest++;
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
     for(const key of workspaceArrays)s[key]=[];
-    Object.assign(s,{org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null,creationTemplate:null,taskRequest:null,editMilestoneId:null,milestoneRequest:null,creationMilestone:null});
+    Object.assign(s,{availabilityError:null,availabilityEdit:null,availabilityKind:null,availabilityRequest:null,org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null,creationTemplate:null,taskRequest:null,editMilestoneId:null,milestoneRequest:null,creationMilestone:null});
+    if(resetNavigation)Object.assign(templateFilters,{group:'all',query:''});
     if(resetNavigation)Object.assign(s,{settingsScope:'',workloadWeek:null,workloadProject:'all',workloadOwner:'all',capacityOwner:null,deliveryProject:'',deliveryType:'executive',reportView:'outlook',reportPeriod:'30',reportHealth:'all',reportClosed:false,reportProject:null,reportSignal:'all',workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:'',milestoneId:null,projectMilestone:'all',projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false});
     const notifications=document.getElementById('toast');if(notifications)notifications.innerHTML='';
     return epoch;
@@ -1083,7 +2729,7 @@
   let candidateRequest = 0;
   let membershipRequest=0;
   const membership={scope:null,rows:[],events:[],loading:false,error:null,loaded:false};
-  const s = {vendors:[],vendorContacts:[],editVendor:null,editVendorContact:null,vendorRequest:null, planningSettings:[],staffCapacity:[],invitedCandidates:[],settingsScope:'',workloadWeek:null,workloadProject:'all',workloadOwner:'all',capacityOwner:null,projectChanges:[], deliveryProject:'',deliveryType:'executive',reportView:'outlook',reportPeriod:'30',reportHealth:'all',reportClosed:false,reportProject:null,reportSignal:'all', briefs:[],milestones:[],milestoneId:null,projectMilestone:'all',editMilestoneId:null,milestoneRequest:null,creationMilestone:null,templates:[],creationTemplate:null,taskRequest:null,projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
+  const s = {availability:[],availabilityError:null,availabilityEdit:null,availabilityKind:null,availabilityRequest:null,vendors:[],vendorContacts:[],editVendor:null,editVendorContact:null,vendorRequest:null, planningSettings:[],staffCapacity:[],invitedCandidates:[],settingsScope:'',workloadWeek:null,workloadProject:'all',workloadOwner:'all',capacityOwner:null,projectChanges:[], deliveryProject:'',deliveryType:'executive',reportView:'outlook',reportPeriod:'30',reportHealth:'all',reportClosed:false,reportProject:null,reportSignal:'all', briefs:[],milestones:[],milestoneId:null,projectMilestone:'all',editMilestoneId:null,milestoneRequest:null,creationMilestone:null,templates:[],creationTemplate:null,taskRequest:null,projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false,user:null,loading:true,demo:false,organizations:[],org:null,orgMembership:null,departments:[],departmentMembers:[],projects:[],projectMembers:[],tasks:[],checklist:[],updates:[],events:[],xp:[],invitations:[],pendingInvitations:[],profiles:[],dependencies:[],dependencyReadiness:[],workspace:'all',nav:'home',projectId:null,taskId:null,modal:null,filter:'all',query:'',mode:localStorage.getItem('qb-mode')||'professional',menuOpen:false,busy:false,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null };
   const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const initials = v => String(v||'Q').trim().split(/\s+/).map(x=>x[0]||'').slice(0,2).join('').toUpperCase();
   const uid = () => (crypto?.randomUUID?.() || 'demo-'+Math.random().toString(36).slice(2));
@@ -1098,8 +2744,9 @@
   const deptFor = id=>s.departments.find(x=>x.id===id);
   const nameFor = id=>{if(!id)return 'Unassigned';if(s.demo)return ({'demo-user':'Jesse','sam':'Sam','eve':'Eve'})[id]||'Team member';const p=s.profiles.find(x=>x.user_id===id);return p?.display_name||'Team member';};
   const deptVisible = d => s.workspace==='all'||d===s.workspace;
-  const visibleProjects = () => s.projects.filter(p=>deptVisible(p.department_id)).filter(p=>!s.query||(p.title+' '+p.summary).toLowerCase().includes(s.query.toLowerCase()));
-  const visibleTasks = () => s.tasks.filter(t=>{const p=projectFor(t.project_id);return p&&deptVisible(p.department_id);}).filter(t=>!s.query||(t.title+' '+t.description).toLowerCase().includes(s.query.toLowerCase()));
+  const pastProject=p=>['complete','archived'].includes(p?.status);
+  const visibleProjects = (includePast=false) => s.projects.filter(p=>(includePast||!pastProject(p))&&deptVisible(p.department_id)).filter(p=>!s.query||(p.title+' '+p.summary).toLowerCase().includes(s.query.toLowerCase()));
+  const visibleTasks = (includePast=false) => s.tasks.filter(t=>{const p=projectFor(t.project_id);return p&&(includePast||!pastProject(p))&&deptVisible(p.department_id);}).filter(t=>!s.query||(t.title+' '+t.description).toLowerCase().includes(s.query.toLowerCase()));
   const myTasks = () => visibleTasks().filter(t=>t.assignee_id===s.user?.id||t.reviewer_id===s.user?.id&&t.status==='in_review');
   const isAdmin = () => s.demo||s.orgMembership?.role==='admin';
   const isOwner = () => s.demo||!!s.orgMembership?.is_owner;
@@ -1233,7 +2880,7 @@
     try{
       const profile={user_id:user.id,display_name:user.user_metadata?.full_name||user.user_metadata?.name||user.email?.split('@')[0]||'Member',preferred_mode:s.mode};
       const [pendingInvitations,memberships]=await Promise.all([
-        pagedRows(()=>api.rpc('qb_my_invitations',{}, {count:'exact'})),
+        pagedRows(()=>api.rpc('qb_my_invitations',{}, {count:'exact'})).then(rows=>{if(generation===epoch){s.pendingInvitations=rows;if(!s.loading)render();}return rows;}),
         pagedRows(()=>api.from('qb_org_members').select('*',{count:'exact'}).eq('user_id',user.id).eq('status','active'),rowKeys.qb_org_members),
         getResult(api.from('qb_profiles').upsert(profile,{onConflict:'user_id'}))
       ]);
@@ -1246,7 +2893,7 @@
         pagedRows(()=>api.from('qb_projects').select('*',{count:'exact'}).eq('org_id',org.id).order('created_at',{ascending:false}))
       ]);
       const projectIds=projects.map(p=>p.id),departmentIds=departments.map(d=>d.id);
-      const [departmentMembers,projectMembers,tasks,orgMembers,invitations,templates,milestones,briefs,notificationSummary,planningSettings,staffCapacity,vendors,vendorContacts,rewardSummary]=await Promise.all([
+      const [departmentMembers,projectMembers,tasks,orgMembers,invitations,templates,milestones,briefs,notificationSummary,planningSettings,staffCapacity,vendors,vendorContacts,rewardSummary,availabilityResult]=await Promise.all([
         scopedRows('qb_department_members','department_id',departmentIds),
         scopedRows('qb_project_members','project_id',projectIds),
         scopedRows('qb_tasks','project_id',projectIds,'*',q=>q.order('created_at',{ascending:false})),
@@ -1260,10 +2907,11 @@
         pagedRows(()=>api.from('qb_staff_capacity').select('*',{count:'exact'}).eq('org_id',org.id),['org_id','owner_key']),
         pagedRows(()=>api.from('qb_vendors').select('*',{count:'exact'}).eq('org_id',org.id)),
         pagedRows(()=>api.from('qb_vendor_contacts').select('*',{count:'exact'}).eq('org_id',org.id)),
-        getResult(api.rpc('qb_rewards_summary',{p_org:org.id})).catch(()=>null)
+        getResult(api.rpc('qb_rewards_summary',{p_org:org.id})).catch(()=>null),
+        pagedRows(()=>api.from('qb_calendar_availability').select('*',{count:'exact'}).eq('org_id',org.id).order('start_date')).then(rows=>({rows,error:null})).catch(()=>({rows:[],error:true}))
       ]);
       const taskIds=tasks.map(t=>t.id);
-      const knownPeople=[...new Set([user.id,...orgMembers.map(m=>m.user_id),...departmentMembers.map(m=>m.user_id),...projectMembers.map(m=>m.user_id),...tasks.flatMap(t=>[t.assignee_id,t.reviewer_id,t.created_by])].filter(Boolean))];
+      const knownPeople=[...new Set([user.id,...availabilityResult.rows.map(a=>a.user_id),...orgMembers.map(m=>m.user_id),...departmentMembers.map(m=>m.user_id),...projectMembers.map(m=>m.user_id),...tasks.flatMap(t=>[t.assignee_id,t.reviewer_id,t.created_by])].filter(Boolean))];
       const [checklist,updates,events,xp,dependencies,dependencyReadiness,knownProfiles]=await Promise.all([
         scopedRows('qb_checklist','task_id',taskIds,'*',q=>q.order('position')),
         scopedRows('qb_task_updates','task_id',taskIds,'*',q=>q.order('created_at',{ascending:false})),
@@ -1283,7 +2931,7 @@
       // Recheck membership at commit: suspension during the load must not publish its snapshot.
       if(!current.length||current[0].role!==orgMembership.role||!!current[0].is_owner!==!!orgMembership.is_owner){s.organizations=[];rememberOrg(user.id,null);throw Error('Organization access changed. Reload your workspace.');}
       if(generation!==epoch)return;
-      Object.assign(s,{organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations,dependencies,dependencyReadiness,templates,milestones,briefs,planningSettings,staffCapacity,vendors,vendorContacts,rewardSummary:rewardSummary?.settings?rewardSummary:null});
+      Object.assign(s,{availability:availabilityResult.rows,availabilityError:availabilityResult.error,organizations,orgMembership,org,pendingInvitations,departments,departmentMembers,projects,projectMembers,tasks,checklist,updates,events,xp,profiles,orgMembers,invitations,dependencies,dependencyReadiness,templates,milestones,briefs,planningSettings,staffCapacity,vendors,vendorContacts,rewardSummary:rewardSummary?.settings?rewardSummary:null});
       inbox.unread=notificationSummary===null?null:Number(notificationSummary?.[0]?.unread_count||0);
       rememberOrg(user.id,org.id);
       if(requestedOrg&&requestedOrg!==org.id)Object.assign(s,{workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:''});
@@ -1339,9 +2987,9 @@
       <button class="menu-backdrop" data-action="close-menu" aria-label="Close navigation" tabindex="-1"></button>
       <main class="main" id="main-content" tabindex="-1">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
       <header class="topbar"><div class="top-left">${organizationSelector()}<button class="mobile-menu" data-action="menu" aria-label="${s.menuOpen?'Close menu':'Open menu'}" aria-expanded="${s.menuOpen}" aria-controls="main-navigation">☰</button><select class="workspace-select" id="workspace-select" ${s.loading?'disabled':''} aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right">${managedDepartments().length||managedProjects().length?`<button class="btn primary sm" data-action="modal" data-value="quick-task">＋ Quick task</button>`:""}<label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
-      <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():s.lastError?loadError():`${invitationNotice()}${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${experienceBar()}${pageContent()}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
+      <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():`${invitationNotice()}${s.nav==='inbox'&&!s.lastError?'':pendingInvitationCards()}${s.lastError?loadError():`${experienceBar()}${pageContent()}`}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
   }
-  function navItem(x){const active=s.nav===x.id||(x.id==='projects'&&['project','project-history','milestone','task'].includes(s.nav))||(x.id==='settings'&&s.nav==='vendors')||(x.id==='rewards'&&s.nav==='reward-admin');return `<button class="nav-link ${active?'active':''}" ${active?'aria-current="page"':''} data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='rewards'&&s.rewardSummary?.pending?`<span class="pill-count" aria-label="Pending reward approvals">${s.rewardSummary.pending}</span>`:''}${x.id==='inbox'&&inbox.unread>0?`<span class="pill-count" aria-label="${inbox.unread} unread notifications">${inbox.unread}</span>`:''}${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
+  function navItem(x){const active=s.nav===x.id||(x.id==='projects'&&['past-projects','project','project-history','milestone','task'].includes(s.nav))||(x.id==='settings'&&s.nav==='vendors')||(x.id==='rewards'&&s.nav==='reward-admin');return `<button class="nav-link ${active?'active':''}" ${active?'aria-current="page"':''} data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='rewards'&&s.rewardSummary?.pending?`<span class="pill-count" aria-label="Pending reward approvals">${s.rewardSummary.pending}</span>`:''}${x.id==='inbox'&&inboxBadgeCount()>0?`<span class="pill-count" aria-label="${inboxBadgeCount()} unread notifications and pending invitations">${inboxBadgeCount()}</span>`:''}${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
   const helpGuides = [
     {id:'start',category:'Getting started',title:'Find your workspace and daily priorities',destination:'mywork',link:'Open My Work',steps:[
       'Choose your organization at the top of the screen, then choose a workspace to narrow the department view. All workspaces includes only work you are allowed to see.',
@@ -1363,7 +3011,7 @@
     ],note:'Available transitions depend on your role and the task state. Starting or submitting a task is not the same as approval.'},
     {id:'projects',category:'Planning',title:'Plan projects with milestones and dependencies',destination:'projects',link:'Open Projects',steps:[
       'Open Projects and create a project if your role allows it. Give it a clear outcome, department, lead, and target date.',
-      'Use Template library for a complete starter plan, or add milestones manually. Preview a template, choose a department and start date, then create an editable project. Suggested dates use calendar days; verify vendor dates and assign the tasks before starting.',
+      'Use Template library to browse Home & family, Personal goals, Business & teams, Education, Community & events, or IT & technology. Combine a category with search, preview the plan, then choose a department and start date. Suggested dates use calendar days; review them and assign tasks before starting.',
       'Set task estimates and dates using the available planning controls. Add prerequisite tasks to describe the order work must happen.',
       'Review the project task table or board to update progress. Use project check-ins to record accomplishments, next steps, risks, and decisions needed.'
     ],note:'A target date is a planning forecast. When the forecast changes, update the plan and explain the reason in a check-in or work update.'},
@@ -1379,11 +3027,18 @@
       'Review the report filters and selected time period. Check that the report includes the intended projects before exporting or printing.',
       'Use Meetings to open Minutes. Create the corresponding QuestBoard tasks for meeting actions and review them at the next meeting.'
     ],note:'Minutes is a separate app; automatic meeting-action synchronization is not implemented. Reports reflect the work and check-ins recorded in QuestBoard.'},
+    {id:'availability',category:'Planning',title:'Plan around holidays and PTO',destination:'calendar',link:'Open Calendar',steps:[
+      'Organization administrators can choose Add holiday or Add PTO in Calendar. Select the first and last day, including both dates. PTO is recorded for active organization members.',
+      'Choose Non-working holiday to reduce available hours, or leave it unchecked for an observance that only appears on the calendar.',
+      'Staff workload reduces each person’s baseline capacity for unavailable working days. Overlapping PTO and holidays count once. Full weeks of PTO show zero available capacity.',
+      'Review Availability conflicts in Calendar or a project. Reassign work, arrange review coverage, or change target dates as appropriate. Task dates and statuses do not change automatically.'
+    ],note:'Full-day planning only, using the configured workweek. This is not an HR leave approval system. Leave reasons are not collected. Undated work cannot be checked for schedule conflicts.'},
     {id:'notifications',category:'Team & reporting',title:'Follow notifications and activity',destination:'inbox',link:'Open Inbox',steps:[
-      'Open Inbox to review your notifications. The menu badge shows unread notifications.',
+      'Open Inbox to review notifications and invitations sent to your signed-in email. The menu badge includes pending invitations.',
+      'Accept an invitation directly from Inbox, even when it is for another organization. Refresh inbox to check for new invitations.',
       'Select a notification to open its related work, then review the latest task context before taking action.',
       'Use Activity to review the work history available to you. Open Team to view people in your organization.'
-    ],note:'Notifications and activity respect organization and project access. Switching organizations changes the context you are viewing.'},
+    ],note:'Task notifications and activity respect organization and project access. Invitations follow your verified email across organizations and remain pending until accepted, revoked, or expired.'},
     {id:'recognition',category:'Recognition',title:'Understand XP, levels, coins, and rewards',destination:'progress',link:'Open My progress',steps:[
       'Use the experience bar or My progress to see your level, XP, and recorded contributions.',
       'Review the task reward settings and your organization policy. XP and coins can be configured differently; not every action earns a reward.',
@@ -1403,7 +3058,7 @@
     <div class="help-search"><label for="guide-search">Find a guide</label><input id="guide-search" type="search" placeholder="Try milestones, review, rewards, or roles…" aria-describedby="guide-count"><span id="guide-count" role="status">${helpGuides.length} guides found</span></div>
     <div class="help-guides">${helpGuides.map(g=>`<details class="help-guide panel" id="guide-${g.id}"><summary><span><small>${esc(g.category)}</small><strong>${esc(g.title)}</strong></span></summary><div class="help-guide-body"><ol>${g.steps.map(step=>`<li>${esc(step)}</li>`).join('')}</ol><p class="help-note">${esc(g.note)}</p><button class="btn soft" data-action="nav" data-value="${g.destination}">${esc(g.link)} →</button></div></details>`).join('')}</div>
     <p id="guide-empty" class="help-empty" hidden>No guides match. Try a broader term or clear the search.</p>`;}
-  function pageContent(){switch(s.nav){case'templates':return templateLibraryPage();case'help':return helpPage();case'home':return dashboard();case'rewards':return rewardStore();case'reward-admin':return rewardAdmin();case'workload':return hasManagerDashboard()?pageTitle('Staff workload','Compare planned effort against available project time.')+workloadOverview()+weeklyWorkloadPanel():workPage();case'progress':return pageTitle('My progress','Your experience, level journey, and approved contributions.')+progressionReport();case'inbox':return inboxPage();case'mywork':return workPage();case'alltasks':return allTasksPage();case'activity':return activityPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();case'settings':return controlPanel();case'vendors':return vendorPage();default:return dashboard();}}
+  function pageContent(){switch(s.nav){case'templates':return templateLibraryPage();case'help':return helpPage();case'home':return dashboard();case'rewards':return rewardStore();case'reward-admin':return rewardAdmin();case'workload':return hasManagerDashboard()?pageTitle('Staff workload','Compare planned effort against available project time.')+workloadOverview()+weeklyWorkloadPanel():workPage();case'progress':return pageTitle('My progress','Your experience, level journey, and approved contributions.')+progressionReport();case'inbox':return inboxPage();case'mywork':return workPage();case'alltasks':return allTasksPage();case'activity':return activityPage();case'calendar':return calendarPage();case'projects':return projectsPage();case'past-projects':return pastProjectsPage();case'project':return projectPage();case'project-history':return projectHistoryPage();case'milestone':return milestonePage();case'task':return taskPage();case'team':return teamPage();case'reports':return reportsPage();case'meetings':return meetingsPage();case'admin':return adminPage();case'settings':return controlPanel();case'vendors':return vendorPage();default:return dashboard();}}
   const pageTitle=(title,desc,actions='')=>`<div class="page-heading"><div><div class="eyebrow">${esc(s.org?.name||'QuestBoard')}</div><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p></div><div class="buttons">${actions}${s.nav!=='help'?`<button class="btn sm" data-action="help" data-value="${helpTopic()}" aria-label="How to use this page">? How to</button>`:''}</div></div>`;
   const empty=(icon,title,desc,button='')=>`<div class="empty"><span class="empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(desc)}</p>${button}</div>`;
   function projectCard(p){const progress=pct(p),department=deptFor(p.department_id);return `<article class="project-card" data-action="project" data-id="${p.id}"><div class="project-icon">${iconForProject(p.title)}</div><div class="overline">${esc(department?.name||'Workspace')} · ${esc(p.status)}</div><h3>${esc(rpg()?questProjectName(p):p.title)}</h3><p class="desc">${esc(p.summary||'A place for meaningful work and shared progress.')}</p><div class="project-meta"><strong>${progress}% ${term('complete','conquered')}</strong><span>${niceDate(p.target_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="project-meta"><span>${s.tasks.filter(t=>t.project_id===p.id).length} ${term('tasks','quests')}</span><div class="tiny-avatars"><span class="tiny-avatar">${esc(initials(nameFor(p.lead_id)))}</span></div></div></article>`;}
@@ -1573,14 +3228,29 @@
   }
   function workPage(){let ts=myTasks();if(s.filter!=='all')ts=ts.filter(t=>t.status===s.filter);return pageTitle(term('My Work','Quest Journal'),term('Your assignments and work awaiting your review.','Your personal adventures, obstacles, and victories.'))+
     `<div class="filter-row">${[['all','All work'],['backlog','Backlog'],['ready','Ready'],['in_progress','In progress'],['blocked','Blocked'],['in_review','In review'],['complete','Completed']].map(([v,l])=>`<button class="filter-pill ${s.filter===v?'active':''}" data-action="filter" data-value="${v}">${esc(rpg()?((rpgStatusNames[v]||l)):l)}</button>`).join('')}</div><div class="panel"><div class="panel-head"><h3>${ts.length} ${term('tasks','quests')}</h3><small>Sorted by due date and status</small></div><div class="panel-body">${ts.length?ts.slice().sort((a,b)=>(a.due_date||'9999').localeCompare(b.due_date||'9999')).map(taskRow).join(''):empty('◇','Nothing here yet','Assigned work will appear as soon as your team adds it.')}</div></div>`;}
+  function templateSearchText(t){return [t.name,t.category,t.summary,templateGroups.find(g=>g.id===t.group)?.name,...t.milestones.flatMap(m=>[m.title,m.description,...m.tasks.flatMap(task=>[task.title,...task.checklist])])].join(' ').toLowerCase();}
+  function templateMatches(t){return (templateFilters.group==='all'||t.group===templateFilters.group)&&templateSearchText(t).includes(templateFilters.query.trim().toLowerCase());}
+  function filterTemplateLibrary(){
+    const query=templateFilters.query.trim().toLowerCase();let count=0;
+    root.querySelectorAll('[data-template-group]').forEach(section=>{
+      let visible=0;
+      section.querySelectorAll('[data-template-search]').forEach(card=>{card.hidden=!(templateFilters.group==='all'||section.dataset.templateGroup===templateFilters.group)||!card.dataset.templateSearch.includes(query);if(!card.hidden)visible++;});
+      section.hidden=visible===0;count+=visible;
+    });
+    root.querySelectorAll('[data-action="template-group"]').forEach(button=>{const active=button.dataset.value===templateFilters.group;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+    document.getElementById('template-count').textContent=count+' templates found';
+    document.getElementById('template-empty').hidden=count>0;
+  }
   function templateLibraryPage(){
-    return pageTitle('Template library','Start with an outcome, then adapt the plan to your team.')+`<section class="panel template-intro"><strong>Reusable IT project plans</strong><p>Each plan contains outcome-based milestones, actionable tasks, and acceptance checklists. Dates are suggested calendar-day targets, not vendor commitments. New work starts unassigned and incomplete.</p><label for="template-search">Find a template</label><input id="template-search" type="search" placeholder="Search equipment, security, phones…"></section><div class="project-grid template-library">${projectTemplateLibrary.map(t=>`<article class="panel template-card" data-template-search="${esc([t.name,t.category,t.summary,...t.milestones.map(m=>m.title)].join(' ').toLowerCase())}"><small>${esc(t.category)}</small><h2>${esc(t.name)}</h2><p>${esc(t.summary)}</p><p class="muted">${t.milestones.length} milestones · ${t.milestones.reduce((n,m)=>n+m.tasks.length,0)} tasks · ${t.milestones.at(-1).offset+1} suggested calendar days</p><details><summary>Preview milestones and tasks</summary><ol>${t.milestones.map(m=>`<li><strong>${esc(m.title)}</strong><small>Day ${m.offset+1}</small><p>${esc(m.description)}</p><ul>${m.tasks.map(task=>`<li>${esc(task.title)}<ul>${task.checklist.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></li>`).join('')}</ul></li>`).join('')}</ol></details>${managedDepartments().length?`<button class="btn primary" data-action="start-project-template" data-id="${t.id}">Use template</button>`:'<p class="muted">A department manager can create a project from this plan.</p>'}</article>`).join('')}</div><p id="template-empty" class="panel" hidden>No templates match. Try a different search.</p>`;
+    const count=projectTemplateLibrary.filter(templateMatches).length;
+    return pageTitle('Template library','Plans for life at home, personal goals, and work of every kind.')+`<section class="panel template-intro"><strong>A starting point you can make your own</strong><p>Every plan includes milestones, tasks, and completion checklists. Suggested dates are adjustable starting points, not commitments. New work starts unassigned and incomplete.</p><label for="template-search">Find a template</label><input id="template-search" type="search" value="${esc(templateFilters.query)}" placeholder="Search moving, onboarding, learning…" aria-describedby="template-count"><div class="filter-row template-groups" role="group" aria-label="Template categories">${[{id:'all',name:'All templates'},...templateGroups].map(g=>`<button class="filter-pill ${templateFilters.group===g.id?'active':''}" data-action="template-group" data-value="${g.id}" aria-pressed="${templateFilters.group===g.id}">${esc(g.name)} <span>(${g.id==='all'?projectTemplateLibrary.length:projectTemplateLibrary.filter(t=>t.group===g.id).length})</span></button>`).join('')}</div><p id="template-count" role="status" aria-live="polite">${count} templates found</p></section>${templateGroups.map(g=>`<section class="template-group" data-template-group="${g.id}" aria-labelledby="template-group-${g.id}" ${projectTemplateLibrary.some(t=>t.group===g.id&&templateMatches(t))?'':'hidden'}><div class="section-row"><div><h2 id="template-group-${g.id}">${esc(g.name)}</h2><p class="muted">${esc(g.description)}</p></div></div><div class="project-grid template-library">${projectTemplateLibrary.filter(t=>t.group===g.id).map(t=>`<article class="panel template-card" data-template-search="${esc(templateSearchText(t))}" ${templateMatches(t)?'':'hidden'}><small>${esc(t.category)}</small><h3>${esc(t.name)}</h3><p>${esc(t.summary)}</p><p class="muted">${t.milestones.length} milestones · ${t.milestones.reduce((n,m)=>n+m.tasks.length,0)} tasks · ${t.milestones.at(-1).offset+1} suggested calendar days</p><details><summary>Preview milestones and tasks</summary><ol>${t.milestones.map(m=>`<li><strong>${esc(m.title)}</strong><small>Day ${m.offset+1}</small><p>${esc(m.description)}</p><ul>${m.tasks.map(task=>`<li>${esc(task.title)}<ul>${task.checklist.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></li>`).join('')}</ul></li>`).join('')}</ol></details>${managedDepartments().length?`<button class="btn primary" data-action="start-project-template" data-id="${t.id}">Use template</button>`:'<p class="muted">An organization admin or workspace manager can create a project from this plan.</p>'}</article>`).join('')}</div></section>`).join('')}<div id="template-empty" class="panel template-intro" ${count?'hidden':''}><p>No templates match this category and search.</p><button class="btn" data-action="template-clear">Clear filters</button></div>`;
   }
   function projectTemplateModal(){
     const t=projectTemplateLibrary.find(t=>t.id===s.projectTemplateId);if(!t)return '';
     return `<form data-form="project-template" data-template="${t.id}" data-request="${esc(s.projectTemplateRequest)}"><div class="modal-body"><p>${esc(t.name)} · ${t.milestones.length} milestones · ${t.milestones.reduce((n,m)=>n+m.tasks.length,0)} tasks</p><div class="form-field"><label>Project name</label><input name="title" value="${esc(t.name)}" maxlength="140" required></div><div class="form-field"><label>Goal / description</label><textarea name="summary" maxlength="1200">${esc(t.summary)}</textarea></div><div class="form-grid"><div class="form-field"><label>Department</label><select name="department_id" required>${managedDepartments().map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="form-field"><label>Planning start date</label><input type="date" name="start_date" required value="${dateKey(new Date())}"></div></div><div class="form-field"><label>Visibility</label><select name="visibility"><option value="department">Department private</option><option value="invited">Invited project members</option><option value="restricted">Restricted project</option></select></div><p class="template-notice">Dates are starting estimates using calendar days. Review milestones, confirm vendor dates, and assign owners after creation. Task dates follow their milestone. No effort estimates or rewards are assumed.</p></div>${modalFooter('Create project from template')}</form>`;
   }
-  function projectsPage(){const ps=visibleProjects(),canCreate=managedDepartments().length>0;return pageTitle(term('Projects','Campaigns'),term('Track the initiatives moving your departments forward.','See every active campaign and the quests required to complete it.'),canCreate?`<button class="btn" data-action="nav" data-value="templates">Template library</button><button class="btn primary" data-action="modal" data-value="project">＋ ${term('New Project','New Campaign')}</button>`:'')+`<div class="project-grid">${ps.map(projectCard).join('')}</div>${ps.length?'':empty('◈','A fresh start',canCreate?'Create a project to organize milestones, owners, and tasks.':'You can see projects once your department manager grants access.',canCreate?`<button class="btn primary" data-action="modal" data-value="project">Create project</button>`:'')}`;}
+  function pastProjectsPage(){const ps=visibleProjects(true).filter(pastProject);return pageTitle('Past projects','Completed and archived projects. Open a project to review its history, tasks, and reports.','<button class="btn" data-action="nav" data-value="projects">Current projects</button>')+`<div class="project-grid">${ps.map(projectCard).join('')}</div>${ps.length?'':empty('◈','No past projects','Completed and archived projects will appear here.')}`;}
+  function projectsPage(){const ps=visibleProjects(),canCreate=managedDepartments().length>0;return pageTitle(term('Projects','Campaigns'),term('Track the initiatives moving your departments forward.','See every active campaign and the quests required to complete it.'),`<button class="btn" data-action="nav" data-value="past-projects">Past projects</button>`+(canCreate?`<button class="btn" data-action="nav" data-value="templates">Template library</button><button class="btn primary" data-action="modal" data-value="project">＋ ${term('New Project','New Campaign')}</button>`:''))+`<div class="project-grid">${ps.map(projectCard).join('')}</div>${ps.length?'':empty('◈','A fresh start',canCreate?'Create a project to organize milestones, owners, and tasks.':'You can see projects once your department manager grants access.',canCreate?`<button class="btn primary" data-action="modal" data-value="project">Create project</button>`:'')}`;}
 
   // Calendar dates are date-only values. Never parse them as UTC instants.
   const dateKey = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -1589,23 +3259,33 @@
     const date=new Date(value+'T12:00:00');
     return Number.isFinite(date.getTime())&&dateKey(date)===value?date:null;
   }
+  function calendarAvailabilityEvents(){
+    const month=calendarDate(s.calendarMonth)||new Date(),first=dateKey(new Date(month.getFullYear(),month.getMonth(),1,12)),last=dateKey(new Date(month.getFullYear(),month.getMonth()+1,0,12)),events=[];
+    for(const entry of availabilityRows()){
+      if(s.calendarScope==='mine'&&entry.kind==='pto'&&entry.user_id!==s.user?.id)continue;
+      const start=entry.start_date>first?entry.start_date:first,end=entry.end_date<last?entry.end_date:last;
+      for(let day=start;day<=end;day=shiftDate(day,1))events.push({kind:entry.kind,id:entry.id,title:availabilityLabel(entry),date:day,item:entry});
+    }
+    return events;
+  }
   function calendarData(){
-    const projects=s.projects.filter(p=>deptVisible(p.department_id));
+    const projects=s.projects.filter(p=>(s.calendarClosed||!pastProject(p))&&deptVisible(p.department_id));
     if(!projects.some(p=>p.id===s.calendarProject))s.calendarProject='all';
     const selected=p=>s.calendarProject==='all'||p.id===s.calendarProject;
-    const tasks=visibleTasks().filter(t=>selected(projectFor(t.project_id)))
+    const tasks=visibleTasks(s.calendarClosed).filter(t=>selected(projectFor(t.project_id)))
       .filter(t=>s.calendarScope!=='mine'||t.assignee_id===s.user?.id)
       .filter(t=>s.calendarClosed||!['complete','cancelled'].includes(t.status));
-    const targets=s.calendarScope==='mine'?[]:visibleProjects().filter(selected)
+    const targets=s.calendarScope==='mine'?[]:visibleProjects(s.calendarClosed).filter(selected)
       .filter(p=>s.calendarClosed||!['complete','archived'].includes(p.status));
     const milestones=s.calendarScope==='mine'?[]:s.milestones.filter(m=>projects.some(p=>p.id===m.project_id)&&selected(projectFor(m.project_id))&&(s.calendarClosed||!m.archived&&!['complete','archived'].includes(projectFor(m.project_id).status))&&(!s.query||(m.title+' '+m.description).toLowerCase().includes(s.query.toLowerCase())));
-    const events=[...milestones.map(m=>({kind:'milestone',id:m.id,title:m.title,date:m.due_date,item:m})),...tasks.filter(t=>calendarDate(t.due_date)).map(t=>({kind:'task',id:t.id,title:t.title,date:t.due_date,item:t})),
+    const events=[...calendarAvailabilityEvents(),...milestones.map(m=>({kind:'milestone',id:m.id,title:m.title,date:m.due_date,item:m})),...tasks.filter(t=>calendarDate(t.due_date)).map(t=>({kind:'task',id:t.id,title:t.title,date:t.due_date,item:t})),
       ...targets.filter(p=>calendarDate(p.target_date)).map(p=>({kind:'project',id:p.id,title:p.title,date:p.target_date,item:p}))]
       .sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title)||a.id.localeCompare(b.id));
     const today=dateKey(new Date());
     return {projects,tasks,events,overdue:tasks.filter(t=>calendarDate(t.due_date)&&t.due_date<today&&!['complete','cancelled'].includes(t.status)).sort((a,b)=>a.due_date.localeCompare(b.due_date)||a.title.localeCompare(b.title)),undated:tasks.filter(t=>!calendarDate(t.due_date))};
   }
   function calendarEvent(event){
+    if(['holiday','pto'].includes(event.kind))return `<div class="calendar-event availability-event ${event.kind}"><strong>${esc(event.title)}</strong><small>${event.item.non_working?'Non-working':'Observance only'}</small></div>`;
     if(event.kind==='milestone')return `<button class="calendar-event milestone-target ${event.item.archived?'closed':''}" data-action="milestone" data-id="${esc(event.id)}"><span class="calendar-event-kind">Milestone</span><strong>${esc(event.title)}</strong><small>${esc(projectFor(event.item.project_id)?.title||'')}</small></button>`;
     const task=event.kind==='task',item=event.item,closed=task?['complete','cancelled'].includes(item.status):['complete','archived'].includes(item.status);
     return `<button class="calendar-event ${task?'':'project-target'} ${closed?'closed':''}" data-action="${event.kind}" data-id="${esc(event.id)}"><span class="calendar-event-kind">${task?term('Task due','Quest due'):'Project target'}</span><strong>${esc(event.title)}</strong><small>${task?esc(projectFor(item.project_id)?.title||'')+' · '+esc(nameFor(item.assignee_id)):esc(deptFor(item.department_id)?.name||'')}</small><small>${esc(task?fmtStatus(item.status):item.status)}${task&&dependencyWaiting(item.id)?' · Waiting for prerequisites':''}</small></button>`;
@@ -1620,11 +3300,13 @@
       const key=prefix+'-'+String(index+1).padStart(2,'0'),entries=byDate.get(key)||[];
       return `<section class="calendar-day ${entries.length?'has-events':'no-events'} ${key===today?'is-today':''}" aria-label="${esc(niceDate(key))}"><h3><time datetime="${key}" ${key===today?'aria-current="date"':''}><span class="calendar-day-number">${index+1}</span><span class="calendar-mobile-date">${esc(niceDate(key))}</span></time>${key===today?'<small>Today</small>':''}</h3>${entries.map(calendarEvent).join('')}</section>`;
     }).join('');
-    return pageTitle(term('Work calendar','Quest Calendar'),'Task due dates, milestones, and project targets across your visible workspaces.')+`
+    return pageTitle(term('Work calendar','Quest Calendar'),'Deadlines, holidays, and staff availability across your visible workspaces.')+`
       <div class="calendar-filters"><label>Project<select id="calendar-project" aria-label="Calendar project"><option value="all">All projects</option>${projects.map(p=>`<option value="${esc(p.id)}" ${p.id===s.calendarProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></label><label>Show<select id="calendar-scope" aria-label="Calendar work scope"><option value="all">All visible work</option><option value="mine" ${s.calendarScope==='mine'?'selected':''}>My assigned tasks</option></select></label><label class="calendar-closed"><input id="calendar-closed" type="checkbox" ${s.calendarClosed?'checked':''}> Include finished work</label></div>
+      ${availabilityPanel()}
       <section class="panel calendar-panel"><div class="panel-head calendar-toolbar"><div><h2 id="calendar-month-label" aria-live="polite">${esc(label)}</h2><small>${monthEvents.length} dated items${s.calendarScope==='mine'?' · Project targets hidden':''}</small></div><div class="buttons"><button class="btn sm" data-action="calendar-month" data-value="-1" aria-label="Previous month">←</button><button class="btn sm" data-action="calendar-month" data-value="today">Today</button><button class="btn sm" data-action="calendar-month" data-value="1" aria-label="Next month">→</button></div></div>
       ${!monthEvents.length?'<p class="calendar-empty" role="status">No matching deadlines this month. Try another month or adjust your filters.</p>':''}
       <div class="calendar-grid" aria-labelledby="calendar-month-label">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(day=>`<div class="calendar-weekday" aria-hidden="true">${day}</div>`).join('')}${cells}</div></section>
+      ${availabilityImpact(s.calendarProject==='all'?null:s.calendarProject)}
       <div class="calendar-followup"><section class="panel"><div class="panel-head"><h3>Overdue tasks · ${overdue.length}</h3><small>Across all months</small></div><div class="panel-body">${overdue.length?`<details><summary>View overdue tasks</summary>${overdue.map(taskRow).join('')}</details>`:'<p class="muted">No overdue tasks match these filters.</p>'}</div></section><section class="panel"><div class="panel-head"><h3>Tasks without a date · ${undated.length}</h3></div><div class="panel-body">${undated.length?`<details><summary>View tasks without a due date</summary>${undated.map(taskRow).join('')}</details>`:'<p class="muted">All matching tasks have a due date.</p>'}</div></section></div>`;
   }
 
@@ -1780,14 +3462,14 @@
 
   function projectPage(){const p=projectFor(s.projectId);if(!p)return projectsPage();const data=projectTaskData(p.id),ts=data.tasks,all=data.all,progress=pct(p),manager=canManage(p.id);
     const statuses=['backlog','ready','in_progress','blocked','in_review',...(s.projectClosed?['complete','cancelled']:[])];
-    return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button><button class="btn" data-action="modal" data-value="project-settings">Project settings</button><button class="btn" data-action="modal" data-value="reward-bulk">Bulk rewards</button><button class="btn" data-action="planning-options" data-id="${esc(p.id)}">Planning options</button>`:''}<button class="btn" data-action="modal" data-value="project-export">Export for staff</button><button class="btn" data-action="project-report" data-id="${esc(p.id)}">Export project report</button><button class="btn" data-action="nav" data-value="team">♧ Team</button><button class="btn" data-action="project-history">Change history</button><button class="btn" data-action="project-refresh">Refresh project</button></div></div>
+    return `<div class="breadcrumb"><button data-action="nav" data-value="${pastProject(p)?'past-projects':'projects'}">${pastProject(p)?'Past projects':term('Projects','Campaigns')}</button><span>›</span>${esc(p.title)}</div><div class="detail-banner">${tag(p.status,p.status.toUpperCase())}<h1>${esc(rpg()?questProjectName(p):p.title)}</h1><p>${esc(p.summary)}</p><div class="banner-actions">${manager?`<button class="btn" data-action="modal" data-value="task">＋ ${term('Add task','Add quest')}</button><button class="btn" data-action="modal" data-value="project-settings">Project settings</button><button class="btn" data-action="modal" data-value="reward-bulk">Bulk rewards</button><button class="btn" data-action="planning-options" data-id="${esc(p.id)}">Planning options</button>`:''}<button class="btn" data-action="modal" data-value="project-export">Export for staff</button><button class="btn" data-action="project-report" data-id="${esc(p.id)}">Export project report</button><button class="btn" data-action="nav" data-value="team">♧ Team</button><button class="btn" data-action="project-history">Change history</button><button class="btn" data-action="project-refresh">Refresh project</button></div></div>${availabilityImpact(p.id)}
     <div class="kpi-grid"><div class="kpi"><div class="label">Progress</div><div class="value">${progress}%</div><div class="hint">Verified completions</div></div><div class="kpi"><div class="label">${term('Tasks','Quests')}</div><div class="value">${all.length}</div><div class="hint">${all.filter(t=>t.status==='complete').length} complete</div></div><div class="kpi amber"><div class="label">Blocked</div><div class="value">${all.filter(t=>t.status==='blocked').length}</div><div class="hint">Require attention</div></div><div class="kpi green"><div class="label">Target date</div><div class="value" style="font-size:19px">${niceDate(p.target_date)}</div><div class="hint">${esc(deptFor(p.department_id)?.name||'Department')}</div></div></div>
     ${projectBriefPanel(p.id)}${projectMilestones(p.id)}${manager?templateLibrary(p.id):''}<div class="section-row"><h2>${term('Project tasks','Campaign quests')}</h2>${manager?`<button class="btn sm" data-action="modal" data-value="task">＋ Add</button>`:''}</div>${projectTaskControls(data)}
     ${!ts.length?empty('◇','No matching tasks','Try clearing the filters or including finished work.'):s.projectView==='dependencies'?projectDependencies(data):s.projectView==='list'?projectTaskTable(ts):
     `<div class="board" style="grid-template-columns:repeat(${statuses.length},minmax(225px,1fr))">${statuses.map(st=>`<div class="board-col"><div class="board-col-head">${esc(fmtStatus(st))} <span>${ts.filter(t=>t.status===st).length}</span></div>${ts.filter(t=>t.status===st).map(t=>`<div class="board-task" data-action="task" data-id="${esc(t.id)}"><h4>${esc(t.title)}</h4>${dependencyWaiting(t.id)?'<small class="dependency-waiting">Waiting for prerequisites</small>':''}<p>${esc(assigneeName(t))} · ${esc(niceDate(t.due_date))}</p><div class="meta">${tag(t.priority,priorityNames[t.priority])}${t.estimated_hours!=null?`<small>${esc(hoursText(t.estimated_hours))}</small>`:''}<small>✦ ${t.xp_reward||0} XP</small></div>${taskAssigneeControl(t)}${taskStatusControls(t)}</div>`).join('')||'<small class="board-empty">No matching work</small>'}</div>`).join('')}</div>`}`;
   }
   function taskPage(){const t=taskFor(s.taskId);if(!t)return workPage();const p=projectFor(t.project_id),checks=s.checklist.filter(c=>c.task_id===t.id),updates=s.updates.filter(x=>x.task_id===t.id),events=s.events.filter(x=>x.task_id===t.id).slice(0,8),manager=canManage(t.project_id),actions=taskActions(t),xp=t.xp_reward||0;
-    return `<div class="breadcrumb"><button data-action="nav" data-value="projects">${term('Projects','Campaigns')}</button><span>›</span><button data-action="project" data-id="${p?.id}">${esc(p?.title||'Project')}</button><span>›</span>${term('Task','Quest')}</div>
+    return `<div class="breadcrumb"><button data-action="nav" data-value="${pastProject(p)?'past-projects':'projects'}">${pastProject(p)?'Past projects':term('Projects','Campaigns')}</button><span>›</span><button data-action="project" data-id="${p?.id}">${esc(p?.title||'Project')}</button><span>›</span>${term('Task','Quest')}</div>
     <div class="page-heading"><div><div class="eyebrow">${esc(p?.title||'Project')} / ${term('Task','Quest')}</div><h1>${esc(t.title)}</h1><p class="lead">${esc(t.description||'No description yet.')}</p></div><div class="buttons">${tag(t.priority,priorityNames[t.priority])}${tag(t.status,fmtStatus(t.status))}</div></div>
     <div class="detail-grid"><div class="detail-content"><section class="panel"><div class="panel-head"><h3>${term('Objectives','Quest objectives')}</h3><small>${checks.filter(x=>x.done).length}/${checks.length} complete</small></div><div class="panel-body">${checks.length?checks.map(c=>`<label class="checkline"><input type="checkbox" data-action="check" data-id="${c.id}" ${c.done?'checked':''} ${['in_review','complete','cancelled'].includes(t.status)||!(s.demo||manager||t.assignee_id===s.user?.id)?'disabled':''}><span style="${c.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(c.title)}</span></label>`).join(''):empty('☑','No checklist items','Add objectives to define what completion means.')}${manager&&!['in_review','complete','cancelled'].includes(t.status)?`<form data-form="checklist" class="journal-form" style="display:flex"><input type="text" name="title" required maxlength="180" placeholder="Add a checklist item…" style="flex:1;min-width:0;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:10px"><button class="btn sm" type="submit">Add</button></form>`:''}</div></section>
     ${planSummary(t)}${vendorSummary(t)}${dependencyPanel(t)}
@@ -1822,7 +3504,7 @@
       `<section class="panel"><div class="panel-head"><div><h3>Team roster</h3><p>${visibleMembers.length} joined · ${pending.length} awaiting acceptance (including expired invitations)</p></div>${manage(preferredMembershipScope())}</div><div class="table-wrap" role="region" aria-label="Team roster" tabindex="0"><table class="data-table"><thead><tr><th>Person</th><th>Status</th><th>Organization role / invited access</th><th>Departments</th><th>Open work</th><th>Actions</th></tr></thead><tbody>${visibleMembers.map(m=>{
         const departments=s.departmentMembers.filter(d=>d.user_id===m.user_id);
         return `<tr><td class="strong">${esc(nameFor(m.user_id))}</td><td>${esc(m.status==='active'?'Joined':m.status)}</td><td>${esc(m.is_owner?'Owner':m.role==='admin'?'Administrator':'Member')}</td><td>${departments.map(d=>`${esc(deptFor(d.department_id)?.name||'Department')} · ${esc(d.role)} (${esc(d.status)})`).join('<br>')||'No department assigned'}</td><td>${s.tasks.filter(t=>t.assignee_id===m.user_id&&!['complete','cancelled'].includes(t.status)).length}</td><td>${membershipScopes().length?`<button class="btn sm" data-action="manage-team-person" data-id="${esc(m.user_id)}" aria-label="Manage access for ${esc(nameFor(m.user_id))}">Manage access</button>`:'—'}</td></tr>`;
-      }).join('')}${pending.map(i=>`<tr><td class="strong">${esc(i.invited_email)}</td><td>${esc(invitationStatus(i))}</td><td>${esc(invitationScope(i))} · ${esc(i.invite_role.replace(/_/g,' '))}</td><td>${i.scope_type==='department'?esc(deptFor(i.scope_id)?.name||'Department'):'Not assigned by this invitation'}</td><td>${s.tasks.filter(t=>t.assignee_invitation_id===i.id&&!['complete','cancelled'].includes(t.status)).length}</td><td><div class="inline-actions">${invitationStatus(i)==='Expired'?`<button class="btn sm" data-action="replace-invite" data-id="${esc(i.id)}">Create replacement invite</button>`:`<button class="btn sm" data-action="copy-invite" data-id="${esc(i.id)}">Copy invite link</button>`}<button class="btn sm danger" data-action="revoke-invite" data-id="${esc(i.id)}">Revoke</button></div></td></tr>`).join('')}${!visibleMembers.length&&!pending.length?'<tr><td colspan="6">No team members yet. Add a team member to create an invitation.</td></tr>':''}</tbody></table></div><div class="panel-body"><p>Invited people appear immediately. They receive access after accepting with the invited email address. Invitation emails are not sent automatically: copy and share the link.</p></div></section>
+      }).join('')}${pending.map(i=>`<tr><td class="strong">${esc(i.invited_email)}</td><td>${esc(invitationStatus(i))}</td><td>${esc(invitationScope(i))} · ${esc(i.invite_role.replace(/_/g,' '))}</td><td>${i.scope_type==='department'?esc(deptFor(i.scope_id)?.name||'Department'):'Not assigned by this invitation'}</td><td>${s.tasks.filter(t=>t.assignee_invitation_id===i.id&&!['complete','cancelled'].includes(t.status)).length}</td><td><div class="inline-actions">${invitationStatus(i)==='Expired'?`<button class="btn sm" data-action="replace-invite" data-id="${esc(i.id)}">Create replacement invite</button>`:`<button class="btn sm" data-action="copy-invite" data-id="${esc(i.id)}">Copy invite link</button>`}<button class="btn sm danger" data-action="revoke-invite" data-id="${esc(i.id)}">Revoke</button></div></td></tr>`).join('')}${!visibleMembers.length&&!pending.length?'<tr><td colspan="6">No team members yet. Add a team member to create an invitation.</td></tr>':''}</tbody></table></div><div class="panel-body"><p>Invited people appear immediately. They receive access after accepting with the invited email address. Recipients can accept in Inbox when signed in with the invited email. Invitation emails are not sent automatically; you can also copy and share the link.</p></div></section>
       `;
   }
 
@@ -1830,7 +3512,7 @@
   const portfolioSignals={all:'All open tasks',overdue:'Overdue',blocked:'Blocked',waiting:'Waiting for prerequisites',unassigned:'Unassigned',review:'Awaiting review',undated:'No due date'};
   function portfolioReport(today=new Date(),healthFilter=s.reportHealth){
     const day=dateKey(today),soon=dateKey(new Date(today.getFullYear(),today.getMonth(),today.getDate()+14,12));
-    const rows=visibleProjects().filter(p=>s.reportClosed||!['complete','archived'].includes(p.status)).map(project=>{
+    const rows=visibleProjects(true).filter(p=>s.reportClosed||!['complete','archived'].includes(p.status)).map(project=>{
       const tasks=s.tasks.filter(t=>t.project_id===project.id),open=tasks.filter(t=>!['complete','cancelled'].includes(t.status));
       const done=tasks.filter(t=>t.status==='complete').length,cancelled=tasks.filter(t=>t.status==='cancelled').length;
       const overdue=open.filter(t=>calendarDate(t.due_date)&&t.due_date<day),blocked=open.filter(t=>t.status==='blocked');
@@ -1875,7 +3557,7 @@
       ${selected?`<section class="panel report-detail" tabindex="-1" aria-label="Project task details"><div class="panel-head"><h2>${esc(selected.project.title)} · ${esc(portfolioSignals[s.reportSignal]||portfolioSignals.all)}</h2><button class="btn sm" data-action="report-detail-close">Close details</button></div><div class="panel-body"><p>${detail.length} matching tasks</p>${detail.map(t=>`<article class="report-task"><button class="text-link" data-action="task" data-id="${esc(t.id)}">${esc(t.title)}</button><span>${esc(assigneeName(t))}</span><span>${esc(fmtStatus(t.status))}</span><span>${t.due_date?niceDate(t.due_date):'No due date'}</span></article>`).join('')||'<p class="muted">No tasks match this signal.</p>'}</div></section>`:''}`;
   }
   function leadershipReport(){
-    const projects=visibleProjects().filter(p=>s.reportClosed||!['complete','archived'].includes(p.status));
+    const projects=visibleProjects(true).filter(p=>s.reportClosed||!['complete','archived'].includes(p.status));
     const cutoff=new Date();cutoff.setDate(cutoff.getDate()-Number(s.reportPeriod||30));
     const rows=projects.map(project=>{
       const updates=projectBriefs(project.id),recent=updates.filter(b=>new Date(b.created_at)>=cutoff);
@@ -2078,6 +3760,8 @@
       const latest=dates.at(-1)||null,target=calendarDate(r.project.target_date)?r.project.target_date:null;
       const gaps=r.undated.length+pending.filter(m=>!calendarDate(m.due_date)).length;
       const signals=[...(r.targetLate?['Project target has passed']:[]),...(target&&latest&&latest>target?['Scheduled work extends beyond the project target']:[]),...(r.overdue.length?[`${r.overdue.length} overdue task(s)`]:[]),...(r.missed.length?[`${r.missed.length} overdue / unverified milestone(s)`]:[]),...(r.blocked.length?[`${r.blocked.length} blocked task(s)`]:[]),...(gaps?[`${gaps} open task(s) / milestone(s) have no valid date`]:[]),...(r.project.status==='paused'?['Project is paused']:[])];
+      for(const task of r.open){const absences=taskAbsences(task);if(absences.length)signals.push('Availability conflict: '+task.title+' — '+absences.map(a=>availabilityLabel(a)+' ('+a.start_date+' to '+a.end_date+')').join('; '));}
+      if(s.availabilityError)signals.push('Holiday / PTO availability could not be loaded; confirm staffing before committing dates');
       const stale=!brief||!Number.isFinite(Date.parse(brief.created_at))||today-new Date(brief.created_at)>14*86400000;
       const finish=['complete','archived'].includes(r.project.status)?`Project is ${r.project.status}; actual finish date is not recorded.`:!target?'No project finish target has been set.':`Current target: ${niceDate(target)}. ${signals.length?'Delivery needs review before this date can be confirmed.':'Confirm this target with the project lead.'}`;
       return {...r,brief,milestones,taskGroups:deliveryTaskGroups(r,milestones),pending,latest,target,gaps,signals,stale,finish,day};
@@ -2101,7 +3785,7 @@
     return `<div class="delivery-document"><header class="dr-cover"><div class="dr-eyebrow">${esc(s.org?.name||'Organization')} / PROJECT DELIVERY</div><h1>${esc(deliveryTypes[s.deliveryType]||deliveryTypes.executive)}</h1><p>As of ${esc(niceDate(dateKey(new Date())))} · ${rows.length} project${rows.length===1?'':'s'} · ${esc(s.workspace==='all'?'All workspaces':deptFor(s.workspace)?.name||'Selected workspace')}</p></header>${rows.length?`<div class="dr-kpis"><div><strong>${rows.length}</strong><span>Projects reported</span></div><div><strong>${rows.reduce((n,r)=>n+r.open.length,0)}</strong><span>Open tasks</span></div><div><strong>${rows.filter(r=>r.signals.length).length}</strong><span>Schedule concerns</span></div><div><strong>${rows.filter(r=>r.stale).length}</strong><span>Check-ins need updating</span></div></div>`:'<p class="dr-note">No projects match this report. Check the project, workspace, search, and closed-project filters.</p>'}${rows.map(r=>`<article class="dr-project"><header class="dr-project-head"><div class="dr-eyebrow">${esc(deptFor(r.project.department_id)?.name||'Department')} · ${esc(r.project.status)}</div><h2>${esc(r.project.title)}</h2><p>${esc(r.project.summary||'No project outcome recorded.')}</p><p class="dr-meta">Delivery owner: ${esc(r.brief?.delivery_owner||nameFor(r.project.lead_id))} · Reported health: ${esc(briefHealth[r.brief?.health]||'Not reported')} · Check-in: ${r.brief?esc(niceDate(r.brief.created_at)):'Not recorded'}${r.stale?' · UPDATE NEEDED':''}</p></header><div class="dr-answer"><h3>Where are we?</h3><p><strong>${r.tasks.length-r.cancelled?r.progress+'% of tracked tasks complete':'No active task scope recorded'}</strong> · ${r.done} complete / ${r.open.length} open / ${r.cancelled} cancelled</p><div class="dr-progress" role="img" aria-label="${r.progress}% of tracked tasks complete"><span style="width:${r.progress}%"></span></div><p class="dr-note">Task-count progress excludes cancelled work; it is not an effort estimate.</p><p class="dr-note">${r.blocked.length} explicitly blocked · ${r.waiting.length} waiting for prerequisites (normal sequencing).</p><h3>When will this be done?</h3><p>${esc(r.finish)}</p><p>Latest dated outstanding work: <strong>${r.latest?esc(niceDate(r.latest)):'Not available'}</strong>. This is a scheduled date, not a calculated finish forecast.</p>${r.signals.length?`<ul class="dr-alert">${r.signals.map(signal=>`<li>${esc(signal)}</li>`).join('')}</ul>`:'<p class="dr-note">No schedule exceptions detected in recorded work. This does not confirm the delivery date.</p>'}</div><h3 class="dr-section-title">${s.deliveryType==='executive'?'Milestone timeline':'Project delivery timeline'}</h3>${deliveryTimeline(r)}<div class="dr-grid">${prose('What happens next?',r.brief?.next_steps)}${prose('What could delay us?',r.brief?.risks)}${prose('What decisions are needed?',r.brief?.decisions)}${prose('What have we accomplished?',r.brief?.accomplishments)}</div>${r.milestones.length?`<h3 class="dr-section-title">Milestone commitments</h3><table class="dr-table"><thead><tr><th>Milestone</th><th>Target</th><th>Evidence / status</th></tr></thead><tbody>${r.milestones.map(m=>{const d=milestoneData(m,r.day);return `<tr><td>${esc(m.title)}${vendorSummary(m)}</td><td>${calendarDate(m.due_date)?esc(niceDate(m.due_date)):'Not scheduled'}</td><td>${d.completed.length&&!d.open.length?'All non-cancelled linked tasks complete':d.open.length?d.open.length+' linked tasks open':'Completion needs verification'}</td></tr>`;}).join('')}</tbody></table>`:'<p class="dr-note">No milestones recorded for this project.</p>'}${s.deliveryType==='executive'?'':deliveryTaskRegister(r)}${s.deliveryType==='detailed'?`<h3 class="dr-section-title">Project update history</h3>${projectBriefs(r.project.id).map(b=>`<section class="dr-history"><h4>${esc(niceDate(b.created_at))} · ${esc(briefHealth[b.health]||'Not reported')}</h4>${prose('Accomplishments',b.accomplishments)}${prose('Next steps',b.next_steps)}${prose('Risks',b.risks)}${prose('Decisions',b.decisions)}</section>`).join('')||'<p>No check-ins recorded.</p>'}`:''}</article>`).join('')}<footer class="dr-footer">Prepared from visible QuestBoard records · Generated ${esc(new Date().toLocaleString())}. Teams Planner is not synchronized. Check-in notes are dated statements, not fresh confirmations. This exported copy may contain internal project information.</footer></div>`;
   }
   function deliveryPage(){
-    const projects=visibleProjects().filter(p=>s.reportClosed||!['complete','archived'].includes(p.status));
+    const projects=visibleProjects(true).filter(p=>s.reportClosed||!['complete','archived'].includes(p.status));
     return `<div class="delivery-toolbar"><label>Project<select id="delivery-project"><option value="">All matching projects</option>${s.deliveryProject&&!projects.some(p=>p.id===s.deliveryProject)?`<option value="${esc(s.deliveryProject)}" selected>Selected project is outside current filters</option>`:''}${projects.map(p=>`<option value="${esc(p.id)}" ${s.deliveryProject===p.id?'selected':''}>${esc(p.title)}</option>`).join('')}</select></label><label>Report format<select id="delivery-type">${Object.entries(deliveryTypes).map(([key,label])=>`<option value="${key}" ${s.deliveryType===key?'selected':''}>${label}</option>`).join('')}</select></label><label><input id="report-closed" type="checkbox" ${s.reportClosed?'checked':''}> Include closed projects</label><button class="btn primary" data-action="delivery-print">Print / Save PDF</button><button class="btn" data-action="delivery-download">Download report (HTML)</button></div><p class="muted">Share a self-contained report or choose Save as PDF in the print dialog. Timeline charts are included in both formats.</p>${deliveryBody()}`;
   }
   function deliveryHTML(){return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(deliveryTypes[s.deliveryType]||deliveryTypes.executive)} · QuestBoard</title><style>${deliveryCSS}</style></head><body>${deliveryBody()}</body></html>`;}
@@ -2251,6 +3935,7 @@
   function modalHTML(){if(!s.modal)return '';let content='',title='';
     if(['vendor','vendor-contact'].includes(s.modal)){title=s.modal==='vendor'?'Vendor details':'Vendor contact';content=vendorModal();}
     if(s.modal==='team-access'){title=s.teamMemberId?'Manage access · '+nameFor(s.teamMemberId):'Manage team access';content=`<div class="modal-body">${membershipPanel(s.teamMemberId||null)}</div>`;}
+    if(s.modal==='availability'){title=s.availabilityKind==='pto'?'Staff PTO':'Holiday';content=availabilityForm();}
     if(s.modal==='capacity'){const key=s.capacityOwner,row=s.staffCapacity.find(r=>r.owner_key===(key?.startsWith('invite:')?key:'user:'+key));title='Weekly staff capacity';content=`<form data-form="capacity" data-owner="${esc(key)}"><div class="modal-body"><p>${esc(ownerLabel(key))}</p><div class="form-field"><label>Available hours per week</label><input name="weekly_hours" type="number" min="0" max="168" step="0.25" value="${esc(row?.weekly_hours??'')}" placeholder="Inherit scope default"></div><p class="field-hint">An individual override applies across this organization. Leave blank to use scope defaults. Set 0 for someone with no available project time.</p></div>${modalFooter('Save capacity')}</form>`;}
     if(s.modal==='task-view'){title='Save task view';content=`<form data-form="task-view"><div class="modal-body"><div class="form-field"><label for="task-view-name">View name</label><input id="task-view-name" name="name" required maxlength="60" placeholder="e.g. My overdue tasks"></div><p class="field-hint">Up to 12 views per organization on this browser. Using an existing name replaces its filters.</p></div>${modalFooter('Save view')}</form>`;}
     if(s.modal==='project-export'){
@@ -2277,7 +3962,7 @@
     if(s.modal==='task'){const selectedProject=s.candidateProject||s.projectId||managedProjects()[0]?.id;title=term('Add a task','Post a quest');content=`<form data-form="task" data-request="${esc(s.taskRequest)}" data-template="${esc(s.creationTemplate||'')}"><div class="modal-body">${creationTemplate()?`<p class="template-notice">Using ${esc(creationTemplate().name)} · ${creationTemplate().checklist.length} checklist items will be added.</p>`:''}<div class="form-field"><label>Task title</label><input name="title" required maxlength="160" placeholder="What needs to get done?"></div><div class="form-field"><label>Expected outcome</label><textarea name="description" maxlength="2500" placeholder="What does success look like?"></textarea></div><div class="form-field"><label>Project</label><select name="project_id" id="task-project-select" required>${managedProjects().filter(p=>!creationTemplate()||p.id===creationTemplate().project_id).map(p=>`<option value="${p.id}" ${p.id===selectedProject?'selected':''}>${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label for="creation-milestone">Milestone</label><select id="creation-milestone" name="milestone_id">${milestoneOptions(selectedProject,s.creationMilestone||'')}</select></div><div class="form-field"><label for="creation-prerequisite">Depends on (optional)</label><select id="creation-prerequisite" name="prerequisite_id">${creationDependencyOptions(selectedProject)}</select><small class="field-hint">Choose a task that must finish first. You can add more prerequisites after creation.</small></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="critical">Critical</option></select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date"></div><div class="form-field"><label>Assign to</label><select name="assignee_id"><option value="">Unassigned</option>${assigneeOptions(selectedProject)}</select></div></div></div>${candidateNotice()}${modalFooter('Create task')}</form>`;}
     if(s.modal==='edit-task'){const t=taskFor(s.taskId);title='Edit task';content=`<form data-form="edit-task"><div class="modal-body"><div class="form-field"><label>Title</label><input name="title" required maxlength="160" value="${esc(t.title)}"></div><div class="form-field"><label>Description</label><textarea name="description">${esc(t.description)}</textarea></div><div class="form-grid"><div class="form-field"><label>Priority</label><select name="priority">${Object.entries(priorityNames).map(([k,v])=>`<option value="${k}" ${t.priority===k?'selected':''}>${v}</option>`).join('')}</select></div><div class="form-field"><label>Due date</label><input type="date" name="due_date" value="${esc(t.due_date||'')}"></div><div class="form-field"><label>Assignee</label><select name="assignee_id"><option value="">Unassigned</option>${assigneeOptions(t.project_id,assignmentKey(t),t.id)}</select></div><div class="form-field"><label for="edit-milestone">Milestone</label><select id="edit-milestone" name="milestone_id">${milestoneOptions(t.project_id,t.milestone_id)}</select></div><div class="form-field"><label>Reviewer</label><select name="reviewer_id"><option value="">Project lead</option>${memberOptions(t.project_id,t.reviewer_id,t.id)}</select></div></div></div>${candidateNotice()}${modalFooter('Save changes')}</form>`;}
     if(s.modal==='department'){title=s.departments.length?'Create department':'Step 3 · Add your first department';content=`<form data-form="department"><div class="modal-body"><div class="form-field"><label>Department name</label><input name="name" required maxlength="120" placeholder="e.g. Facilities"></div><div class="form-field"><label>Color</label><input name="color" type="color" value="#658be7" style="height:45px"></div></div>${modalFooter('Create department')}</form>`;}
-    if(s.modal==='invite'){title='Invite a team member';content=`<form data-form="invite"><div class="modal-body"><div class="form-field"><label>Email address</label><input name="invited_email" type="email" required placeholder="person@university.edu"></div><div class="form-field"><label>Access scope</label><select name="scope" id="invite-scope"><option value="organization">Organization member</option>${s.departments.map(d=>`<option value="dept:${d.id}">Department · ${esc(d.name)}</option>`).join('')}${s.projects.map(p=>`<option value="project:${p.id}">Project · ${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label>Role</label><select name="invite_role" id="invite-role"><option value="member">Organization member</option></select></div><div class="invite-box"><p>After creating the invitation, copy its secure link to share with the recipient. Automatic invitation emails are not enabled in this pilot.</p></div></div>${modalFooter('Create invitation')}</form>`;}
+    if(s.modal==='invite'){title='Invite a team member';content=`<form data-form="invite"><div class="modal-body"><div class="form-field"><label>Email address</label><input name="invited_email" type="email" required placeholder="person@university.edu"></div><div class="form-field"><label>Access scope</label><select name="scope" id="invite-scope"><option value="organization">Organization member</option>${s.departments.map(d=>`<option value="dept:${d.id}">Department · ${esc(d.name)}</option>`).join('')}${s.projects.map(p=>`<option value="project:${p.id}">Project · ${esc(p.title)}</option>`).join('')}</select></div><div class="form-field"><label>Role</label><select name="invite_role" id="invite-role"><option value="member">Organization member</option></select></div><div class="invite-box"><p>The invitation appears in the recipient’s Inbox when they sign in with this email. You can also copy its secure link to share. Automatic invitation emails are not enabled in this pilot.</p></div></div>${modalFooter('Create invitation')}</form>`;}
     if(s.modal==='reward-item'){title=rewards.edit?'Edit reward':'Create reward';content='<div class="modal-body">'+rewardCatalogForm(rewards.edit||{})+'</div>';}
     if(s.modal==='reward-confirm'){const item=rewards.edit;title='Confirm reward redemption';content=`<form data-form="reward-confirm" data-item="${esc(item.id)}" data-request="${esc(rewards.request)}"><div class="modal-body"><h3>${esc(item.name)}</h3><p>${esc(item.description)}</p><p><strong>${item.price} coins</strong> will be reserved from your available balance. ${item.approval_required?'An organization admin must approve the request.':item.category==='digital'?'The digital reward unlocks immediately.':'An organization admin will fulfill the reward.'}</p><p>Rejected, canceled, or expired reservations return the coins. ${esc(item.instructions)}</p></div>${modalFooter('Confirm redemption')}</form>`;}
     if(s.modal==='reward-bulk'){title='Update rewards for selected tasks';content=`<form data-form="reward-bulk"><div class="modal-body"><p>Only uncompleted tasks without a prior XP award can be changed. The whole selection is validated before any changes are saved.</p><div class="reward-bulk-list">${s.tasks.filter(t=>t.project_id===s.projectId&&!['complete','cancelled'].includes(t.status)&&!s.xp.some(x=>x.task_id===t.id)).map(t=>`<label class="reward-check"><input type="checkbox" name="task_ids" value="${t.id}">${esc(t.title)}</label>`).join('')}</div>${rewardFields()}</div>${modalFooter('Update selected rewards')}</form>`;}
@@ -2408,6 +4093,24 @@
   }
   async function withBusy(work){if(s.busy)return;const generation=epoch;s.busy=true;try{await work();}catch(e){if(generation===epoch&&!e.stale)toast(e.message||'Something went wrong',true);}finally{if(generation===epoch)s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
+    if(action==='availability-new'||action==='availability-edit'){
+      if(!isAdmin()||s.availabilityError)return;
+      const row=action==='availability-edit'?availabilityRows().find(a=>a.id===id):null;
+      if(action==='availability-edit'&&!row||action==='availability-new'&&!['holiday','pto'].includes(v))return;
+      s.availabilityEdit=row?.id||null;s.availabilityKind=row?.kind||v;s.availabilityRequest=uid();s.modal='availability';render();return;
+    }
+    if(action==='availability-remove'){
+      const row=availabilityRows().find(a=>a.id===id),form=root.querySelector('form[data-form="availability"]');
+      if(!isAdmin()||!row||!form||formEpoch.get(form)!==epoch||form.dataset.id!==id)return;
+      if(!form.elements.confirm_remove.checked){toast('Confirm removal before deleting this entry',true);return;}
+      await withBusy(async()=>{
+        if(s.demo)s.availability=s.availability.filter(a=>a.id!==id);
+        else{const rows=await getResult(api.from('qb_calendar_availability').delete().eq('id',id).eq('org_id',s.org.id).eq('revision',Number(v)).select('id'));if(!rows.length)throw Error('Entry changed. Refresh the calendar before removing it.');}
+        s.modal=null;await refresh();toast('Calendar entry removed');
+      });return;
+    }
+    if(action==='template-group'){if(!['all',...templateGroups.map(g=>g.id)].includes(v))return;templateFilters.group=v;filterTemplateLibrary();return;}
+    if(action==='template-clear'){templateFilters.group='all';templateFilters.query='';document.getElementById('template-search').value='';filterTemplateLibrary();document.getElementById('template-search').focus();return;}
     if(action==='start-project-template'){if(!managedDepartments().length||!projectTemplateLibrary.some(t=>t.id===id))return;s.projectTemplateId=id;s.projectTemplateRequest=uid();s.modal='project-template';render();return;}
     if(action==='vendor-edit'||action==='vendor-contact-edit'){
       if(!canManageVendors())return;s.editVendor=action==='vendor-edit'?id:a.dataset.vendor;s.editVendorContact=action==='vendor-contact-edit'?id:null;s.vendorRequest=uid();s.modal=action==='vendor-edit'?'vendor':'vendor-contact';render();return;
@@ -2616,6 +4319,19 @@ const fd=new FormData(form),type=form.dataset.form,get=k=>String(fd.get(k)||'').
         if(membershipScopes().some(x=>x.value===scope))await loadMemberships(scope);
         toast(get('action')==='remove'?'Member removed; work history retained':'Membership updated');return;
       }
+      if(type==='availability'){
+        if(!isAdmin()||s.availabilityError)throw Error('Only organization administrators can manage holidays and PTO');
+        const kind=form.dataset.kind,id=form.dataset.id,revision=Number(form.dataset.revision),existing=availabilityRows().find(a=>a.id===id);
+        const start=get('start_date'),end=get('end_date'),person=kind==='pto'?get('user_id'):null;
+        if(!['holiday','pto'].includes(kind)||!calendarDate(start)||!calendarDate(end)||start>end||start<'1900-01-01'||end>'2200-12-31'||Math.round((calendarDate(end)-calendarDate(start))/86400000)>365)throw Error('Choose a valid date range of up to one year');
+        if(kind==='pto'&&!availabilityStaff().some(m=>m.user_id===person))throw Error('Choose an active staff member');
+        const row={title:kind==='pto'?'PTO':get('title'),user_id:person,start_date:start,end_date:end,non_working:kind==='pto'||fd.has('non_working')};
+        if(!row.title||row.title.length>120)throw Error('Enter a holiday name of up to 120 characters');
+        if(s.demo){if(revision){if(!existing||existing.revision!==revision)throw Error('Entry changed. Refresh the calendar.');Object.assign(existing,row,{revision:revision+1});}else s.availability.push({...row,id,kind,org_id:s.org.id,revision:1});}
+        else if(revision){const rows=await getResult(api.from('qb_calendar_availability').update(row).eq('id',id).eq('org_id',s.org.id).eq('revision',revision).select('id'));if(!rows.length)throw Error('Entry changed. Refresh the calendar before saving.');}
+        else await getResult(api.from('qb_calendar_availability').insert({...row,id,kind,org_id:s.org.id,created_by:s.user.id}));
+        s.modal=null;await refresh();toast('Calendar entry saved');return;
+      }
       if(type==='vendor'||type==='vendor-contact'){
         if(!canManageVendors())throw Error('Vendor administration unavailable');
         const contact=type==='vendor-contact',table=contact?'qb_vendor_contacts':'qb_vendors',collection=contact?'vendorContacts':'vendors';
@@ -2815,7 +4531,7 @@ if(['planner-signal','planner-group'].includes(e.target?.id)){
     }
     if(['report-health','report-closed','report-period'].includes(e.target?.id)){const id=e.target.id;if(id==='report-health')s.reportHealth=e.target.value;else if(id==='report-closed')s.reportClosed=e.target.checked;else if(['7','30','90','365'].includes(e.target.value))s.reportPeriod=e.target.value;s.reportProject=null;render();document.getElementById(id)?.focus();return;}
     const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;taskExplorer.page=1;activity.page=1;render();if(s.nav==='inbox')loadInbox();if(s.nav==='team'&&!s.demo&&membershipScopes().length)loadMemberships(preferredMembershipScope());}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;syncPlanControls(e.target.closest('form'));const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
-  document.addEventListener('input',e=>{if(e.target?.id==='template-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('[data-template-search]').forEach(card=>{card.hidden=!card.dataset.templateSearch.includes(query);if(!card.hidden)count++;});document.getElementById('template-empty').hidden=count>0;return;}if(e.target?.id==='guide-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('.help-guide').forEach(guide=>{guide.hidden=!guide.textContent.toLowerCase().includes(query);if(!guide.hidden)count++;});document.getElementById('guide-count').textContent=count+' guides found';document.getElementById('guide-empty').hidden=count>0;return;}if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='activity')activity.page=1;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
+  document.addEventListener('input',e=>{if(e.target?.id==='template-search'){templateFilters.query=e.target.value;filterTemplateLibrary();return;}if(e.target?.id==='guide-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('.help-guide').forEach(guide=>{guide.hidden=!guide.textContent.toLowerCase().includes(query);if(!guide.hidden)count++;});document.getElementById('guide-count').textContent=count+' guides found';document.getElementById('guide-empty').hidden=count>0;return;}if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='activity')activity.page=1;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if(s.menuOpen&&e.key==='Escape'&&!s.modal){s.menuOpen=false;render();root.querySelector('.mobile-menu')?.focus();return;}if(s.menuOpen&&e.key==='Tab'&&window.matchMedia?.('(max-width: 900px)').matches){const items=[...root.querySelectorAll('.sidebar button:not(:disabled)')];const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     readAuthReturn();

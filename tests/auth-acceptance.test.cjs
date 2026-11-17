@@ -5,7 +5,7 @@ const invitation='10000000-0000-0000-0000-000000000001';
 async function app(url='https://projects.dudgeon.io/',setup=()=>{}){
  const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url,runScripts:'outside-only'});
  const f=installFakeSupabase(dom.window);f.current=null;dom.window.QUESTBOARD_CONFIG.authProviders={google:true,azure:false};setup(dom.window,f);
- dom.window.eval(source.replace('  init();','  globalThis.qa={s,startSignIn,readAuthReturn,invitationNotice,handleClick,render};\n  init();'));
+ dom.window.eval(source.replace('  init();','  globalThis.qa={s,startSignIn,readAuthReturn,invitationNotice,handleClick,render,loadLive};\n  init();'));
  await new Promise(r=>setTimeout(r,0));return{dom,f,q:dom.window.qa};
 }
 test('OAuth failure is persistent, generic and removed from URL without removing invitation',async()=>{
@@ -39,4 +39,37 @@ test('Malformed invitation is ignored and blocked storage does not prevent sign-
 });
 test('Startup SDK failure provides persistent recovery without raw error details',async()=>{
  const {dom}=await app(undefined,(w,f)=>{f.api.auth.getSession=async()=>({error:Error('private detail')});});try{assert.match(dom.window.document.querySelector('[role="alert"]').textContent,/Unable to restore/);assert(!dom.window.document.body.textContent.includes('private detail'));}finally{dom.window.close();}
+});
+
+test('Existing account can still see and accept an invitation when its workspace fails to load',async()=>{
+ const {dom,f,q}=await app(`https://projects.dudgeon.io/?invite=${invitation}`);
+ try{
+  f.current=q.s.user={id:'u1',email:'u1@example.invalid',user_metadata:{}};
+  f.rpcRows.qb_my_invitations=[{id:invitation,org_name:'Invited Home',invite_role:'member'}];
+  f.before=async call=>{if(call.table==='qb_departments')throw Error('Workspace unavailable');};
+  await q.loadLive('a');
+  assert.match(dom.window.document.body.textContent,/Workspace unavailable/);
+  assert.match(dom.window.document.body.textContent,/Invited Home/);
+  assert.equal(dom.window.document.querySelector('[data-action="accept-invite"]').dataset.id,invitation);
+  assert(!f.calls.some(c=>c.rpc==='qb_accept_invitation'));
+  const rpc=f.api.rpc;let accepted=null;
+  f.api.rpc=(name,args,...rest)=>{
+   if(name!=='qb_accept_invitation')return rpc(name,args,...rest);
+   accepted=args.p_invitation;f.before=null;f.rpcRows.qb_my_invitations=[];
+   return Promise.resolve({data:'b'});
+  };
+  await q.handleClick({dataset:{action:'accept-invite',id:invitation}});
+  assert.equal(accepted,invitation);assert.equal(q.s.org.id,'b');
+  assert.equal(dom.window.sessionStorage.getItem('qb-pending-invitation'),null);
+ }finally{dom.window.close();}
+});
+test('Old links direct an existing account to current invitations and identify the signed-in email',async()=>{
+ const {dom,q}=await app(`https://projects.dudgeon.io/?invite=${invitation}`);
+ try{
+  q.s.user={id:'u1',email:'u1@example.invalid'};
+  q.s.pendingInvitations=[{id:'20000000-0000-0000-0000-000000000002',org_name:'Home',invite_role:'member'}];
+  assert.match(q.invitationNotice(),/pending invitations below/);
+  assert.match(q.invitationNotice(),/u1@example.invalid/);
+  assert.match(q.invitationNotice(),/Sign out to use another account/);
+ }finally{dom.window.close();}
 });
