@@ -1,9 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {JSDOM}=require('jsdom');const {database}=require('./database-helper.cjs');
 const source=fs.readFileSync(__dirname+'/../dist/app.js','utf8');
-function app(){const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'https://projects.dudgeon.io',runScripts:'outside-only'});dom.window.eval(source.replace('  init();','  globalThis.qa={s,loadDemo,render,handleClick,handleForm,projectTemplateLibrary};'));dom.window.qa.loadDemo();return {dom,q:dom.window.qa,doc:dom.window.document};}
+function app(){const dom=new JSDOM('<div id="app"></div><div id="toast"></div>',{url:'https://projects.dudgeon.io',runScripts:'outside-only'});dom.window.eval(source.replace('  init();','  globalThis.qa={s,loadDemo,render,handleClick,handleForm,projectTemplateLibrary,templateGroups,templateFilters};'));dom.window.qa.loadDemo();return {dom,q:dom.window.qa,doc:dom.window.document};}
 test('Library searches, previews, and creates a complete editable demo plan',async()=>{const {dom,q,doc}=app();try{
- await q.handleClick({dataset:{action:'nav',value:'templates'}});assert.equal(doc.querySelectorAll('.template-card').length,6);
+ await q.handleClick({dataset:{action:'nav',value:'templates'}});assert.equal(doc.querySelectorAll('.template-card').length,26);
  const search=doc.getElementById('template-search');search.value='phone';search.dispatchEvent(new dom.window.Event('input',{bubbles:true}));assert.equal(doc.querySelectorAll('.template-card:not([hidden])').length,1);
  search.value='no such template';search.dispatchEvent(new dom.window.Event('input',{bubbles:true}));assert.equal(doc.getElementById('template-empty').hidden,false);
  await q.handleClick({dataset:{action:'start-project-template',id:'equipment'}});const form=doc.querySelector('[data-form="project-template"]');assert(form);form.elements.namedItem('title').value='QA equipment';form.elements.namedItem('start_date').value='2026-11-16';
@@ -26,4 +26,35 @@ test('Template RPC is atomic, idempotent, and department-scoped for all starter 
  await actor('viewer');await deny(()=>create(id,q.projectTemplateLibrary[0].milestones));
  await db.exec('reset role;set local role anon');await deny(()=>create(id,q.projectTemplateLibrary[0].milestones));
  }finally{dom.window.close();await db.exec('rollback');await db.close();}
+});
+
+test('Library groups plans by audience and combines category and search filters across rerenders',async()=>{
+ const {dom,q,doc}=app();try{
+  await q.handleClick({dataset:{action:'nav',value:'templates'}});
+  assert.equal(doc.querySelectorAll('[data-template-group]:not([hidden])').length,6);
+  await q.handleClick({dataset:{action:'template-group',value:'home'}});
+  assert.equal(doc.querySelectorAll('.template-card:not([hidden])').length,5);
+  const input=doc.getElementById('template-search');input.value='moving';input.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+  assert.equal(doc.querySelectorAll('.template-card:not([hidden])').length,1);
+  await q.handleClick({dataset:{action:'start-project-template',id:'home-move'}});
+  assert.equal(doc.getElementById('template-search').value,'moving');
+  assert.equal(doc.querySelectorAll('.template-card:not([hidden])').length,1);
+  await q.handleClick({dataset:{action:'template-group',value:'business'}});
+  assert.equal(doc.querySelectorAll('.template-card:not([hidden])').length,0);
+  assert.equal(doc.getElementById('template-empty').hidden,false);
+  await q.handleClick({dataset:{action:'template-clear'}});
+  assert.equal(doc.querySelectorAll('.template-card:not([hidden])').length,26);
+  assert.equal(doc.querySelector('[data-action="template-group"][data-value="all"]').getAttribute('aria-pressed'),'true');
+  assert.equal(doc.activeElement.id,'template-search');
+ }finally{dom.window.close();}
+});
+test('Every audience has concrete plans with valid milestones, task checks, and unique identities',()=>{
+ const {dom,q}=app();try{
+  assert.equal(new Set(q.projectTemplateLibrary.map(t=>t.id)).size,26);
+  for(const group of q.templateGroups){const plans=q.projectTemplateLibrary.filter(t=>t.group===group.id);assert(plans.length>=3);}
+  for(const plan of q.projectTemplateLibrary){
+   assert(q.templateGroups.some(g=>g.id===plan.group));assert(plan.summary.length>20);
+   let last=-1;for(const m of plan.milestones){assert(m.offset>last);last=m.offset;assert(m.tasks.length>=(plan.group==='technology'?1:2));for(const task of m.tasks)assert(task.checklist.length>=2);}
+  }
+ }finally{dom.window.close();}
 });
