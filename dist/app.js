@@ -635,9 +635,10 @@
   function invitationNotice(){
     if(!inviteIntent||s.demo)return '';
     const available=s.pendingInvitations.some(i=>i.id===inviteIntent);
-    const message=!s.user?'Sign in with the email address that received this invitation.':available?'Your invitation is listed below. Review it and choose Accept invitation.':'This invitation is not available to this account. It may have expired, been revoked or already accepted. Check that you signed in with the invited email address.';
-    return `<div class="invite-box" role="status"><strong>Organization invitation</strong><p>${esc(message)}</p><button class="btn sm" data-action="dismiss-invite">Dismiss notice</button></div>`;
+    const message=!s.user?'Sign in with the email address that received this invitation.':available?'Your invitation is listed below. Review it and choose Accept invitation.':s.pendingInvitations.length?'This link is no longer available, but you have pending invitations below. Review the organization and accept the current invitation.':'This invitation is not available to this account. It may have expired, been revoked or already accepted. Check that you signed in with the invited email address.';
+    return `<div class="invite-box" role="status"><strong>Organization invitation</strong><p>${esc(message)}</p>${s.user?`<p>Signed in as ${esc(s.user.email)}.</p><button class="btn sm" data-action="logout">Sign out to use another account</button> `:''}<button class="btn sm" data-action="dismiss-invite">Dismiss notice</button></div>`;
   }
+  function pendingInvitationCards(){return s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${esc(i.id)}">Accept invitation</button></div>`).join('');}
   function clearInviteIntent(){inviteIntent=null;try{sessionStorage.removeItem(inviteKey);const url=new URL(location.href);url.searchParams.delete('invite');history.replaceState(history.state,'',url.pathname+url.search+url.hash);}catch{}}
   async function startSignIn(provider){
     if(authPending||s.user)return;
@@ -1233,7 +1234,7 @@
     try{
       const profile={user_id:user.id,display_name:user.user_metadata?.full_name||user.user_metadata?.name||user.email?.split('@')[0]||'Member',preferred_mode:s.mode};
       const [pendingInvitations,memberships]=await Promise.all([
-        pagedRows(()=>api.rpc('qb_my_invitations',{}, {count:'exact'})),
+        pagedRows(()=>api.rpc('qb_my_invitations',{}, {count:'exact'})).then(rows=>{if(generation===epoch){s.pendingInvitations=rows;if(!s.loading)render();}return rows;}),
         pagedRows(()=>api.from('qb_org_members').select('*',{count:'exact'}).eq('user_id',user.id).eq('status','active'),rowKeys.qb_org_members),
         getResult(api.from('qb_profiles').upsert(profile,{onConflict:'user_id'}))
       ]);
@@ -1339,7 +1340,7 @@
       <button class="menu-backdrop" data-action="close-menu" aria-label="Close navigation" tabindex="-1"></button>
       <main class="main" id="main-content" tabindex="-1">${s.demo?`<div class="demo-banner">✦ You are exploring sample data. Changes are temporary and are not saved. <button data-action="exit-demo">Exit demo</button></div>`:''}
       <header class="topbar"><div class="top-left">${organizationSelector()}<button class="mobile-menu" data-action="menu" aria-label="${s.menuOpen?'Close menu':'Open menu'}" aria-expanded="${s.menuOpen}" aria-controls="main-navigation">☰</button><select class="workspace-select" id="workspace-select" ${s.loading?'disabled':''} aria-label="Current workspace"><option value="all">All workspaces</option>${s.departments.map(d=>`<option value="${esc(d.id)}" ${s.workspace===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div><div class="top-right">${managedDepartments().length||managedProjects().length?`<button class="btn primary sm" data-action="modal" data-value="quick-task">＋ Quick task</button>`:""}<label class="search"><span>⌕</span><input id="search" placeholder="Search work…" value="${esc(s.query)}" aria-label="Search projects and tasks"></label><div class="mode-switch"><button data-action="mode" data-value="professional" class="${!rpg()?'active':''}">◫ Work</button><button data-action="mode" data-value="rpg" class="${rpg()?'active':''}">✦ Quest</button></div>${!s.demo?`<button class="btn sm" data-action="logout">Sign out</button>`:''}<span class="user-dot" title="${esc(s.user?.email)}">${esc(initials(name))}</span></div></header>
-      <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():s.lastError?loadError():`${invitationNotice()}${s.pendingInvitations.map(i=>`<div class="invite-box"><strong>${esc(i.org_name)}: ${esc(i.invite_role.replace(/_/g,' '))}</strong> <button class="btn sm" data-action="accept-invite" data-id="${i.id}">Accept invitation</button></div>`).join('')}${experienceBar()}${pageContent()}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
+      <div class="page" aria-busy="${s.loading}">${s.loading?loadingContent():`${invitationNotice()}${pendingInvitationCards()}${s.lastError?loadError():`${experienceBar()}${pageContent()}`}`}</div></main></div>${s.loading||s.lastError?'':modalHTML()}`;
   }
   function navItem(x){const active=s.nav===x.id||(x.id==='projects'&&['project','project-history','milestone','task'].includes(s.nav))||(x.id==='settings'&&s.nav==='vendors')||(x.id==='rewards'&&s.nav==='reward-admin');return `<button class="nav-link ${active?'active':''}" ${active?'aria-current="page"':''} data-action="nav" data-value="${x.id}"><span class="nav-icon">${x.icon}</span><span>${esc(rpg()?x.rpg:x.pro)}</span>${x.id==='rewards'&&s.rewardSummary?.pending?`<span class="pill-count" aria-label="Pending reward approvals">${s.rewardSummary.pending}</span>`:''}${x.id==='inbox'&&inbox.unread>0?`<span class="pill-count" aria-label="${inbox.unread} unread notifications">${inbox.unread}</span>`:''}${x.id==='mywork'?`<span class="pill-count">${myTasks().filter(t=>!['complete','cancelled'].includes(t.status)).length}</span>`:''}</button>`;}
   const helpGuides = [
