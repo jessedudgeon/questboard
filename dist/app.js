@@ -608,6 +608,1602 @@
     ]
   }
 ];
+  const templateGroups = [
+  {
+    "id": "home",
+    "name": "Home & family",
+    "description": "Household projects, shared responsibilities, and life events."
+  },
+  {
+    "id": "personal",
+    "name": "Personal goals",
+    "description": "Learning, creative work, and plans you own."
+  },
+  {
+    "id": "business",
+    "name": "Business & teams",
+    "description": "Launches, client work, operations, and team growth."
+  },
+  {
+    "id": "education",
+    "name": "Education",
+    "description": "Courses, research, and learning programs."
+  },
+  {
+    "id": "community",
+    "name": "Community & events",
+    "description": "Volunteer projects, gatherings, and local initiatives."
+  },
+  {
+    "id": "technology",
+    "name": "IT & technology",
+    "description": "Equipment, security, systems, and service delivery."
+  }
+];
+  for(const template of projectTemplateLibrary)template.group="technology";
+  projectTemplateLibrary.push(...[
+  {
+    "id": "home-move",
+    "name": "Move to a new home",
+    "group": "home",
+    "category": "Moving",
+    "summary": "Coordinate packing, services, moving day, and settling in.",
+    "milestones": [
+      {
+        "title": "Move plan ready",
+        "offset": 6,
+        "description": "The schedule, help, and inventory are agreed.",
+        "tasks": [
+          {
+            "title": "Plan moving day",
+            "description": "Confirm access and move dates; Choose transport and helpers.",
+            "checklist": [
+              "Confirm access and move dates",
+              "Choose transport and helpers"
+            ]
+          },
+          {
+            "title": "Sort belongings",
+            "description": "List items to pack, donate, or sell; Label rooms and priority boxes.",
+            "checklist": [
+              "List items to pack, donate, or sell",
+              "Label rooms and priority boxes"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Home and boxes ready",
+        "offset": 20,
+        "description": "Essentials are packed and services are arranged.",
+        "tasks": [
+          {
+            "title": "Pack and protect belongings",
+            "description": "Label fragile boxes; Keep daily essentials accessible.",
+            "checklist": [
+              "Label fragile boxes",
+              "Keep daily essentials accessible"
+            ]
+          },
+          {
+            "title": "Arrange household services",
+            "description": "Schedule utility transfers; Update delivery addresses.",
+            "checklist": [
+              "Schedule utility transfers",
+              "Update delivery addresses"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Household settled",
+        "offset": 27,
+        "description": "Belongings are checked and essential rooms are usable.",
+        "tasks": [
+          {
+            "title": "Complete the move",
+            "description": "Check rooms before leaving; Record missing or damaged items.",
+            "checklist": [
+              "Check rooms before leaving",
+              "Record missing or damaged items"
+            ]
+          },
+          {
+            "title": "Unpack essential spaces",
+            "description": "Set up sleeping and cooking areas; Assign remaining unpacking tasks.",
+            "checklist": [
+              "Set up sleeping and cooking areas",
+              "Assign remaining unpacking tasks"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "home-maintenance",
+    "name": "Seasonal home maintenance",
+    "group": "home",
+    "category": "Maintenance",
+    "summary": "Organize a seasonal inspection and a manageable repair list.",
+    "milestones": [
+      {
+        "title": "Maintenance list prioritized",
+        "offset": 3,
+        "description": "Rooms and outdoor areas have a prioritized checklist.",
+        "tasks": [
+          {
+            "title": "Walk through the property",
+            "description": "Record visible maintenance issues; Note specialist work to arrange.",
+            "checklist": [
+              "Record visible maintenance issues",
+              "Note specialist work to arrange"
+            ]
+          },
+          {
+            "title": "Set scope and spending limit",
+            "description": "Rank urgent and routine items; Choose work for this season.",
+            "checklist": [
+              "Rank urgent and routine items",
+              "Choose work for this season"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Selected maintenance completed",
+        "offset": 17,
+        "description": "Agreed work is finished or has a confirmed appointment.",
+        "tasks": [
+          {
+            "title": "Gather supplies and book help",
+            "description": "Check existing supplies; Confirm contractor scope and access.",
+            "checklist": [
+              "Check existing supplies",
+              "Confirm contractor scope and access"
+            ]
+          },
+          {
+            "title": "Complete scheduled upkeep",
+            "description": "Record completed items; Photograph work needing follow-up.",
+            "checklist": [
+              "Record completed items",
+              "Photograph work needing follow-up"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Next season prepared",
+        "offset": 20,
+        "description": "Records and future maintenance needs are organized.",
+        "tasks": [
+          {
+            "title": "Inspect completed work",
+            "description": "Check each agreed outcome; List unresolved issues.",
+            "checklist": [
+              "Check each agreed outcome",
+              "List unresolved issues"
+            ]
+          },
+          {
+            "title": "Organize maintenance records",
+            "description": "Save receipts and warranties; Record next inspection dates.",
+            "checklist": [
+              "Save receipts and warranties",
+              "Record next inspection dates"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "home-declutter",
+    "name": "Declutter and organize a room",
+    "group": "home",
+    "category": "Organization",
+    "summary": "Make one space easier to use without taking on the whole house.",
+    "milestones": [
+      {
+        "title": "Room goal agreed",
+        "offset": 1,
+        "description": "The room has a clear purpose and sorting plan.",
+        "tasks": [
+          {
+            "title": "Choose the room and outcome",
+            "description": "List what the room needs to support; Take a starting photo.",
+            "checklist": [
+              "List what the room needs to support",
+              "Take a starting photo"
+            ]
+          },
+          {
+            "title": "Prepare sorting zones",
+            "description": "Set up keep, donate, and discard areas; Arrange donation or disposal options.",
+            "checklist": [
+              "Set up keep, donate, and discard areas",
+              "Arrange donation or disposal options"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Belongings sorted",
+        "offset": 6,
+        "description": "Items have a destination and usable space is cleared.",
+        "tasks": [
+          {
+            "title": "Sort one area at a time",
+            "description": "Group similar belongings; Separate items needing another person’s decision.",
+            "checklist": [
+              "Group similar belongings",
+              "Separate items needing another person’s decision"
+            ]
+          },
+          {
+            "title": "Remove outgoing items",
+            "description": "Deliver donations; Clear agreed disposal items.",
+            "checklist": [
+              "Deliver donations",
+              "Clear agreed disposal items"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Storage system in use",
+        "offset": 13,
+        "description": "Remaining items have homes that work in daily life.",
+        "tasks": [
+          {
+            "title": "Arrange everyday storage",
+            "description": "Place frequent-use items within reach; Label shared storage.",
+            "checklist": [
+              "Place frequent-use items within reach",
+              "Label shared storage"
+            ]
+          },
+          {
+            "title": "Review after a week",
+            "description": "Identify what became cluttered again; Adjust locations and reset routine.",
+            "checklist": [
+              "Identify what became cluttered again",
+              "Adjust locations and reset routine"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "family-vacation",
+    "name": "Family vacation planning",
+    "group": "home",
+    "category": "Travel",
+    "summary": "Coordinate a shared trip from preferences through the return home.",
+    "milestones": [
+      {
+        "title": "Trip outline agreed",
+        "offset": 6,
+        "description": "Dates, preferences, and a spending limit are agreed.",
+        "tasks": [
+          {
+            "title": "Gather travel preferences",
+            "description": "Confirm available dates; Record accessibility and activity needs.",
+            "checklist": [
+              "Confirm available dates",
+              "Record accessibility and activity needs"
+            ]
+          },
+          {
+            "title": "Compare trip options",
+            "description": "Estimate transport and lodging costs; Choose a destination and budget.",
+            "checklist": [
+              "Estimate transport and lodging costs",
+              "Choose a destination and budget"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reservations and itinerary ready",
+        "offset": 20,
+        "description": "Bookings and essential logistics are recorded.",
+        "tasks": [
+          {
+            "title": "Confirm travel arrangements",
+            "description": "Save booking confirmations; Record cancellation deadlines.",
+            "checklist": [
+              "Save booking confirmations",
+              "Record cancellation deadlines"
+            ]
+          },
+          {
+            "title": "Build a flexible itinerary",
+            "description": "Choose priority activities; Leave room for rest and travel time.",
+            "checklist": [
+              "Choose priority activities",
+              "Leave room for rest and travel time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Travel preparation complete",
+        "offset": 27,
+        "description": "Everyone has the information and supplies they need.",
+        "tasks": [
+          {
+            "title": "Prepare documents and packing",
+            "description": "Check required travel documents; Share packing responsibilities.",
+            "checklist": [
+              "Check required travel documents",
+              "Share packing responsibilities"
+            ]
+          },
+          {
+            "title": "Arrange care at home",
+            "description": "Confirm pet or property care; Share itinerary and emergency contacts privately.",
+            "checklist": [
+              "Confirm pet or property care",
+              "Share itinerary and emergency contacts privately"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "household-routines",
+    "name": "Shared household routines",
+    "group": "home",
+    "category": "Family routines",
+    "summary": "Agree a fair division of recurring household responsibilities.",
+    "milestones": [
+      {
+        "title": "Responsibilities mapped",
+        "offset": 2,
+        "description": "The household has a shared picture of the work.",
+        "tasks": [
+          {
+            "title": "List recurring responsibilities",
+            "description": "Include planning and supply shopping; Note timing and frequency.",
+            "checklist": [
+              "Include planning and supply shopping",
+              "Note timing and frequency"
+            ]
+          },
+          {
+            "title": "Discuss availability",
+            "description": "Record each person’s constraints; Agree what a completed chore means.",
+            "checklist": [
+              "Record each person’s constraints",
+              "Agree what a completed chore means"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Trial routine running",
+        "offset": 9,
+        "description": "Responsibilities and a first-week schedule are agreed.",
+        "tasks": [
+          {
+            "title": "Assign a manageable trial",
+            "description": "Agree owners together; Add reminders where useful.",
+            "checklist": [
+              "Agree owners together",
+              "Add reminders where useful"
+            ]
+          },
+          {
+            "title": "Prepare shared supplies",
+            "description": "Choose accessible storage locations; List supplies to replenish.",
+            "checklist": [
+              "Choose accessible storage locations",
+              "List supplies to replenish"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Routine adjusted",
+        "offset": 16,
+        "description": "The household has reviewed the trial and made changes.",
+        "tasks": [
+          {
+            "title": "Review the first week",
+            "description": "Identify overloaded people; Discuss missed or unclear tasks.",
+            "checklist": [
+              "Identify overloaded people",
+              "Discuss missed or unclear tasks"
+            ]
+          },
+          {
+            "title": "Agree the next routine",
+            "description": "Adjust owners or frequency; Set the next household check-in.",
+            "checklist": [
+              "Adjust owners or frequency",
+              "Set the next household check-in"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "learn-skill",
+    "name": "Learn a new skill",
+    "group": "personal",
+    "category": "Learning",
+    "summary": "Turn a learning goal into practice sessions and a finished demonstration.",
+    "milestones": [
+      {
+        "title": "Learning path chosen",
+        "offset": 3,
+        "description": "The goal and starting resources are clear.",
+        "tasks": [
+          {
+            "title": "Define a demonstration goal",
+            "description": "Describe what you want to do independently; Record your starting ability.",
+            "checklist": [
+              "Describe what you want to do independently",
+              "Record your starting ability"
+            ]
+          },
+          {
+            "title": "Choose learning resources",
+            "description": "Pick a course, book, or mentor; Reserve realistic practice time.",
+            "checklist": [
+              "Pick a course, book, or mentor",
+              "Reserve realistic practice time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Practice project completed",
+        "offset": 20,
+        "description": "Practice has produced a small example of the skill.",
+        "tasks": [
+          {
+            "title": "Work through the foundations",
+            "description": "Complete introductory exercises; Keep notes on difficult topics.",
+            "checklist": [
+              "Complete introductory exercises",
+              "Keep notes on difficult topics"
+            ]
+          },
+          {
+            "title": "Build a small practice project",
+            "description": "Apply the core techniques; Record questions for feedback.",
+            "checklist": [
+              "Apply the core techniques",
+              "Record questions for feedback"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Progress demonstrated",
+        "offset": 27,
+        "description": "A finished example and a next learning step are recorded.",
+        "tasks": [
+          {
+            "title": "Get feedback on the result",
+            "description": "Compare the result with the original goal; Choose one improvement to make.",
+            "checklist": [
+              "Compare the result with the original goal",
+              "Choose one improvement to make"
+            ]
+          },
+          {
+            "title": "Reflect and choose next steps",
+            "description": "Save the finished example; Decide what to practice next.",
+            "checklist": [
+              "Save the finished example",
+              "Decide what to practice next"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "personal-creative",
+    "name": "Finish a creative project",
+    "group": "personal",
+    "category": "Creative work",
+    "summary": "Take a story, art piece, or other creative idea through a complete first release.",
+    "milestones": [
+      {
+        "title": "Creative brief ready",
+        "offset": 3,
+        "description": "The audience, scope, and format are chosen.",
+        "tasks": [
+          {
+            "title": "Define the finished piece",
+            "description": "Choose a format and audience; Write a short creative brief.",
+            "checklist": [
+              "Choose a format and audience",
+              "Write a short creative brief"
+            ]
+          },
+          {
+            "title": "Plan the work sessions",
+            "description": "Gather references and materials; Reserve focused work time.",
+            "checklist": [
+              "Gather references and materials",
+              "Reserve focused work time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "First version finished",
+        "offset": 20,
+        "description": "A complete draft exists for review.",
+        "tasks": [
+          {
+            "title": "Create a rough version",
+            "description": "Finish the full outline or sketch; Mark gaps without stopping progress.",
+            "checklist": [
+              "Finish the full outline or sketch",
+              "Mark gaps without stopping progress"
+            ]
+          },
+          {
+            "title": "Develop the first complete draft",
+            "description": "Fill the identified gaps; Save a reviewable version.",
+            "checklist": [
+              "Fill the identified gaps",
+              "Save a reviewable version"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Final version shared or saved",
+        "offset": 27,
+        "description": "Feedback has been addressed and the work is finished.",
+        "tasks": [
+          {
+            "title": "Review and revise",
+            "description": "Request focused feedback; Make the chosen revisions.",
+            "checklist": [
+              "Request focused feedback",
+              "Make the chosen revisions"
+            ]
+          },
+          {
+            "title": "Prepare the final copy",
+            "description": "Export or package the work; Choose where to share or store it.",
+            "checklist": [
+              "Export or package the work",
+              "Choose where to share or store it"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "career-portfolio",
+    "name": "Update a career portfolio",
+    "group": "personal",
+    "category": "Career",
+    "summary": "Prepare a clear resume and selected examples of your work.",
+    "milestones": [
+      {
+        "title": "Career story outlined",
+        "offset": 3,
+        "description": "Relevant experience and a target role are identified.",
+        "tasks": [
+          {
+            "title": "Choose a target role",
+            "description": "List the skills it calls for; Select relevant accomplishments.",
+            "checklist": [
+              "List the skills it calls for",
+              "Select relevant accomplishments"
+            ]
+          },
+          {
+            "title": "Collect evidence",
+            "description": "Gather work samples you may share; Remove confidential information.",
+            "checklist": [
+              "Gather work samples you may share",
+              "Remove confidential information"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Application materials drafted",
+        "offset": 10,
+        "description": "A resume and portfolio draft are ready to review.",
+        "tasks": [
+          {
+            "title": "Update the resume",
+            "description": "Describe outcomes of your work; Check dates and contact details.",
+            "checklist": [
+              "Describe outcomes of your work",
+              "Check dates and contact details"
+            ]
+          },
+          {
+            "title": "Build portfolio examples",
+            "description": "Explain your contribution to each sample; Add context and results.",
+            "checklist": [
+              "Explain your contribution to each sample",
+              "Add context and results"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Materials ready to use",
+        "offset": 13,
+        "description": "Final materials have been checked and organized.",
+        "tasks": [
+          {
+            "title": "Review with a trusted reader",
+            "description": "Check clarity and spelling; Verify that links work.",
+            "checklist": [
+              "Check clarity and spelling",
+              "Verify that links work"
+            ]
+          },
+          {
+            "title": "Save application-ready copies",
+            "description": "Export the resume to PDF; Keep editable source versions.",
+            "checklist": [
+              "Export the resume to PDF",
+              "Keep editable source versions"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "personal-reading",
+    "name": "Reading and discussion plan",
+    "group": "personal",
+    "category": "Reading",
+    "summary": "Finish a book with a manageable schedule and useful reflections.",
+    "milestones": [
+      {
+        "title": "Book and pace chosen",
+        "offset": 2,
+        "description": "The book and reading schedule fit available time.",
+        "tasks": [
+          {
+            "title": "Choose the book",
+            "description": "Agree on a title or topic; Get access to a copy.",
+            "checklist": [
+              "Agree on a title or topic",
+              "Get access to a copy"
+            ]
+          },
+          {
+            "title": "Set a reading pace",
+            "description": "Divide the book into sections; Reserve reading or listening time.",
+            "checklist": [
+              "Divide the book into sections",
+              "Reserve reading or listening time"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reading completed",
+        "offset": 23,
+        "description": "The planned sections are read and reflections recorded.",
+        "tasks": [
+          {
+            "title": "Read the first half",
+            "description": "Capture interesting ideas; Adjust the pace if needed.",
+            "checklist": [
+              "Capture interesting ideas",
+              "Adjust the pace if needed"
+            ]
+          },
+          {
+            "title": "Finish the remaining sections",
+            "description": "Record questions or quotations; Mark ideas to revisit.",
+            "checklist": [
+              "Record questions or quotations",
+              "Mark ideas to revisit"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Reflection completed",
+        "offset": 27,
+        "description": "The main takeaways are discussed or summarized.",
+        "tasks": [
+          {
+            "title": "Write a short reflection",
+            "description": "Summarize the main takeaways; Record where you disagree or remain curious.",
+            "checklist": [
+              "Summarize the main takeaways",
+              "Record where you disagree or remain curious"
+            ]
+          },
+          {
+            "title": "Share or apply an idea",
+            "description": "Discuss with a friend or group; Choose one idea to explore further.",
+            "checklist": [
+              "Discuss with a friend or group",
+              "Choose one idea to explore further"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-client",
+    "name": "Client onboarding",
+    "group": "business",
+    "category": "Client services",
+    "summary": "Move a new client from agreement to a clear delivery plan.",
+    "milestones": [
+      {
+        "title": "Engagement aligned",
+        "offset": 3,
+        "description": "The scope, stakeholders, and measures of success are agreed.",
+        "tasks": [
+          {
+            "title": "Confirm the engagement scope",
+            "description": "Record deliverables and exclusions; Identify the client decision maker.",
+            "checklist": [
+              "Record deliverables and exclusions",
+              "Identify the client decision maker"
+            ]
+          },
+          {
+            "title": "Hold the kickoff",
+            "description": "Agree communication channels; Confirm approval and meeting cadence.",
+            "checklist": [
+              "Agree communication channels",
+              "Confirm approval and meeting cadence"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Delivery setup ready",
+        "offset": 9,
+        "description": "The team has the inputs and access needed to begin.",
+        "tasks": [
+          {
+            "title": "Gather client inputs",
+            "description": "Request required files and context; Track missing inputs with owners.",
+            "checklist": [
+              "Request required files and context",
+              "Track missing inputs with owners"
+            ]
+          },
+          {
+            "title": "Prepare delivery workspace",
+            "description": "Confirm authorized access; Assign initial work and milestones.",
+            "checklist": [
+              "Confirm authorized access",
+              "Assign initial work and milestones"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Client ready for delivery",
+        "offset": 13,
+        "description": "The client and team have reviewed the first delivery plan.",
+        "tasks": [
+          {
+            "title": "Review the delivery plan",
+            "description": "Confirm target dates and dependencies; Document client feedback.",
+            "checklist": [
+              "Confirm target dates and dependencies",
+              "Document client feedback"
+            ]
+          },
+          {
+            "title": "Close onboarding",
+            "description": "Resolve outstanding setup questions; Send the agreed next-step summary.",
+            "checklist": [
+              "Resolve outstanding setup questions",
+              "Send the agreed next-step summary"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-launch",
+    "name": "Product or service launch",
+    "group": "business",
+    "category": "Launches",
+    "summary": "Coordinate an offering, launch materials, readiness checks, and follow-up.",
+    "milestones": [
+      {
+        "title": "Launch scope approved",
+        "offset": 6,
+        "description": "The audience, offer, and launch criteria are agreed.",
+        "tasks": [
+          {
+            "title": "Define the offer",
+            "description": "Identify the intended customer; List what is included at launch.",
+            "checklist": [
+              "Identify the intended customer",
+              "List what is included at launch"
+            ]
+          },
+          {
+            "title": "Agree launch success criteria",
+            "description": "Choose measurable launch outcomes; Assign decision and delivery owners.",
+            "checklist": [
+              "Choose measurable launch outcomes",
+              "Assign decision and delivery owners"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Launch ready",
+        "offset": 20,
+        "description": "The offering and customer-facing materials have been checked.",
+        "tasks": [
+          {
+            "title": "Prepare launch materials",
+            "description": "Review messaging and pricing details; Check support and contact routes.",
+            "checklist": [
+              "Review messaging and pricing details",
+              "Check support and contact routes"
+            ]
+          },
+          {
+            "title": "Run readiness checks",
+            "description": "Test the customer journey; Resolve launch-blocking issues.",
+            "checklist": [
+              "Test the customer journey",
+              "Resolve launch-blocking issues"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Launch reviewed",
+        "offset": 27,
+        "description": "The offering is available and initial feedback has been reviewed.",
+        "tasks": [
+          {
+            "title": "Release the offering",
+            "description": "Publish approved materials; Monitor questions and reported issues.",
+            "checklist": [
+              "Publish approved materials",
+              "Monitor questions and reported issues"
+            ]
+          },
+          {
+            "title": "Review launch results",
+            "description": "Compare results with success criteria; Prioritize follow-up improvements.",
+            "checklist": [
+              "Compare results with success criteria",
+              "Prioritize follow-up improvements"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-event",
+    "name": "Business workshop or training",
+    "group": "business",
+    "category": "Training",
+    "summary": "Plan and deliver a useful session with clear learning outcomes.",
+    "milestones": [
+      {
+        "title": "Session plan agreed",
+        "offset": 4,
+        "description": "The audience, outcomes, and delivery format are confirmed.",
+        "tasks": [
+          {
+            "title": "Identify participant needs",
+            "description": "Gather questions and skill gaps; Define session outcomes.",
+            "checklist": [
+              "Gather questions and skill gaps",
+              "Define session outcomes"
+            ]
+          },
+          {
+            "title": "Arrange the session",
+            "description": "Choose date and delivery format; Confirm facilitator and participant list.",
+            "checklist": [
+              "Choose date and delivery format",
+              "Confirm facilitator and participant list"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Materials tested",
+        "offset": 13,
+        "description": "Activities and practical arrangements are ready.",
+        "tasks": [
+          {
+            "title": "Prepare teaching materials",
+            "description": "Create examples and exercises; Prepare accessible participant copies.",
+            "checklist": [
+              "Create examples and exercises",
+              "Prepare accessible participant copies"
+            ]
+          },
+          {
+            "title": "Rehearse delivery",
+            "description": "Check timing and equipment; Prepare a backup for technical issues.",
+            "checklist": [
+              "Check timing and equipment",
+              "Prepare a backup for technical issues"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Session completed and evaluated",
+        "offset": 20,
+        "description": "Participants have resources and feedback has been reviewed.",
+        "tasks": [
+          {
+            "title": "Deliver the workshop",
+            "description": "Record attendance as appropriate; Capture unanswered questions.",
+            "checklist": [
+              "Record attendance as appropriate",
+              "Capture unanswered questions"
+            ]
+          },
+          {
+            "title": "Follow up with participants",
+            "description": "Share materials and answers; Review feedback for the next session.",
+            "checklist": [
+              "Share materials and answers",
+              "Review feedback for the next session"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-process",
+    "name": "Improve a business process",
+    "group": "business",
+    "category": "Operations",
+    "summary": "Find a recurring pain point, test a change, and document a better process.",
+    "milestones": [
+      {
+        "title": "Problem and baseline agreed",
+        "offset": 6,
+        "description": "The process and its measurable problem are understood.",
+        "tasks": [
+          {
+            "title": "Map the current process",
+            "description": "List handoffs and decisions; Ask the people doing the work about delays.",
+            "checklist": [
+              "List handoffs and decisions",
+              "Ask the people doing the work about delays"
+            ]
+          },
+          {
+            "title": "Define the improvement goal",
+            "description": "Record a baseline measure; Agree scope and a process owner.",
+            "checklist": [
+              "Record a baseline measure",
+              "Agree scope and a process owner"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Improvement trial completed",
+        "offset": 20,
+        "description": "A limited trial has produced evidence of the change.",
+        "tasks": [
+          {
+            "title": "Design a small change",
+            "description": "Identify affected people; Plan how to reverse an unsuccessful change.",
+            "checklist": [
+              "Identify affected people",
+              "Plan how to reverse an unsuccessful change"
+            ]
+          },
+          {
+            "title": "Run the trial",
+            "description": "Record results using the baseline measure; Collect participant feedback.",
+            "checklist": [
+              "Record results using the baseline measure",
+              "Collect participant feedback"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "New process adopted",
+        "offset": 27,
+        "description": "The team has a documented decision and operating guidance.",
+        "tasks": [
+          {
+            "title": "Evaluate the trial",
+            "description": "Compare results and side effects; Agree whether to adopt or revise.",
+            "checklist": [
+              "Compare results and side effects",
+              "Agree whether to adopt or revise"
+            ]
+          },
+          {
+            "title": "Document and hand over",
+            "description": "Update the operating procedure; Set a follow-up review date.",
+            "checklist": [
+              "Update the operating procedure",
+              "Set a follow-up review date"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "business-hire",
+    "name": "New team member onboarding",
+    "group": "business",
+    "category": "People & teams",
+    "summary": "Prepare access, introductions, and a supported first month.",
+    "milestones": [
+      {
+        "title": "First day prepared",
+        "offset": 6,
+        "description": "The manager has arranged the essentials for the new starter.",
+        "tasks": [
+          {
+            "title": "Plan the first week",
+            "description": "Confirm start date and work arrangements; Choose an onboarding buddy.",
+            "checklist": [
+              "Confirm start date and work arrangements",
+              "Choose an onboarding buddy"
+            ]
+          },
+          {
+            "title": "Arrange equipment and access",
+            "description": "Request role-appropriate accounts; Confirm workspace and equipment readiness.",
+            "checklist": [
+              "Request role-appropriate accounts",
+              "Confirm workspace and equipment readiness"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "First week completed",
+        "offset": 13,
+        "description": "The new team member knows their contacts and initial responsibilities.",
+        "tasks": [
+          {
+            "title": "Introduce the team and work",
+            "description": "Explain responsibilities and priorities; Share key contacts and team routines.",
+            "checklist": [
+              "Explain responsibilities and priorities",
+              "Share key contacts and team routines"
+            ]
+          },
+          {
+            "title": "Complete essential orientation",
+            "description": "Review relevant policies and training; Confirm access works for assigned tasks.",
+            "checklist": [
+              "Review relevant policies and training",
+              "Confirm access works for assigned tasks"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "First month reviewed",
+        "offset": 34,
+        "description": "The starter and manager have agreed the next goals.",
+        "tasks": [
+          {
+            "title": "Support an initial assignment",
+            "description": "Provide a clear outcome and owner; Schedule feedback during the work.",
+            "checklist": [
+              "Provide a clear outcome and owner",
+              "Schedule feedback during the work"
+            ]
+          },
+          {
+            "title": "Hold the first-month review",
+            "description": "Discuss what support is still needed; Agree the next set of goals.",
+            "checklist": [
+              "Discuss what support is still needed",
+              "Agree the next set of goals"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "education-course",
+    "name": "Prepare a course or class",
+    "group": "education",
+    "category": "Teaching",
+    "summary": "Build a course outline, materials, assessments, and launch checklist.",
+    "milestones": [
+      {
+        "title": "Learning outcomes defined",
+        "offset": 6,
+        "description": "The course goals and sequence are clear.",
+        "tasks": [
+          {
+            "title": "Define the audience and outcomes",
+            "description": "Record prerequisites; Write observable learning outcomes.",
+            "checklist": [
+              "Record prerequisites",
+              "Write observable learning outcomes"
+            ]
+          },
+          {
+            "title": "Outline the course",
+            "description": "Sequence topics and activities; Estimate time per section.",
+            "checklist": [
+              "Sequence topics and activities",
+              "Estimate time per section"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Materials and assessments ready",
+        "offset": 20,
+        "description": "Learners have a coherent set of resources and activities.",
+        "tasks": [
+          {
+            "title": "Prepare learning materials",
+            "description": "Create readings and examples; Check accessibility and permissions.",
+            "checklist": [
+              "Create readings and examples",
+              "Check accessibility and permissions"
+            ]
+          },
+          {
+            "title": "Design assessments",
+            "description": "Match assessments to outcomes; Write clear instructions and criteria.",
+            "checklist": [
+              "Match assessments to outcomes",
+              "Write clear instructions and criteria"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Course ready to teach",
+        "offset": 27,
+        "description": "The learning environment and opening session are checked.",
+        "tasks": [
+          {
+            "title": "Set up the course space",
+            "description": "Publish the schedule and resources; Test learner access.",
+            "checklist": [
+              "Publish the schedule and resources",
+              "Test learner access"
+            ]
+          },
+          {
+            "title": "Review the first session",
+            "description": "Rehearse activities and timing; Explain how learners can get help.",
+            "checklist": [
+              "Rehearse activities and timing",
+              "Explain how learners can get help"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "education-research",
+    "name": "Student research project",
+    "group": "education",
+    "category": "Research",
+    "summary": "Organize a research question, evidence, draft, and final presentation.",
+    "milestones": [
+      {
+        "title": "Research question approved",
+        "offset": 6,
+        "description": "The question and approach fit the assignment.",
+        "tasks": [
+          {
+            "title": "Narrow the research question",
+            "description": "Review assignment requirements; Confirm scope with the instructor.",
+            "checklist": [
+              "Review assignment requirements",
+              "Confirm scope with the instructor"
+            ]
+          },
+          {
+            "title": "Plan evidence collection",
+            "description": "Identify credible starting sources; Record any required permissions.",
+            "checklist": [
+              "Identify credible starting sources",
+              "Record any required permissions"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Evidence and draft assembled",
+        "offset": 20,
+        "description": "Sources and findings support a complete draft.",
+        "tasks": [
+          {
+            "title": "Collect and evaluate sources",
+            "description": "Keep citation details; Distinguish evidence from interpretation.",
+            "checklist": [
+              "Keep citation details",
+              "Distinguish evidence from interpretation"
+            ]
+          },
+          {
+            "title": "Draft the argument",
+            "description": "Organize findings around the question; Identify gaps needing more research.",
+            "checklist": [
+              "Organize findings around the question",
+              "Identify gaps needing more research"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Final submission ready",
+        "offset": 27,
+        "description": "The final work follows the assignment and citation requirements.",
+        "tasks": [
+          {
+            "title": "Revise the draft",
+            "description": "Address instructor or peer feedback; Check citations and quotations.",
+            "checklist": [
+              "Address instructor or peer feedback",
+              "Check citations and quotations"
+            ]
+          },
+          {
+            "title": "Prepare the submission",
+            "description": "Check formatting and required files; Rehearse the presentation if required.",
+            "checklist": [
+              "Check formatting and required files",
+              "Rehearse the presentation if required"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "education-club",
+    "name": "School club project",
+    "group": "education",
+    "category": "Student activities",
+    "summary": "Help a club choose an achievable project and deliver it together.",
+    "milestones": [
+      {
+        "title": "Club project agreed",
+        "offset": 4,
+        "description": "Members and the adviser agree on a purpose and scope.",
+        "tasks": [
+          {
+            "title": "Choose the club project",
+            "description": "Collect member suggestions; Agree the intended benefit.",
+            "checklist": [
+              "Collect member suggestions",
+              "Agree the intended benefit"
+            ]
+          },
+          {
+            "title": "Confirm practical requirements",
+            "description": "Check school permissions; Set a spending limit and roles.",
+            "checklist": [
+              "Check school permissions",
+              "Set a spending limit and roles"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Project prepared",
+        "offset": 13,
+        "description": "Materials, communications, and assignments are ready.",
+        "tasks": [
+          {
+            "title": "Prepare materials and logistics",
+            "description": "Book approved spaces; Gather required supplies.",
+            "checklist": [
+              "Book approved spaces",
+              "Gather required supplies"
+            ]
+          },
+          {
+            "title": "Coordinate club members",
+            "description": "Assign clear tasks; Share the schedule and contact person.",
+            "checklist": [
+              "Assign clear tasks",
+              "Share the schedule and contact person"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Project delivered and reviewed",
+        "offset": 20,
+        "description": "The activity is complete and the club has reflected on it.",
+        "tasks": [
+          {
+            "title": "Deliver the activity",
+            "description": "Check setup and attendance arrangements; Record issues needing follow-up.",
+            "checklist": [
+              "Check setup and attendance arrangements",
+              "Record issues needing follow-up"
+            ]
+          },
+          {
+            "title": "Wrap up with members",
+            "description": "Return borrowed equipment; Discuss lessons for the next project.",
+            "checklist": [
+              "Return borrowed equipment",
+              "Discuss lessons for the next project"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "community-event",
+    "name": "Community gathering",
+    "group": "community",
+    "category": "Events",
+    "summary": "Organize a local gathering with shared roles and practical logistics.",
+    "milestones": [
+      {
+        "title": "Gathering plan agreed",
+        "offset": 6,
+        "description": "The purpose, venue, and responsibilities are confirmed.",
+        "tasks": [
+          {
+            "title": "Define the gathering",
+            "description": "Choose the audience and activities; Set a practical attendance estimate.",
+            "checklist": [
+              "Choose the audience and activities",
+              "Set a practical attendance estimate"
+            ]
+          },
+          {
+            "title": "Confirm venue and permissions",
+            "description": "Check venue requirements; Agree budget and organizing roles.",
+            "checklist": [
+              "Check venue requirements",
+              "Agree budget and organizing roles"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "People and logistics ready",
+        "offset": 20,
+        "description": "Volunteers, supplies, and attendee information are prepared.",
+        "tasks": [
+          {
+            "title": "Arrange event logistics",
+            "description": "Confirm equipment and supplies; Plan accessibility and weather alternatives.",
+            "checklist": [
+              "Confirm equipment and supplies",
+              "Plan accessibility and weather alternatives"
+            ]
+          },
+          {
+            "title": "Invite and brief participants",
+            "description": "Share time and location; Brief volunteers on their responsibilities.",
+            "checklist": [
+              "Share time and location",
+              "Brief volunteers on their responsibilities"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Gathering completed",
+        "offset": 27,
+        "description": "The event is delivered and the venue is handed back.",
+        "tasks": [
+          {
+            "title": "Run the gathering",
+            "description": "Check setup and welcome arrangements; Assign an on-site coordination contact.",
+            "checklist": [
+              "Check setup and welcome arrangements",
+              "Assign an on-site coordination contact"
+            ]
+          },
+          {
+            "title": "Close and review",
+            "description": "Clean and return the venue; Review feedback and expenses.",
+            "checklist": [
+              "Clean and return the venue",
+              "Review feedback and expenses"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "community-volunteer",
+    "name": "Volunteer service project",
+    "group": "community",
+    "category": "Volunteering",
+    "summary": "Coordinate volunteers around a defined community need.",
+    "milestones": [
+      {
+        "title": "Service scope confirmed",
+        "offset": 6,
+        "description": "The partner and volunteers agree on useful, achievable work.",
+        "tasks": [
+          {
+            "title": "Confirm the community need",
+            "description": "Speak with the receiving organization; Agree the work and limits.",
+            "checklist": [
+              "Speak with the receiving organization",
+              "Agree the work and limits"
+            ]
+          },
+          {
+            "title": "Plan volunteer roles",
+            "description": "Identify required skills; Confirm supervision and site requirements.",
+            "checklist": [
+              "Identify required skills",
+              "Confirm supervision and site requirements"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Volunteer team prepared",
+        "offset": 13,
+        "description": "People have the supplies and instructions to participate.",
+        "tasks": [
+          {
+            "title": "Recruit and confirm volunteers",
+            "description": "Match volunteers to agreed roles; Share schedule and access instructions.",
+            "checklist": [
+              "Match volunteers to agreed roles",
+              "Share schedule and access instructions"
+            ]
+          },
+          {
+            "title": "Prepare supplies and briefing",
+            "description": "Confirm who provides materials; Explain site rules and escalation contacts.",
+            "checklist": [
+              "Confirm who provides materials",
+              "Explain site rules and escalation contacts"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Service completed and handed over",
+        "offset": 20,
+        "description": "The partner has reviewed the work and remaining needs.",
+        "tasks": [
+          {
+            "title": "Complete the agreed work",
+            "description": "Check progress with the partner; Record unresolved items.",
+            "checklist": [
+              "Check progress with the partner",
+              "Record unresolved items"
+            ]
+          },
+          {
+            "title": "Close with volunteers and partner",
+            "description": "Return equipment and clear the site; Thank participants and capture feedback.",
+            "checklist": [
+              "Return equipment and clear the site",
+              "Thank participants and capture feedback"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "community-fundraiser",
+    "name": "Community fundraising campaign",
+    "group": "community",
+    "category": "Fundraising",
+    "summary": "Plan a campaign with clear goals, approved messaging, and transparent follow-up.",
+    "milestones": [
+      {
+        "title": "Campaign plan approved",
+        "offset": 6,
+        "description": "The beneficiary, target, and approval responsibilities are clear.",
+        "tasks": [
+          {
+            "title": "Confirm purpose and target",
+            "description": "Agree the beneficiary and intended use; Set a realistic campaign goal.",
+            "checklist": [
+              "Agree the beneficiary and intended use",
+              "Set a realistic campaign goal"
+            ]
+          },
+          {
+            "title": "Confirm collection arrangements",
+            "description": "Use the organization’s approved donation route; Assign recordkeeping and approval owners.",
+            "checklist": [
+              "Use the organization’s approved donation route",
+              "Assign recordkeeping and approval owners"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Campaign launched",
+        "offset": 20,
+        "description": "Approved materials and outreach are in use.",
+        "tasks": [
+          {
+            "title": "Prepare campaign materials",
+            "description": "Explain the purpose and donation route; Obtain approval for public claims.",
+            "checklist": [
+              "Explain the purpose and donation route",
+              "Obtain approval for public claims"
+            ]
+          },
+          {
+            "title": "Coordinate outreach",
+            "description": "Schedule agreed announcements; Track responses without exposing donor details.",
+            "checklist": [
+              "Schedule agreed announcements",
+              "Track responses without exposing donor details"
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Campaign reconciled and reported",
+        "offset": 34,
+        "description": "Collections and spending are reconciled and results communicated.",
+        "tasks": [
+          {
+            "title": "Close and reconcile the campaign",
+            "description": "Confirm totals with the recordkeeping owner; Resolve missing or unmatched records.",
+            "checklist": [
+              "Confirm totals with the recordkeeping owner",
+              "Resolve missing or unmatched records"
+            ]
+          },
+          {
+            "title": "Report results and thank supporters",
+            "description": "Share approved results and use of funds; Send appropriate acknowledgments.",
+            "checklist": [
+              "Share approved results and use of funds",
+              "Send appropriate acknowledgments"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]);
+  const templateFilters={group:"all",query:""};
   let api = null;
   let epoch=0, requestController=null, authRevision=0, signedOutLocally=false, signingOut=false, signOutFailed=false;
   let signupMode=false;
@@ -1077,6 +2673,7 @@
     Object.assign(membership,{scope:null,rows:[],events:[],loading:false,error:null,loaded:false});
     for(const key of workspaceArrays)s[key]=[];
     Object.assign(s,{org:null,requestedOrg:null,orgMembership:null,modal:null,menuOpen:false,busy:false,lastError:null,candidateRows:[],candidateProject:null,candidateTask:null,candidatesLoading:false,candidateError:null,creationTemplate:null,taskRequest:null,editMilestoneId:null,milestoneRequest:null,creationMilestone:null});
+    if(resetNavigation)Object.assign(templateFilters,{group:'all',query:''});
     if(resetNavigation)Object.assign(s,{settingsScope:'',workloadWeek:null,workloadProject:'all',workloadOwner:'all',capacityOwner:null,deliveryProject:'',deliveryType:'executive',reportView:'outlook',reportPeriod:'30',reportHealth:'all',reportClosed:false,reportProject:null,reportSignal:'all',workspace:'all',nav:'home',projectId:null,taskId:null,filter:'all',query:'',milestoneId:null,projectMilestone:'all',projectView:'board',projectOwner:'all',projectPriority:'all',projectReadiness:'all',projectSort:'due',projectClosed:false,dashboardView:'overview',plannerGroup:'owner',plannerSignal:'all',plannerCell:null,calendarMonth:null,calendarProject:'all',calendarScope:'all',calendarClosed:false});
     const notifications=document.getElementById('toast');if(notifications)notifications.innerHTML='';
     return epoch;
@@ -1369,7 +2966,7 @@
     ],note:'Available transitions depend on your role and the task state. Starting or submitting a task is not the same as approval.'},
     {id:'projects',category:'Planning',title:'Plan projects with milestones and dependencies',destination:'projects',link:'Open Projects',steps:[
       'Open Projects and create a project if your role allows it. Give it a clear outcome, department, lead, and target date.',
-      'Use Template library for a complete starter plan, or add milestones manually. Preview a template, choose a department and start date, then create an editable project. Suggested dates use calendar days; verify vendor dates and assign the tasks before starting.',
+      'Use Template library to browse Home & family, Personal goals, Business & teams, Education, Community & events, or IT & technology. Combine a category with search, preview the plan, then choose a department and start date. Suggested dates use calendar days; review them and assign tasks before starting.',
       'Set task estimates and dates using the available planning controls. Add prerequisite tasks to describe the order work must happen.',
       'Review the project task table or board to update progress. Use project check-ins to record accomplishments, next steps, risks, and decisions needed.'
     ],note:'A target date is a planning forecast. When the forecast changes, update the plan and explain the reason in a check-in or work update.'},
@@ -1580,8 +3177,22 @@
   }
   function workPage(){let ts=myTasks();if(s.filter!=='all')ts=ts.filter(t=>t.status===s.filter);return pageTitle(term('My Work','Quest Journal'),term('Your assignments and work awaiting your review.','Your personal adventures, obstacles, and victories.'))+
     `<div class="filter-row">${[['all','All work'],['backlog','Backlog'],['ready','Ready'],['in_progress','In progress'],['blocked','Blocked'],['in_review','In review'],['complete','Completed']].map(([v,l])=>`<button class="filter-pill ${s.filter===v?'active':''}" data-action="filter" data-value="${v}">${esc(rpg()?((rpgStatusNames[v]||l)):l)}</button>`).join('')}</div><div class="panel"><div class="panel-head"><h3>${ts.length} ${term('tasks','quests')}</h3><small>Sorted by due date and status</small></div><div class="panel-body">${ts.length?ts.slice().sort((a,b)=>(a.due_date||'9999').localeCompare(b.due_date||'9999')).map(taskRow).join(''):empty('◇','Nothing here yet','Assigned work will appear as soon as your team adds it.')}</div></div>`;}
+  function templateSearchText(t){return [t.name,t.category,t.summary,templateGroups.find(g=>g.id===t.group)?.name,...t.milestones.flatMap(m=>[m.title,m.description,...m.tasks.flatMap(task=>[task.title,...task.checklist])])].join(' ').toLowerCase();}
+  function templateMatches(t){return (templateFilters.group==='all'||t.group===templateFilters.group)&&templateSearchText(t).includes(templateFilters.query.trim().toLowerCase());}
+  function filterTemplateLibrary(){
+    const query=templateFilters.query.trim().toLowerCase();let count=0;
+    root.querySelectorAll('[data-template-group]').forEach(section=>{
+      let visible=0;
+      section.querySelectorAll('[data-template-search]').forEach(card=>{card.hidden=!(templateFilters.group==='all'||section.dataset.templateGroup===templateFilters.group)||!card.dataset.templateSearch.includes(query);if(!card.hidden)visible++;});
+      section.hidden=visible===0;count+=visible;
+    });
+    root.querySelectorAll('[data-action="template-group"]').forEach(button=>{const active=button.dataset.value===templateFilters.group;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+    document.getElementById('template-count').textContent=count+' templates found';
+    document.getElementById('template-empty').hidden=count>0;
+  }
   function templateLibraryPage(){
-    return pageTitle('Template library','Start with an outcome, then adapt the plan to your team.')+`<section class="panel template-intro"><strong>Reusable IT project plans</strong><p>Each plan contains outcome-based milestones, actionable tasks, and acceptance checklists. Dates are suggested calendar-day targets, not vendor commitments. New work starts unassigned and incomplete.</p><label for="template-search">Find a template</label><input id="template-search" type="search" placeholder="Search equipment, security, phones…"></section><div class="project-grid template-library">${projectTemplateLibrary.map(t=>`<article class="panel template-card" data-template-search="${esc([t.name,t.category,t.summary,...t.milestones.map(m=>m.title)].join(' ').toLowerCase())}"><small>${esc(t.category)}</small><h2>${esc(t.name)}</h2><p>${esc(t.summary)}</p><p class="muted">${t.milestones.length} milestones · ${t.milestones.reduce((n,m)=>n+m.tasks.length,0)} tasks · ${t.milestones.at(-1).offset+1} suggested calendar days</p><details><summary>Preview milestones and tasks</summary><ol>${t.milestones.map(m=>`<li><strong>${esc(m.title)}</strong><small>Day ${m.offset+1}</small><p>${esc(m.description)}</p><ul>${m.tasks.map(task=>`<li>${esc(task.title)}<ul>${task.checklist.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></li>`).join('')}</ul></li>`).join('')}</ol></details>${managedDepartments().length?`<button class="btn primary" data-action="start-project-template" data-id="${t.id}">Use template</button>`:'<p class="muted">A department manager can create a project from this plan.</p>'}</article>`).join('')}</div><p id="template-empty" class="panel" hidden>No templates match. Try a different search.</p>`;
+    const count=projectTemplateLibrary.filter(templateMatches).length;
+    return pageTitle('Template library','Plans for life at home, personal goals, and work of every kind.')+`<section class="panel template-intro"><strong>A starting point you can make your own</strong><p>Every plan includes milestones, tasks, and completion checklists. Suggested dates are adjustable starting points, not commitments. New work starts unassigned and incomplete.</p><label for="template-search">Find a template</label><input id="template-search" type="search" value="${esc(templateFilters.query)}" placeholder="Search moving, onboarding, learning…" aria-describedby="template-count"><div class="filter-row template-groups" role="group" aria-label="Template categories">${[{id:'all',name:'All templates'},...templateGroups].map(g=>`<button class="filter-pill ${templateFilters.group===g.id?'active':''}" data-action="template-group" data-value="${g.id}" aria-pressed="${templateFilters.group===g.id}">${esc(g.name)} <span>(${g.id==='all'?projectTemplateLibrary.length:projectTemplateLibrary.filter(t=>t.group===g.id).length})</span></button>`).join('')}</div><p id="template-count" role="status" aria-live="polite">${count} templates found</p></section>${templateGroups.map(g=>`<section class="template-group" data-template-group="${g.id}" aria-labelledby="template-group-${g.id}" ${projectTemplateLibrary.some(t=>t.group===g.id&&templateMatches(t))?'':'hidden'}><div class="section-row"><div><h2 id="template-group-${g.id}">${esc(g.name)}</h2><p class="muted">${esc(g.description)}</p></div></div><div class="project-grid template-library">${projectTemplateLibrary.filter(t=>t.group===g.id).map(t=>`<article class="panel template-card" data-template-search="${esc(templateSearchText(t))}" ${templateMatches(t)?'':'hidden'}><small>${esc(t.category)}</small><h3>${esc(t.name)}</h3><p>${esc(t.summary)}</p><p class="muted">${t.milestones.length} milestones · ${t.milestones.reduce((n,m)=>n+m.tasks.length,0)} tasks · ${t.milestones.at(-1).offset+1} suggested calendar days</p><details><summary>Preview milestones and tasks</summary><ol>${t.milestones.map(m=>`<li><strong>${esc(m.title)}</strong><small>Day ${m.offset+1}</small><p>${esc(m.description)}</p><ul>${m.tasks.map(task=>`<li>${esc(task.title)}<ul>${task.checklist.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></li>`).join('')}</ul></li>`).join('')}</ol></details>${managedDepartments().length?`<button class="btn primary" data-action="start-project-template" data-id="${t.id}">Use template</button>`:'<p class="muted">An organization admin or workspace manager can create a project from this plan.</p>'}</article>`).join('')}</div></section>`).join('')}<div id="template-empty" class="panel template-intro" ${count?'hidden':''}><p>No templates match this category and search.</p><button class="btn" data-action="template-clear">Clear filters</button></div>`;
   }
   function projectTemplateModal(){
     const t=projectTemplateLibrary.find(t=>t.id===s.projectTemplateId);if(!t)return '';
@@ -2416,6 +4027,8 @@
   }
   async function withBusy(work){if(s.busy)return;const generation=epoch;s.busy=true;try{await work();}catch(e){if(generation===epoch&&!e.stale)toast(e.message||'Something went wrong',true);}finally{if(generation===epoch)s.busy=false;}}
   async function handleClick(a){const action=a.dataset.action,v=a.dataset.value,id=a.dataset.id;
+    if(action==='template-group'){if(!['all',...templateGroups.map(g=>g.id)].includes(v))return;templateFilters.group=v;filterTemplateLibrary();return;}
+    if(action==='template-clear'){templateFilters.group='all';templateFilters.query='';document.getElementById('template-search').value='';filterTemplateLibrary();document.getElementById('template-search').focus();return;}
     if(action==='start-project-template'){if(!managedDepartments().length||!projectTemplateLibrary.some(t=>t.id===id))return;s.projectTemplateId=id;s.projectTemplateRequest=uid();s.modal='project-template';render();return;}
     if(action==='vendor-edit'||action==='vendor-contact-edit'){
       if(!canManageVendors())return;s.editVendor=action==='vendor-edit'?id:a.dataset.vendor;s.editVendorContact=action==='vendor-contact-edit'?id:null;s.vendorRequest=uid();s.modal=action==='vendor-edit'?'vendor':'vendor-contact';render();return;
@@ -2823,7 +4436,7 @@ if(['planner-signal','planner-group'].includes(e.target?.id)){
     }
     if(['report-health','report-closed','report-period'].includes(e.target?.id)){const id=e.target.id;if(id==='report-health')s.reportHealth=e.target.value;else if(id==='report-closed')s.reportClosed=e.target.checked;else if(['7','30','90','365'].includes(e.target.value))s.reportPeriod=e.target.value;s.reportProject=null;render();document.getElementById(id)?.focus();return;}
     const projectFields={'project-milestone':'projectMilestone','project-owner':'projectOwner','project-priority':'projectPriority','project-readiness':'projectReadiness','project-sort':'projectSort','project-closed':'projectClosed'};if(projectFields[e.target?.id]){const id=e.target.id;s[projectFields[id]]=id==='project-closed'?e.target.checked:e.target.value;render();document.getElementById(id)?.focus();return;}if(['calendar-project','calendar-scope','calendar-closed'].includes(e.target?.id)){const id=e.target.id;if(id==='calendar-project')s.calendarProject=e.target.value;if(id==='calendar-scope')s.calendarScope=e.target.value;if(id==='calendar-closed')s.calendarClosed=e.target.checked;render();document.getElementById(id)?.focus();return;}if(e.target?.id==='organization-select'){if(e.target.value==='__create__'){e.target.value=s.org?.id||s.requestedOrg;handleClick({dataset:{action:'modal',value:'organization'}});}else switchOrganization(e.target.value);}if(e.target?.id==='membership-scope')loadMemberships(e.target.value);if(e.target?.id==='workspace-select'){s.workspace=e.target.value;s.plannerCell=null;taskExplorer.page=1;activity.page=1;render();if(s.nav==='inbox')loadInbox();if(s.nav==='team'&&!s.demo&&membershipScopes().length)loadMemberships(preferredMembershipScope());}if(e.target?.id==='task-project-select'){const milestonePicker=document.getElementById('creation-milestone');if(milestonePicker)milestonePicker.innerHTML=milestoneOptions(e.target.value);s.creationMilestone=null;syncPlanControls(e.target.closest('form'));const picker=document.getElementById('creation-prerequisite');if(picker)picker.innerHTML=creationDependencyOptions(e.target.value);loadAssignmentCandidates(e.target.value);}if(e.target?.id==='invite-scope')updateInviteRoles(e.target.value);});
-  document.addEventListener('input',e=>{if(e.target?.id==='template-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('[data-template-search]').forEach(card=>{card.hidden=!card.dataset.templateSearch.includes(query);if(!card.hidden)count++;});document.getElementById('template-empty').hidden=count>0;return;}if(e.target?.id==='guide-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('.help-guide').forEach(guide=>{guide.hidden=!guide.textContent.toLowerCase().includes(query);if(!guide.hidden)count++;});document.getElementById('guide-count').textContent=count+' guides found';document.getElementById('guide-empty').hidden=count>0;return;}if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='activity')activity.page=1;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
+  document.addEventListener('input',e=>{if(e.target?.id==='template-search'){templateFilters.query=e.target.value;filterTemplateLibrary();return;}if(e.target?.id==='guide-search'){const query=e.target.value.trim().toLowerCase();let count=0;root.querySelectorAll('.help-guide').forEach(guide=>{guide.hidden=!guide.textContent.toLowerCase().includes(query);if(!guide.hidden)count++;});document.getElementById('guide-count').textContent=count+' guides found';document.getElementById('guide-empty').hidden=count>0;return;}if(e.target?.id==='search'){const v=e.target.value;s.query=v;s.plannerCell=null;if(s.nav==='alltasks'){taskExplorer.page=1;taskExplorer.selected='';}if(s.nav==='activity')activity.page=1;if(s.nav==='inbox')scheduleInboxSearch();const caret=e.target.selectionStart;render();const input=document.getElementById('search');if(input){input.focus();input.setSelectionRange(caret,caret);}}});
   document.addEventListener('keydown',e=>{if(s.menuOpen&&e.key==='Escape'&&!s.modal){s.menuOpen=false;render();root.querySelector('.mobile-menu')?.focus();return;}if(s.menuOpen&&e.key==='Tab'&&window.matchMedia?.('(max-width: 900px)').matches){const items=[...root.querySelectorAll('.sidebar button:not(:disabled)')];const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"][data-action]')){e.preventDefault();handleClick(e.target).catch(x=>toast(x.message,true));}if(e.key==='Escape'&&s.modal){candidateRequest++;s.modal=null;render();}});
   async function init(){
     readAuthReturn();
