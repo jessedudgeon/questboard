@@ -277,10 +277,23 @@ new backend requirements.
 
 ## Project template library
 
-Open **Template library** in Resources & settings, or from Projects. Six curated
-IT starter plans cover equipment installation, security updates, network upgrades,
-phone migrations, software rollouts, and incident follow-up. Search and preview
-milestones, tasks, and checklists before choosing **Use template**.
+Open **Template library** in Resources & settings, or from Projects. The library
+has 26 curated plans in six audience groups:
+
+| Group | Plans | Examples |
+| --- | ---: | --- |
+| Home & family | 5 | Moving, seasonal maintenance, decluttering, vacations, shared routines |
+| Personal goals | 4 | Learning a skill, creative projects, career portfolios, reading |
+| Business & teams | 5 | Client onboarding, launches, workshops, process improvement, employee onboarding |
+| Education | 3 | Course preparation, student research, club projects |
+| Community & events | 3 | Gatherings, volunteering, fundraising |
+| IT & technology | 6 | Equipment, security, networks, phones, software, incident follow-up |
+
+Filter by audience and search together. Search covers plan names, categories,
+milestones, tasks, and checklist text. Filters survive previews and creation
+forms; Clear filters restores all groups. Preview the full plan before choosing
+**Use template**. These are editable starting points, not automatic recurring
+schedules or industry compliance procedures.
 
 Department managers choose a project name, department, visibility, and planning
 start date. Suggested dates use calendar days and require review, especially for
